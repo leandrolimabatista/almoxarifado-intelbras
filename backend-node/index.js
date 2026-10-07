@@ -128,9 +128,9 @@ app.post('/criar-pagamento', async (req, res) => {
         external_reference: String(idPedido),
 
         back_urls: {
-  success: 'https://almoxarifado-intelbras.duckdns.org/?pagina=loja&pagamento=sucesso',
-  failure: 'https://almoxarifado-intelbras.duckdns.org/?pagina=loja&pagamento=falha',
-  pending: 'https://almoxarifado-intelbras.duckdns.org/?pagina=loja&pagamento=pendente',
+  success: 'https://portal-intelbras.duckdns.org/?pagina=loja&pagamento=sucesso',
+failure: 'https://portal-intelbras.duckdns.org/?pagina=loja&pagamento=falha',
+pending: 'https://portal-intelbras.duckdns.org/?pagina=loja&pagamento=pendente',
 },
       },
     });
