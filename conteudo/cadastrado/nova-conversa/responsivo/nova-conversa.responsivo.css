@@ -1,0 +1,42 @@
+/* ============================================================
+   CONTEÚDO — Nova conversa (área CADASTRADO) — Responsivo
+============================================================= */
+
+@media (max-width: 1180px) {
+  .nova-conversa__preview {
+    display: none;
+  }
+
+  .nova-conversa__painel {
+    width: 100%;
+  }
+
+  /* Sem painel de pré-visualização, o botão de ação some junto —
+     ele reaparece fixo no rodapé do próprio painel central. */
+  .nova-conversa__painel::after {
+    content: '';
+  }
+}
+
+@media (max-width: 640px) {
+  .nova-conversa__main {
+    padding: 16px 16px 28px;
+  }
+
+  .nova-conversa__painel {
+    padding: 16px;
+    border-radius: 12px;
+    max-height: none;
+  }
+
+  .nova-conversa__titulo {
+    font-size: 20px;
+  }
+}
+
+@media (max-width: 1180px) {
+  .nova-conversa__iniciar--mobile {
+    display: inline-flex;
+    margin-top: 12px;
+  }
+}

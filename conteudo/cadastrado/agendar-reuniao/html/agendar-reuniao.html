@@ -1,0 +1,413 @@
+<?php
+// Token CSRF do módulo Agendar reunião: gerado uma vez por sessão e enviado pelo JS
+// no header X-CSRF-Token ao agendar (POST api/reunioes/agendar.php).
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+if (empty($_SESSION['csrf_reunioes'])) {
+    $_SESSION['csrf_reunioes'] = bin2hex(random_bytes(32));
+}
+$csrfReunioes = (string)$_SESSION['csrf_reunioes'];
+?>
+<!-- ============================================================
+     CONTEÚDO — Agendar reunião (área CADASTRADO)
+     Componente incluído dentro de <main> no index.php quando o
+     usuário está logado (index.php?pagina=agendar-reuniao). Não
+     contém <html>/<head>/<body> — só o conteúdo em si.
+
+     Layout: menu lateral (mesmo das demais páginas, com o atalho
+     "Agendar reunião" ativo) + formulário + card "Detalhes da
+     reunião" (resumo em tempo real).
+
+     Os participantes vêm de api/reunioes/participantes.php e o envio
+     vai para api/reunioes/agendar.php (tabelas em
+     database/reunioes.sql). Se a API/banco ainda não estiverem
+     prontos, o JS entra sozinho em "modo demonstração" (pessoas
+     fictícias, nada é salvo) e avisa na tela — igual ao módulo
+     Documentos.
+============================================================= -->
+<link rel="stylesheet" href="conteudo/cadastrado/agendar-reuniao/css/agendar-reuniao.css?v=1">
+<link rel="stylesheet" href="conteudo/cadastrado/agendar-reuniao/responsivo/agendar-reuniao.responsivo.css?v=1">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
+
+<div class="reuniao" id="reuRaiz" data-csrf="<?php echo htmlspecialchars($csrfReunioes, ENT_QUOTES, 'UTF-8'); ?>">
+
+  <aside class="inicio__sidebar" id="sidebar">
+    <nav class="inicio__nav">
+      <a href="index.php?pagina=inicio" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-5a1 1 0 011-1h2a1 1 0 011 1v5h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Início</span>
+      </a>
+      <a href="index.php?pagina=servicos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Serviços</span>
+      </a>
+      <a href="index.php?pagina=inteligencia-artificial" class="inicio__nav-item">
+        <svg class="inicio__icon inicio__icon--ia" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.6 4.6H6.5A3.9 3.9 0 0 0 2.6 8.5V17.5A3.9 3.9 0 0 0 6.5 21.4H14.5A3.9 3.9 0 0 0 18.4 17.5V9.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <text x="10.4" y="17.5" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="10.8" fill="currentColor" text-anchor="middle">IA</text>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(17.4 3.6) scale(0.34) translate(-12 -12)"/>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(21 6.6) scale(0.16) translate(-12 -12)"/>
+        </svg>
+        <span>Inteligência Artificial</span>
+      </a>
+      <a href="index.php?pagina=documentos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Documentos</span>
+      </a>
+      <a href="index.php?pagina=unidade" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 20.5V6l7-2.5 7 2.5v14.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 20.5v-5h6v5M9 9.5h.01M12 9.5h.01M15 9.5h.01M9 13h.01M12 13h.01M15 13h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Unidade</span>
+      </a>
+      <a href="index.php?pagina=chamadas" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chamadas</span>
+      </a>
+      <a href="index.php?pagina=cursos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L12 4l9.5 4.5L12 13 2.5 8.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 10.7v4.3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>Cursos</span>
+      </a>
+      <a href="index.php?pagina=loja" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/><path d="M3 4h2l2.2 11.2a1.5 1.5 0 001.5 1.3h7.6a1.5 1.5 0 001.47-1.2L19.5 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Loja</span>
+      </a>
+      <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
+      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Usuários</span>
+      </a>
+      <?php endif; ?>
+    </nav>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">EQUIPES</span>
+      <div class="inicio__channel-list">
+        <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
+          <span class="inicio__channel-dot" style="background:#00A859"></span>
+          <span>Geral</span>
+          <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
+          <span class="inicio__channel-dot" style="background:#3B82F6"></span>
+          <span>Projetos</span>
+          <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
+          <span class="inicio__channel-dot" style="background:#F59E0B"></span>
+          <span>Marketing</span>
+          <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
+          <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
+          <span>RH</span>
+          <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
+          <span class="inicio__channel-dot" style="background:#EC4899"></span>
+          <span>Financeiro</span>
+          <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
+          <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
+          <span>TI</span>
+          <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
+          <span class="inicio__channel-dot" style="background:#EF4444"></span>
+          <span>SAC / Ouvidoria</span>
+          <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
+        </a>
+      </div>
+      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
+    </div>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">ATALHOS</span>
+      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Nova conversa</span>
+      </a>
+      <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut inicio__shortcut--active" id="atalhoAgendarReuniaoSidebar" aria-current="page">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>Agendar reunião</span>
+      </a>
+    </div>
+
+    <button class="inicio__collapse" id="btnRecolher" aria-label="Fechar menu">
+      <span>«</span> Recolher
+    </button>
+  </aside>
+
+
+  <main class="reuniao__main">
+    <div class="reuniao__conteudo">
+
+      <!-- Cabeçalho da página -->
+      <header class="reuniao__cabecalho">
+        <svg class="reuniao__cabecalho-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="15" rx="1.5"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3"/></svg>
+        <div>
+          <h1 class="reuniao__titulo">Agendar reunião</h1>
+          <p class="reuniao__subtitulo">Crie uma reunião e convide participantes</p>
+        </div>
+      </header>
+
+      <div class="reuniao__aviso" id="reuAviso" role="status" hidden>
+        Modo demonstração: não foi possível falar com o servidor, então as pessoas listadas são fictícias e nada será salvo.
+      </div>
+
+      <div class="reuniao__layout">
+
+        <!-- ===================== FORMULÁRIO ===================== -->
+        <section class="reuniao__card reuniao__card--form" aria-label="Formulário de reunião">
+          <form id="reuForm" novalidate>
+
+            <!-- 1. Título -->
+            <div class="reuniao__grupo">
+              <label class="reuniao__label" for="reuTitulo">Título da reunião</label>
+              <input type="text" id="reuTitulo" class="reuniao__input" maxlength="150"
+                     placeholder="Ex.: Reunião de alinhamento" autocomplete="off"
+                     aria-describedby="reuErro_titulo">
+              <p class="reuniao__erro" id="reuErro_titulo" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+            </div>
+
+            <!-- 2. Data + Horário -->
+            <div class="reuniao__linha">
+              <div class="reuniao__grupo">
+                <span class="reuniao__label" id="reuLblData">Data</span>
+                <div class="reuniao__popwrap" id="reuDataWrap">
+                  <button type="button" class="reuniao__campo" id="reuDataBtn"
+                          aria-haspopup="dialog" aria-expanded="false"
+                          aria-labelledby="reuLblData reuDataTxt" aria-describedby="reuErro_data">
+                    <svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="15" rx="1.5"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3"/></svg>
+                    <span class="reuniao__valor" id="reuDataTxt"></span>
+                    <svg class="reuniao__icone reuniao__icone--fim" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="15" rx="1.5"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3"/></svg>
+                  </button>
+                  <div class="reuniao__pop reuniao__pop--cal" id="reuCal" role="dialog" aria-label="Escolher data" hidden></div>
+                </div>
+                <p class="reuniao__erro" id="reuErro_data" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+              </div>
+
+              <div class="reuniao__grupo">
+                <span class="reuniao__label" id="reuLblHorario">Horário</span>
+                <div class="reuniao__horario" role="group" aria-labelledby="reuLblHorario">
+                  <div class="reuniao__popwrap" id="reuInicioWrap">
+                    <div class="reuniao__campo reuniao__campo--input">
+                      <svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+                      <input type="text" id="reuInicio" class="reuniao__input-nu" inputmode="numeric"
+                             maxlength="5" placeholder="09:00" autocomplete="off"
+                             aria-label="Horário inicial" aria-describedby="reuErro_horario">
+                    </div>
+                    <ul class="reuniao__pop reuniao__pop--lista" id="reuInicioLista" role="listbox" aria-label="Horários" hidden></ul>
+                  </div>
+                  <span class="reuniao__traco" aria-hidden="true">–</span>
+                  <div class="reuniao__popwrap" id="reuFimWrap">
+                    <div class="reuniao__campo reuniao__campo--input">
+                      <svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+                      <input type="text" id="reuFim" class="reuniao__input-nu" inputmode="numeric"
+                             maxlength="5" placeholder="10:00" autocomplete="off"
+                             aria-label="Horário final" aria-describedby="reuErro_horario">
+                    </div>
+                    <ul class="reuniao__pop reuniao__pop--lista" id="reuFimLista" role="listbox" aria-label="Horários" hidden></ul>
+                  </div>
+                </div>
+                <p class="reuniao__erro" id="reuErro_horario" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+              </div>
+            </div>
+
+            <!-- 3. Fuso horário + Equipe ou canal -->
+            <div class="reuniao__linha">
+              <div class="reuniao__grupo">
+                <span class="reuniao__label" id="reuLblFuso">Fuso horário</span>
+                <div class="reuniao__popwrap" id="reuSelFuso">
+                  <button type="button" class="reuniao__campo" aria-haspopup="listbox" aria-expanded="false"
+                          aria-labelledby="reuLblFuso reuFusoTxt" aria-describedby="reuErro_fuso">
+                    <svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M3 12h18M12 3c2.5 2.6 3.8 5.6 3.8 9s-1.3 6.4-3.8 9c-2.5-2.6-3.8-5.6-3.8-9S9.5 5.6 12 3z"/></svg>
+                    <span class="reuniao__valor" id="reuFusoTxt"></span>
+                    <svg class="reuniao__icone reuniao__icone--fim reuniao__icone--seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <div class="reuniao__pop" hidden></div>
+                </div>
+                <p class="reuniao__erro" id="reuErro_fuso" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+              </div>
+
+              <div class="reuniao__grupo">
+                <span class="reuniao__label" id="reuLblEquipe">Equipe ou canal</span>
+                <div class="reuniao__popwrap" id="reuSelEquipe">
+                  <button type="button" class="reuniao__campo" aria-haspopup="listbox" aria-expanded="false"
+                          aria-labelledby="reuLblEquipe reuEquipeTxt" aria-describedby="reuErro_equipe">
+                    <svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/><circle cx="17" cy="9" r="2.2"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3"/></svg>
+                    <span class="reuniao__valor" id="reuEquipeTxt"></span>
+                    <svg class="reuniao__icone reuniao__icone--fim reuniao__icone--seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                  </button>
+                  <div class="reuniao__pop" hidden></div>
+                </div>
+                <p class="reuniao__erro" id="reuErro_equipe" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+              </div>
+            </div>
+
+            <!-- 4. Participantes -->
+            <div class="reuniao__grupo">
+              <span class="reuniao__label" id="reuLblPart">Participantes</span>
+              <div class="reuniao__chips" id="reuChips" role="list" aria-labelledby="reuLblPart"></div>
+              <button type="button" class="reuniao__sugestao" id="reuSugestao" hidden></button>
+              <p class="reuniao__erro" id="reuErro_participantes" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+            </div>
+
+            <!-- 5. Descrição -->
+            <div class="reuniao__grupo">
+              <label class="reuniao__label" for="reuDescricao">Descrição</label>
+              <textarea id="reuDescricao" class="reuniao__textarea" maxlength="1000" rows="4"
+                        placeholder="Adicione os detalhes da reunião, pauta, links e outras informações relevantes..."
+                        aria-describedby="reuContador reuErro_descricao"></textarea>
+              <div class="reuniao__contador" id="reuContador">0/1000</div>
+              <p class="reuniao__erro" id="reuErro_descricao" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+            </div>
+
+            <!-- 6. Repetir reunião -->
+            <div class="reuniao__repetir">
+              <label class="reuniao__check">
+                <input type="checkbox" id="reuRepetir" aria-controls="reuRec">
+                <span class="reuniao__check-caixa" aria-hidden="true"><svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg></span>
+                <span>Repetir reunião</span>
+                <svg class="reuniao__icone reuniao__icone--repetir" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4"/></svg>
+              </label>
+
+              <div class="reuniao__rec" id="reuRec" hidden>
+                <div class="reuniao__linha">
+                  <div class="reuniao__grupo">
+                    <span class="reuniao__label" id="reuLblFreq">Frequência</span>
+                    <div class="reuniao__popwrap" id="reuSelFreq">
+                      <button type="button" class="reuniao__campo" aria-haspopup="listbox" aria-expanded="false"
+                              aria-labelledby="reuLblFreq reuFreqTxt" aria-describedby="reuErro_recorrencia">
+                        <svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 11a8 8 0 0 0-14.5-4M4 4v4h4M4 13a8 8 0 0 0 14.5 4M20 20v-4h-4"/></svg>
+                        <span class="reuniao__valor" id="reuFreqTxt"></span>
+                        <svg class="reuniao__icone reuniao__icone--fim reuniao__icone--seta" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 9l6 6 6-6"/></svg>
+                      </button>
+                      <div class="reuniao__pop" hidden></div>
+                    </div>
+                    <p class="reuniao__erro" id="reuErro_recorrencia" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+                  </div>
+                </div>
+
+                <div class="reuniao__grupo" id="reuDiasGrupo">
+                  <span class="reuniao__label" id="reuLblDias">Dias da semana</span>
+                  <div class="reuniao__dias" id="reuDias" role="group" aria-labelledby="reuLblDias"></div>
+                  <p class="reuniao__erro" id="reuErro_recorrencia_dias" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+                </div>
+
+                <fieldset class="reuniao__termino">
+                  <legend class="reuniao__label">Término</legend>
+                  <label class="reuniao__radio"><input type="radio" name="reuTermino" value="nunca" checked><span>Nunca</span></label>
+                  <label class="reuniao__radio">
+                    <input type="radio" name="reuTermino" value="data"><span>Em data</span>
+                    <input type="date" id="reuTerminoData" class="reuniao__mini-input" aria-label="Data de término" disabled>
+                  </label>
+                  <label class="reuniao__radio">
+                    <input type="radio" name="reuTermino" value="ocorrencias"><span>Após</span>
+                    <input type="number" id="reuOcorrencias" class="reuniao__mini-input reuniao__mini-input--num" min="1" max="365" value="10" aria-label="Número de ocorrências" disabled>
+                    <span>ocorrências</span>
+                  </label>
+                  <p class="reuniao__erro" id="reuErro_recorrencia_termino" hidden><svg class="reuniao__erro-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 8v5M12 16h.01"/></svg><span></span></p>
+                </fieldset>
+              </div>
+            </div>
+
+            <!-- 7. Divisor + 8. Botões -->
+            <hr class="reuniao__divisor">
+            <div class="reuniao__botoes">
+              <button type="submit" class="reuniao__btn reuniao__btn--primario" id="reuBtnAgendar">
+                <span class="reuniao__spinner" aria-hidden="true"></span>
+                <span class="reuniao__btn-texto">Agendar reunião</span>
+              </button>
+              <button type="button" class="reuniao__btn reuniao__btn--secundario" id="reuBtnCancelar">Cancelar</button>
+            </div>
+
+          </form>
+        </section>
+
+        <!-- ===================== DETALHES DA REUNIÃO ===================== -->
+        <aside class="reuniao__card reuniao__card--resumo" aria-label="Detalhes da reunião">
+          <h2 class="reuniao__resumo-titulo">Detalhes da reunião</h2>
+
+          <div class="reuniao__item">
+            <svg class="reuniao__icone reuniao__item-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="5.5" width="16" height="15" rx="1.5"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3"/></svg>
+            <div class="reuniao__item-corpo">
+              <span class="reuniao__item-label">Data</span>
+              <span class="reuniao__item-valor" id="reuResData"></span>
+            </div>
+          </div>
+
+          <div class="reuniao__item">
+            <svg class="reuniao__icone reuniao__item-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>
+            <div class="reuniao__item-corpo">
+              <span class="reuniao__item-label">Horário</span>
+              <span class="reuniao__item-valor" id="reuResHorario"></span>
+            </div>
+          </div>
+
+          <div class="reuniao__item">
+            <svg class="reuniao__icone reuniao__item-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/><circle cx="17" cy="9" r="2.2"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3"/></svg>
+            <div class="reuniao__item-corpo">
+              <span class="reuniao__item-label">Participantes</span>
+              <ul class="reuniao__res-pessoas" id="reuResPessoas"></ul>
+            </div>
+          </div>
+
+          <div class="reuniao__item">
+            <svg class="reuniao__icone reuniao__item-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/><circle cx="17" cy="9" r="2.2"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3"/></svg>
+            <div class="reuniao__item-corpo">
+              <span class="reuniao__item-label">Equipe ou canal</span>
+              <span class="reuniao__item-valor reuniao__item-valor--equipe">
+                <svg class="reuniao__icone reuniao__icone--pequeno" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="9" cy="8" r="3"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5"/><circle cx="17" cy="9" r="2.2"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3"/></svg>
+                <span id="reuResEquipe"></span>
+              </span>
+            </div>
+          </div>
+
+          <div class="reuniao__item">
+            <svg class="reuniao__icone reuniao__item-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z"/><path d="M9 12.5h6M9 16h6"/></svg>
+            <div class="reuniao__item-corpo">
+              <span class="reuniao__item-label">Descrição</span>
+              <span class="reuniao__item-valor reuniao__item-valor--texto" id="reuResDescricao"></span>
+            </div>
+          </div>
+        </aside>
+
+      </div>
+    </div>
+  </main>
+
+  <!-- ===================== MODAL: ADICIONAR PARTICIPANTE ===================== -->
+  <dialog class="reuniao__dlg" id="reuDlgPessoas" aria-labelledby="reuDlgPessoasTitulo">
+    <div class="reuniao__dlg-cabeca">
+      <h2 class="reuniao__dlg-titulo" id="reuDlgPessoasTitulo">Adicionar participantes</h2>
+      <button type="button" class="reuniao__dlg-fechar" id="reuDlgPessoasFechar" aria-label="Fechar"><svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    </div>
+    <div class="reuniao__busca">
+      <svg class="reuniao__icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M21 21l-4.35-4.35"/></svg>
+      <input type="search" id="reuBuscaPessoas" placeholder="Buscar por nome ou e-mail" autocomplete="off" aria-label="Buscar pessoas">
+    </div>
+    <ul class="reuniao__pessoas" id="reuListaPessoas" aria-live="polite"></ul>
+    <div class="reuniao__dlg-rodape">
+      <span class="reuniao__dlg-contagem" id="reuContagemPessoas"></span>
+      <button type="button" class="reuniao__btn reuniao__btn--secundario reuniao__btn--pequeno" id="reuPessoasCancelar">Cancelar</button>
+      <button type="button" class="reuniao__btn reuniao__btn--primario reuniao__btn--pequeno" id="reuPessoasAdicionar"><span class="reuniao__btn-texto">Adicionar</span></button>
+    </div>
+  </dialog>
+
+  <!-- ===================== MODAL: DESCARTAR ALTERAÇÕES ===================== -->
+  <dialog class="reuniao__dlg reuniao__dlg--confirma" id="reuDlgDescartar" aria-labelledby="reuDlgDescartarTitulo" aria-describedby="reuDlgDescartarTexto">
+    <h2 class="reuniao__dlg-titulo" id="reuDlgDescartarTitulo">Descartar alterações?</h2>
+    <p class="reuniao__dlg-texto" id="reuDlgDescartarTexto">O que você preencheu nesta reunião será perdido.</p>
+    <div class="reuniao__dlg-rodape reuniao__dlg-rodape--fim">
+      <button type="button" class="reuniao__btn reuniao__btn--secundario reuniao__btn--pequeno" id="reuContinuar">Continuar editando</button>
+      <button type="button" class="reuniao__btn reuniao__btn--perigo reuniao__btn--pequeno" id="reuDescartar">Descartar</button>
+    </div>
+  </dialog>
+
+  <!-- Toasts -->
+  <div class="reuniao__toasts" id="reuToasts" aria-live="polite" aria-atomic="false"></div>
+</div>
+
+<script src="conteudo/cadastrado/agendar-reuniao/js/agendar-reuniao.js?v=1"></script>

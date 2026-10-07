@@ -1,0 +1,415 @@
+<!-- ============================================================
+     CABEÇALHO — Intelbras
+     Este arquivo é um "componente": pode ser incluído dentro do
+     index.html principal via PHP (include) ou via JS (fetch).
+     Ele NÃO deve conter <html>/<head>/<body> — só o header em si.
+============================================================= -->
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="cabecalho/css/cabecalho.css?v=1789997600">
+<link rel="stylesheet" href="cabecalho/responsivo/cabecalho.responsivo.css?v=1789997600">
+
+<header class="header">
+  <div class="header__container">
+
+    <!-- Logo: troque o arquivo dentro de Cabecalho/img/ pela foto oficial da Intelbras -->
+    <a href="/" class="header__logo" aria-label="Intelbras - Página inicial">
+      <img src="cabecalho/img/Logo.png" alt="Intelbras">
+    </a>
+
+    <!-- Barra de busca -->
+    <form class="header__search" id="headerSearch" role="search" action="/busca" method="get">
+      <input
+        type="search"
+        name="q"
+        class="header__search-input"
+        placeholder="O que você está procurando?"
+        aria-label="Buscar produtos"
+      >
+      <button type="submit" class="header__search-btn" aria-label="Buscar">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+          <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+      <!-- Botão de fechar a busca, visível só no mobile quando a barra está aberta -->
+      <button type="button" class="header__search-close" id="btnSearchClose" aria-label="Fechar busca">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 6L18 18M6 18L18 6" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+      </button>
+    </form>
+
+    <!-- Categorias (o menu suspenso será implementado mais pra frente) -->
+    <button class="header__categories" id="btnCategorias">
+      <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+      <span>Todas categorias</span>
+    </button>
+
+    <?php if (!empty($_SESSION['usuario_id'])): ?>
+    <!-- ============================================================
+         ÍCONES DE NOTIFICAÇÃO E CHAT — só aparecem para usuário LOGADO.
+         Contagens (data-badge) são estáticas por enquanto; quando
+         houver endpoint de notificações, trocar pelo valor real.
+    ============================================================= -->
+    <?php
+      // Quais ícones aparecem em cada página (a ordem no HTML é sempre:
+      // notificação/carrinho, chat, chamada — o posicionamento vem do CSS).
+      //   Loja     -> Carrinho + Chat
+      //   Usuários -> Notificação + Chat + Chamada
+      //   Equipes  -> Notificação + Chamada
+      //   Demais   -> Notificação + Chat
+      $cabPagina   = $paginaSolicitada ?? 'inicio';
+      $cabCarrinho = ($cabPagina === 'loja');
+      $cabNotif    = !$cabCarrinho;
+      $cabChat     = ($cabPagina !== 'equipes');
+      $cabChamada  = in_array($cabPagina, ['usuarios', 'equipes'], true);
+    ?>
+    <div class="header__quick-icons">
+      <?php if ($cabNotif): ?>
+      <button type="button" class="header__icon-btn" id="btnNotificacoes" aria-label="Notificações" aria-haspopup="true" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 9.5a6 6 0 0112 0v4.2c0 .5.16.98.47 1.38l.9 1.15c.6.77.05 1.9-.93 1.9H5.56c-.98 0-1.53-1.13-.93-1.9l.9-1.15c.3-.4.47-.88.47-1.38V9.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M9.5 19a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span class="header__icon-badge" id="notificacoesBadge">3</span>
+      </button>
+      <?php endif; ?>
+      <?php if ($cabCarrinho): ?>
+      <!-- Carrinho da Loja: o botão fica no cabeçalho do site (compartilhado por
+           todas as páginas), mas só é conectado ao drawer pelo js da Loja
+           (conteudo/cadastrado/loja/js/loja.js), quando essa página está aberta. -->
+      <button type="button" class="header__icon-btn" id="btnCarrinhoLoja" aria-label="Carrinho da loja">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M6 6h15l-1.5 9h-13z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+          <circle cx="9" cy="21" r="1.2" fill="currentColor"/>
+          <circle cx="18" cy="21" r="1.2" fill="currentColor"/>
+          <path d="M6 6 5 2H2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
+        </svg>
+        <span class="header__icon-badge" id="carrinhoBadge">0</span>
+      </button>
+      <?php endif; ?>
+      <?php if ($cabChat): ?>
+      <button type="button" class="header__icon-btn" id="btnChat" aria-label="Chat" aria-haspopup="true" aria-expanded="false">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </button>
+      <?php endif; ?>
+      <?php if ($cabChamada): ?>
+      <!-- Chamada rápida (Chamadas): abre a tela de Chamadas já com o modal "Nova chamada" -->
+      <a href="index.php?pagina=chamadas&amp;nova=1" class="header__icon-btn" id="btnChamadaRapida" aria-label="Nova chamada" title="Nova chamada">
+        <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+      </a>
+      <?php endif; ?>
+    </div>
+    <?php endif; ?>
+
+    <!-- Área do usuário -->
+    <div class="header__user">
+      <?php if (!empty($_SESSION['usuario_id'])): ?>
+        <?php $primeiroNome = htmlspecialchars(explode(' ', (string)$_SESSION['usuario_nome'])[0], ENT_QUOTES, 'UTF-8'); ?>
+        <span class="header__avatar" aria-hidden="true"><?php echo mb_strtoupper(mb_substr($primeiroNome, 0, 1)); ?></span>
+        <button type="button" class="header__user-text header__user-menu-trigger" id="btnUsuarioMenu" aria-haspopup="true" aria-expanded="false">
+          <span class="header__user-greeting">Olá, Bem-Vindo!</span>
+          <span class="header__user-login"><?php echo $primeiroNome; ?>
+            <svg class="header__user-caret" width="12" height="12" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </span>
+        </button>
+
+        <!-- Dropdown do menu do usuário -->
+        <div class="user-menu" id="userMenu" aria-hidden="true">
+          <span class="user-menu__arrow" aria-hidden="true"></span>
+          <div class="user-menu__card" role="menu">
+            <a href="index.php?pagina=configuracoes" class="user-menu__item" role="menuitem">Meu perfil</a>
+            <a href="index.php?pagina=configuracoes" class="user-menu__item" role="menuitem">Configurações</a>
+            <a href="api/logout.php" class="user-menu__item user-menu__item--sair" id="btnSairConta" role="menuitem">Sair</a>
+          </div>
+        </div>
+      <?php else: ?>
+        <svg class="header__user-icon" id="btnAbrirLoginModalIcon" width="32" height="32" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="2"/>
+          <path d="M4 20C4 16.6863 7.13401 14 11 14H13C16.866 14 20 16.6863 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+        </svg>
+        <div class="header__user-text">
+          <span class="header__user-greeting">Olá, Bem-Vindo!</span>
+          <a href="/login" class="header__user-login" id="btnAbrirLoginModal">Entrar</a>
+        </div>
+      <?php endif; ?>
+
+      <!-- ============================================================
+           DROPDOWN DE LOGIN — abre ao clicar em "Entrar" ou no ícone
+           do usuário, ancorado logo abaixo desta área. Tem 2 etapas
+           dentro do mesmo popout:
+             1) escolha do método de acesso (login-modal__step--choice)
+             2) formulário email + senha + código (login-modal__step--form)
+           A troca de etapa é só visual (esconde uma, mostra a outra),
+           o popout em si nunca fecha/reabre entre as etapas.
+      ============================================================= -->
+      <div class="login-modal" id="loginModal" aria-hidden="true">
+        <span class="login-modal__arrow" aria-hidden="true"></span>
+        <div class="login-modal__card" role="dialog" aria-modal="true" aria-labelledby="loginModalTitle">
+          <span class="login-modal__blob login-modal__blob--tl" aria-hidden="true"></span>
+          <span class="login-modal__blob login-modal__blob--tr" aria-hidden="true"></span>
+
+          <h2 class="login-modal__title" id="loginModalTitle">Acesse sua conta:</h2>
+
+          <!-- Etapa 1: escolha do método de acesso -->
+          <div class="login-modal__step login-modal__step--choice" id="loginStepChoice">
+            <button type="button" class="login-modal__option" id="btnCadastrar">
+              Cadastre-se
+            </button>
+            <button type="button" class="login-modal__option" id="btnEntrarEmailSenha">
+              Entrar com email e senha
+            </button>
+          </div>
+
+          <!-- Etapa 2: formulário de email e senha -->
+          <form class="login-modal__step login-modal__step--form" id="loginStepForm" novalidate hidden>
+
+            <div class="login-modal__field">
+              <label class="login-modal__label" for="loginEmail">Email</label>
+              <input
+                type="email"
+                name="email"
+                id="loginEmail"
+                class="login-modal__input"
+                placeholder="Ex.: exemplo@mail.com"
+                autocomplete="username"
+                required
+              >
+            </div>
+
+            <div class="login-modal__field login-modal__field--senha">
+              <label class="login-modal__label" for="loginSenha">Senha</label>
+              <div class="login-modal__input-wrap">
+                <input
+                  type="password"
+                  name="senha"
+                  id="loginSenha"
+                  class="login-modal__input"
+                  placeholder="Adicione sua senha"
+                  autocomplete="current-password"
+                  required
+                >
+                <button type="button" class="login-modal__toggle-senha" data-target="loginSenha" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg class="login-modal__eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <span class="login-modal__field-error" id="erroLogin" aria-live="polite"></span>
+
+            <a href="#" class="login-modal__forgot" id="linkEsqueciSenha">Esqueci minha senha</a>
+
+            <div class="login-modal__actions">
+              <button type="button" class="login-modal__back" id="btnVoltarLogin">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Voltar
+              </button>
+
+              <button type="submit" class="login-modal__submit">Entrar</button>
+            </div>
+          </form>
+
+          <!-- Etapa 3: formulário de cadastro -->
+          <form class="login-modal__step login-modal__step--form login-modal__step--cadastro" id="cadastroStepForm" novalidate hidden>
+
+            <div class="login-modal__field">
+              <label class="login-modal__label" for="cadastroNome">Nome</label>
+              <input
+                type="text"
+                name="nome"
+                id="cadastroNome"
+                class="login-modal__input"
+                placeholder="Nome completo"
+                autocomplete="name"
+                aria-describedby="erroCadastroNome"
+                required
+              >
+              <span class="login-modal__field-error" id="erroCadastroNome" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__field">
+              <label class="login-modal__label" for="cadastroEmail">Email</label>
+              <input
+                type="email"
+                name="email"
+                id="cadastroEmail"
+                class="login-modal__input"
+                placeholder="Ex.: exemplo@mail.com"
+                autocomplete="email"
+                aria-describedby="erroCadastroEmail"
+                required
+              >
+              <span class="login-modal__field-error" id="erroCadastroEmail" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__field login-modal__field--senha">
+              <label class="login-modal__label" for="cadastroSenha">Senha</label>
+              <div class="login-modal__input-wrap">
+                <input
+                  type="password"
+                  name="senha"
+                  id="cadastroSenha"
+                  class="login-modal__input"
+                  placeholder="Crie sua senha"
+                  autocomplete="new-password"
+                  aria-describedby="erroCadastroSenha"
+                  required
+                >
+                <button type="button" class="login-modal__toggle-senha" data-target="cadastroSenha" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg class="login-modal__eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </button>
+              </div>
+              <span class="login-modal__field-error" id="erroCadastroSenha" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__field login-modal__field--senha">
+              <label class="login-modal__label" for="cadastroRepetirSenha">Repetir senha</label>
+              <div class="login-modal__input-wrap">
+                <input
+                  type="password"
+                  name="repetir_senha"
+                  id="cadastroRepetirSenha"
+                  class="login-modal__input"
+                  placeholder="Repita sua senha"
+                  autocomplete="new-password"
+                  aria-describedby="erroCadastroRepetirSenha"
+                  required
+                >
+                <button type="button" class="login-modal__toggle-senha" data-target="cadastroRepetirSenha" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg class="login-modal__eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </button>
+              </div>
+              <span class="login-modal__field-error" id="erroCadastroRepetirSenha" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__field">
+              <label class="login-modal__label" for="cadastroTelefone">Telefone</label>
+              <input
+                type="tel"
+                name="telefone"
+                id="cadastroTelefone"
+                class="login-modal__input"
+                placeholder="(00) 00000-0000"
+                inputmode="numeric"
+                maxlength="15"
+                autocomplete="tel"
+                aria-describedby="erroCadastroTelefone"
+                required
+              >
+              <span class="login-modal__field-error" id="erroCadastroTelefone" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__field">
+              <label class="login-modal__label" for="cadastroCpf">CPF</label>
+              <input
+                type="text"
+                name="cpf"
+                id="cadastroCpf"
+                class="login-modal__input"
+                placeholder="000.000.000-00"
+                inputmode="numeric"
+                maxlength="14"
+                aria-describedby="erroCadastroCpf"
+                required
+              >
+              <span class="login-modal__field-error" id="erroCadastroCpf" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__field">
+              <label class="login-modal__label" for="cadastroDataNascimento">Data de nascimento</label>
+              <input
+                type="text"
+                name="data_nascimento"
+                id="cadastroDataNascimento"
+                class="login-modal__input"
+                placeholder="dd/mm/aaaa"
+                inputmode="numeric"
+                maxlength="10"
+                aria-describedby="erroCadastroDataNascimento"
+                required
+              >
+              <span class="login-modal__field-error" id="erroCadastroDataNascimento" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__field">
+              <label class="login-modal__label" for="cadastroGenero">Gênero</label>
+              <select
+                name="genero"
+                id="cadastroGenero"
+                data-seletor
+                class="login-modal__input login-modal__select"
+                aria-describedby="erroCadastroGenero"
+                required
+              >
+                <option value="" disabled selected>Selecione o gênero</option>
+                <option value="masculino">Masculino</option>
+                <option value="feminino">Feminino</option>
+                <option value="outro">Outro</option>
+                <option value="prefiro_nao_informar">Prefiro não informar</option>
+              </select>
+              <span class="login-modal__field-error" id="erroCadastroGenero" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__field" id="cadastroGeneroOutroWrap" hidden>
+              <label class="login-modal__label" for="cadastroGeneroOutro">Qual seu gênero?</label>
+              <input
+                type="text"
+                name="genero_outro"
+                id="cadastroGeneroOutro"
+                class="login-modal__input"
+                placeholder="Digite seu gênero"
+                aria-describedby="erroCadastroGeneroOutro"
+              >
+              <span class="login-modal__field-error" id="erroCadastroGeneroOutro" aria-live="polite"></span>
+            </div>
+
+            <div class="login-modal__actions">
+              <button type="button" class="login-modal__back" id="btnVoltarCadastro">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Voltar
+              </button>
+
+              <button type="submit" class="login-modal__submit">Cadastrar</button>
+            </div>
+          </form>
+
+        </div>
+      </div>
+    </div>
+
+    <!-- Botão que abre a barra de busca no mobile (mesmo ícone de lupa, sem alterações) -->
+    <button class="header__search-toggle" id="btnSearchToggle" aria-label="Buscar" aria-expanded="false" aria-controls="headerSearch">
+      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/>
+        <path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/>
+      </svg>
+    </button>
+
+  </div>
+</header>
+
+<?php if (!empty($_SESSION['usuario_id'])): ?>
+<script src="assets/js/equipes-badges.js?v=1"></script>
+<?php endif; ?>
+<script src="cabecalho/js/cabecalho.js?v=1787771373"></script>

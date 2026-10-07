@@ -1,0 +1,35 @@
+/* ============================================================
+   RODAPÉ — Intelbras
+============================================================= */
+
+.footer {
+  background: #0B2A19;
+  color: #fff;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 12.5px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 12px 24px;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.footer__copy {
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.footer__links {
+  display: flex;
+  gap: 22px;
+}
+
+.footer__links a {
+  color: rgba(255, 255, 255, 0.85);
+  text-decoration: none;
+}
+
+.footer__links a:hover {
+  color: #fff;
+  text-decoration: underline;
+}

@@ -1,0 +1,68 @@
+/* ============================================================
+   CONTEÚDO — Chamadas (área CADASTRADO) — Estilos responsivos
+   Tablet ≤ 1024px · Mobile ≤ 600px (390px é a referência).
+============================================================= */
+
+@media (max-width: 1180px) {
+  .chamadas__acoes { grid-template-columns: 1fr; }
+  .chamadas__colunas { grid-template-columns: 1fr; }
+  .chamadas__acao { padding: 16px; }
+}
+
+@media (max-width: 1024px) {
+  .chamadas__main { padding: 18px 20px 32px; }
+  .sala__painel { width: 300px; }
+  .chamadas__tooltip { left: 16px; transform: none; }
+  .chamadas__tooltip::after { left: 40px; margin-left: 0; }
+}
+
+@media (max-width: 860px) {
+  .chamadas__contato { grid-template-columns: 44px minmax(0, 1fr) auto; }
+  .chamadas__contato .chamadas__badge { grid-column: 2; grid-row: 2; justify-self: start; }
+  .chamadas__contato-acoes { grid-column: 3; grid-row: 1 / span 2; }
+  .chamadas__link-btn--msg { display: none; }
+  .chamadas__busca { width: 100%; }
+  .chamadas__link-btn--direita { margin-left: 0; }
+}
+
+@media (max-width: 600px) {
+  .chamadas__main { padding: 14px 14px 28px; }
+  .chamadas__title { font-size: 22px; }
+  .chamadas__acao { flex-direction: row; gap: 14px; }
+  .chamadas__acao-icone { width: 64px; height: 64px; }
+  .chamadas__acao-icone .ch-ic { width: 30px; height: 30px; }
+  .chamadas__btn { min-height: 44px; }
+  .chamadas__icone-btn { width: 44px; height: 44px; }
+  .chamadas__contato { gap: 10px; padding: 12px; }
+  .chamadas__contato-acoes { gap: 6px; }
+  .chamadas__campo-linha { flex-direction: column; }
+  .chamadas__modal { align-items: flex-end; padding: 0; }
+  .chamadas__modal-caixa { max-width: none; border-radius: 16px 16px 0 0; max-height: 92vh; }
+  .chamadas__modal--alto .chamadas__modal-caixa--estreita { border-radius: 16px; margin: 16px; max-width: 400px; }
+  .chamadas__modal--alto { align-items: center; }
+  .chamadas__resumo { flex-direction: column; gap: 12px; align-items: center; }
+
+  /* Sala: grade em 1 coluna, painel por cima, controles em barra inferior */
+  .chamadas__sala { top: 64px; }
+  .sala__topo { grid-template-columns: auto 1fr auto; padding: 8px 10px; }
+  .sala__topo-centro { justify-content: center; gap: 8px; min-width: 0; }
+  .sala__titulo { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .sala__cripto { font-size: 0; gap: 0; }
+  .sala__cripto .ch-ic { width: 18px; height: 18px; }
+  .sala__palco { padding: 8px; }
+  .sala__grade { grid-template-columns: repeat(var(--cols-m, 1), minmax(0, 1fr)); gap: 8px; }
+  .sala__grade[data-qtd='5'], .sala__grade[data-qtd='6'], .sala__grade[data-qtd='7'], .sala__grade[data-qtd='8'], .sala__grade[data-qtd='9'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .sala__painel { position: absolute; left: 0; right: 0; bottom: 0; top: 96px; width: auto; z-index: 6; }
+  .sala__barra { gap: 6px; padding: 8px; justify-content: space-between; }
+  .sala__ctl { flex: 1 1 0; min-width: 44px; min-height: 52px; padding: 6px 4px; }
+  .sala__ctl-rot { display: none; }
+  .sala__ctl--encerrar { min-width: 56px; }
+  .sala__menu { right: auto; left: auto; bottom: calc(100% + 8px); right: 0; }
+  .chamadas__mini { left: 12px; right: 12px; bottom: 12px; justify-content: space-between; }
+  .chamadas__avisos { bottom: 84px; width: calc(100vw - 24px); }
+}
+
+@media (max-width: 420px) {
+  .chamadas__acao { flex-direction: column; align-items: flex-start; }
+  .chamadas__acao-icone { width: 56px; height: 56px; }
+}

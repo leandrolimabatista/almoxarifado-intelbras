@@ -1,0 +1,92 @@
+/* ============================================================
+   CONTEÚDO — Inteligência Artificial (área CADASTRADO) — Estilos responsivos
+   Breakpoints do site: 1180 / 860 / 600 / 480
+============================================================= */
+
+@media (max-width: 1180px) {
+  /* Painel desce para baixo do chat (coluna única) */
+  .inteligencia-artificial__main {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .inteligencia-artificial {
+    --ia-respiro: 20px;
+  }
+
+  .inteligencia-artificial__main {
+    padding: var(--ia-respiro) 20px;
+    gap: 20px;
+  }
+
+  .inteligencia-artificial__mensagens {
+    padding: 20px;
+  }
+
+  .inteligencia-artificial__entrada {
+    padding: 8px 20px 14px;
+  }
+}
+
+@media (max-width: 600px) {
+  .inteligencia-artificial__chat-header {
+    flex-wrap: wrap;
+  }
+
+  .inteligencia-artificial__chat-titulos {
+    flex-basis: calc(100% - 60px);
+  }
+
+  .inteligencia-artificial__btn-nova {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .inteligencia-artificial__sugestoes {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .inteligencia-artificial__conteudo {
+    max-width: 92%;
+  }
+}
+
+@media (max-width: 480px) {
+  .inteligencia-artificial__main {
+    padding: 16px;
+  }
+
+  .inteligencia-artificial__chat-header {
+    padding: 16px;
+  }
+
+  .inteligencia-artificial__mensagens {
+    padding: 16px;
+  }
+
+  .inteligencia-artificial__entrada {
+    padding: 8px 16px 12px;
+  }
+
+  .inteligencia-artificial__card {
+    padding: 20px 16px;
+  }
+
+  /* Botões do campo de entrada ficam só com o ícone */
+  .inteligencia-artificial__acao {
+    width: 40px;
+    padding: 0;
+    justify-content: center;
+  }
+
+  .inteligencia-artificial__acao-texto {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+}

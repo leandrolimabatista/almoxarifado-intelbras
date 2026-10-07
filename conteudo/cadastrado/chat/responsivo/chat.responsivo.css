@@ -1,0 +1,9 @@
+/* ============================================================
+   CONTEÚDO — Chat (área CADASTRADO) — Estilos responsivos
+============================================================= */
+
+@media (max-width: 480px) {
+  .chat__main {
+    padding: 32px 20px;
+  }
+}

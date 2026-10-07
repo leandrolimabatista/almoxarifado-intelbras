@@ -1,0 +1,297 @@
+<?php
+// Token CSRF do módulo IA: gerado uma vez por sessão e enviado pelo JS
+// no header X-CSRF-Token em todas as requisições que alteram dados.
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+if (empty($_SESSION['csrf_ia'])) {
+    $_SESSION['csrf_ia'] = bin2hex(random_bytes(32));
+}
+$csrfIa = (string)$_SESSION['csrf_ia'];
+?>
+<!-- ============================================================
+     CONTEÚDO — Inteligência Artificial (área CADASTRADO)
+     Componente incluído dentro de <main> no index.php quando o
+     usuário está logado. Não contém <html>/<head>/<body>.
+
+     Layout: menu lateral (igual ao Início) + card do chat +
+     painel direito (Recursos da IA e Conversas recentes).
+     A lista de conversas NÃO tem itens fixos aqui: o JS carrega
+     tudo de api/ia/conversas.php.
+============================================================= -->
+<link rel="stylesheet" href="conteudo/cadastrado/inteligencia-artificial/css/inteligencia-artificial.css?v=11">
+<link rel="stylesheet" href="conteudo/cadastrado/inteligencia-artificial/responsivo/inteligencia-artificial.responsivo.css?v=2">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
+
+<div class="inteligencia-artificial" id="iaRaiz" data-csrf="<?php echo htmlspecialchars($csrfIa, ENT_QUOTES, 'UTF-8'); ?>">
+
+  <aside class="inicio__sidebar" id="sidebar">
+    <nav class="inicio__nav">
+      <a href="index.php?pagina=inicio" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-5a1 1 0 011-1h2a1 1 0 011 1v5h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Início</span>
+      </a>
+      <a href="index.php?pagina=servicos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Serviços</span>
+      </a>
+      <a href="index.php?pagina=inteligencia-artificial" class="inicio__nav-item inicio__nav-item--active">
+        <svg class="inicio__icon inicio__icon--ia" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.6 4.6H6.5A3.9 3.9 0 0 0 2.6 8.5V17.5A3.9 3.9 0 0 0 6.5 21.4H14.5A3.9 3.9 0 0 0 18.4 17.5V9.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <text x="10.4" y="17.5" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="10.8" fill="currentColor" text-anchor="middle">IA</text>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(17.4 3.6) scale(0.34) translate(-12 -12)"/>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(21 6.6) scale(0.16) translate(-12 -12)"/>
+        </svg>
+        <span>Inteligência Artificial</span>
+      </a>
+      <a href="index.php?pagina=documentos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Documentos</span>
+      </a>
+      <a href="index.php?pagina=unidade" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 20.5V6l7-2.5 7 2.5v14.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 20.5v-5h6v5M9 9.5h.01M12 9.5h.01M15 9.5h.01M9 13h.01M12 13h.01M15 13h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Unidade</span>
+      </a>
+      <a href="index.php?pagina=chamadas" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chamadas</span>
+      </a>
+      <a href="index.php?pagina=cursos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L12 4l9.5 4.5L12 13 2.5 8.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 10.7v4.3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>Cursos</span>
+      </a>
+      <a href="index.php?pagina=loja" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/><path d="M3 4h2l2.2 11.2a1.5 1.5 0 001.5 1.3h7.6a1.5 1.5 0 001.47-1.2L19.5 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Loja</span>
+      </a>
+      <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
+      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Usuários</span>
+      </a>
+      <?php endif; ?>
+    </nav>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">EQUIPES</span>
+      <div class="inicio__channel-list">
+        <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
+          <span class="inicio__channel-dot" style="background:#00A859"></span>
+          <span>Geral</span>
+          <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
+          <span class="inicio__channel-dot" style="background:#3B82F6"></span>
+          <span>Projetos</span>
+          <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
+          <span class="inicio__channel-dot" style="background:#F59E0B"></span>
+          <span>Marketing</span>
+          <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
+          <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
+          <span>RH</span>
+          <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
+          <span class="inicio__channel-dot" style="background:#EC4899"></span>
+          <span>Financeiro</span>
+          <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
+          <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
+          <span>TI</span>
+          <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
+          <span class="inicio__channel-dot" style="background:#EF4444"></span>
+          <span>SAC / Ouvidoria</span>
+          <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
+        </a>
+      </div>
+      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
+    </div>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">ATALHOS</span>
+      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Nova conversa</span>
+      </a>
+      <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>Agendar reunião</span>
+      </a>
+    </div>
+
+    <button class="inicio__collapse" id="btnRecolher" aria-label="Fechar menu">
+      <span>«</span> Recolher
+    </button>
+  </aside>
+
+  <main class="inteligencia-artificial__main">
+
+    <!-- ===================== CARD DO CHAT ===================== -->
+    <section class="inteligencia-artificial__chat" aria-labelledby="iaTitulo">
+
+      <header class="inteligencia-artificial__chat-header">
+        <span class="inteligencia-artificial__logo">
+          <svg class="inteligencia-artificial__logo-svg" aria-hidden="true" focusable="false" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.6 4.6H6.5A3.9 3.9 0 0 0 2.6 8.5V17.5A3.9 3.9 0 0 0 6.5 21.4H14.5A3.9 3.9 0 0 0 18.4 17.5V9.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <text x="10.4" y="17.5" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="10.8" fill="currentColor" text-anchor="middle">IA</text>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(17.4 3.6) scale(0.34) translate(-12 -12)"/>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(21 6.6) scale(0.16) translate(-12 -12)"/>
+        </svg>
+        </span>
+        <div class="inteligencia-artificial__chat-titulos">
+          <h1 class="inteligencia-artificial__titulo" id="iaTitulo">Inteligência Artificial</h1>
+          <p class="inteligencia-artificial__subtitulo">Seu assistente inteligente para ajudar no dia a dia da Intelbras</p>
+        </div>
+        <button type="button" class="inteligencia-artificial__btn-nova" id="iaBtnNova">
+          <span>Nova conversa</span>
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v8M8 12h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </button>
+      </header>
+
+      <div class="inteligencia-artificial__offline" id="iaOffline" role="status" hidden>
+        Você está offline. Reconecte-se para enviar mensagens.
+      </div>
+
+      <!-- Área rolável: estado inicial (boas-vindas + sugestões) OU mensagens -->
+      <div class="inteligencia-artificial__mensagens" id="iaMensagens" role="log" aria-live="polite" aria-label="Mensagens da conversa">
+
+        <div class="inteligencia-artificial__inicial" id="iaInicial">
+          <div class="inteligencia-artificial__msg inteligencia-artificial__msg--ia">
+            <span class="inteligencia-artificial__avatar" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+            </span>
+            <div class="inteligencia-artificial__conteudo">
+              <div class="inteligencia-artificial__balao">
+                <p>Olá! Sou a IA da Intelbras.</p>
+                <p>Como posso ajudar você hoje?</p>
+                <time class="inteligencia-artificial__hora" id="iaHoraBoasVindas"></time>
+              </div>
+            </div>
+          </div>
+
+          <div class="inteligencia-artificial__sugestoes" id="iaSugestoes">
+            <button type="button" class="inteligencia-artificial__sugestao" data-texto="Resuma o relatório de vendas do último trimestre.">
+              <span class="inteligencia-artificial__sugestao-icone inteligencia-artificial__sugestao-icone--verde" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6M9 9h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <span>Resuma o relatório de vendas do último trimestre.</span>
+            </button>
+            <button type="button" class="inteligencia-artificial__sugestao" data-texto="Quais são as metas da equipe de Marketing?">
+              <span class="inteligencia-artificial__sugestao-icone inteligencia-artificial__sugestao-icone--roxo" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="11" cy="13" r="7.5" stroke="currentColor" stroke-width="1.6"/><circle cx="11" cy="13" r="4" stroke="currentColor" stroke-width="1.6"/><circle cx="11" cy="13" r="0.9" fill="currentColor"/><path d="M11 13l8-8M16.5 3.5v3h3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span>Quais são as metas da equipe de Marketing?</span>
+            </button>
+            <button type="button" class="inteligencia-artificial__sugestao" data-texto="Crie um plano de ação para o lançamento do novo produto.">
+              <span class="inteligencia-artificial__sugestao-icone inteligencia-artificial__sugestao-icone--laranja" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M14.5 4.5c3-1.2 5-1 5-1s.2 2-1 5c-1 2.5-3 4.5-5.5 5.5l-4-4c1-2.5 3-4.500 5.500-5.500z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="14.5" cy="9.5" r="1.3" stroke="currentColor" stroke-width="1.4"/><path d="M9.500 9.500l-3.500.5-2 3.500 3.500-.5M14.500 14.500l-.5 3.500-3.500 2 .5-3.500M6 18c-1.500.5-2 2.500-2 2.500s2-.5 2.500-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </span>
+              <span>Crie um plano de ação para o lançamento do novo produto.</span>
+            </button>
+            <button type="button" class="inteligencia-artificial__sugestao" data-texto="Me ajude a organizar as tarefas da equipe de TI.">
+              <span class="inteligencia-artificial__sugestao-icone inteligencia-artificial__sugestao-icone--azul" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" focusable="false"><rect x="3" y="4" width="18" height="12" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M8 20h8M12 16v4" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <span>Me ajude a organizar as tarefas da equipe de TI.</span>
+            </button>
+          </div>
+        </div>
+
+        <!-- Mensagens da conversa ativa (montadas pelo JS) -->
+        <div class="inteligencia-artificial__lista" id="iaLista" hidden></div>
+      </div>
+
+      <!-- Campo de entrada (fixo na base do card) -->
+      <div class="inteligencia-artificial__entrada">
+        <div class="inteligencia-artificial__caixa">
+          <label class="inteligencia-artificial__sr" for="iaCampo">Mensagem para a IA</label>
+          <textarea class="inteligencia-artificial__campo" id="iaCampo" rows="1" maxlength="4000" placeholder="Digite sua mensagem..." autocomplete="off"></textarea>
+          <div class="inteligencia-artificial__acoes">
+            <button type="button" class="inteligencia-artificial__acao" disabled title="Em breve">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="M20 11.500l-8.200 8.200a5 5 0 01-7.100-7.100l8.500-8.500a3.300 3.300 0 014.700 4.700l-8.500 8.500a1.700 1.700 0 01-2.400-2.400l7.800-7.800" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              <span class="inteligencia-artificial__acao-texto">Anexar</span>
+            </button>
+            <button type="button" class="inteligencia-artificial__enviar" id="iaEnviar" aria-label="Enviar mensagem" disabled>
+              <svg class="inteligencia-artificial__enviar-seta" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><path d="M4 4l17 8-17 8 3.500-8L4 4z" fill="currentColor"/></svg>
+              <svg class="inteligencia-artificial__enviar-parar" viewBox="0 0 24 24" fill="none" aria-hidden="true" focusable="false"><rect x="6.500" y="6.500" width="11" height="11" rx="2" fill="currentColor"/></svg>
+            </button>
+          </div>
+        </div>
+        <p class="inteligencia-artificial__aviso">A IA pode cometer erros. Verifique as informações importantes.</p>
+      </div>
+    </section>
+
+    <!-- ===================== PAINEL DIREITO ===================== -->
+    <aside class="inteligencia-artificial__painel">
+
+      <section class="inteligencia-artificial__card" aria-labelledby="iaRecursosTitulo">
+        <h2 class="inteligencia-artificial__card-titulo" id="iaRecursosTitulo">Recursos da IA</h2>
+        <ul class="inteligencia-artificial__recursos">
+          <li class="inteligencia-artificial__recurso">
+            <span class="inteligencia-artificial__recurso-icone inteligencia-artificial__recurso-icone--verde" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6M9 9h2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            <span class="inteligencia-artificial__recurso-textos">
+              <strong>Análise de documentos</strong>
+              <span>Faça upload e resuma documentos</span>
+            </span>
+          </li>
+          <li class="inteligencia-artificial__recurso">
+            <span class="inteligencia-artificial__recurso-icone inteligencia-artificial__recurso-icone--roxo" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" focusable="false"><circle cx="10.500" cy="10.500" r="6.500" stroke="currentColor" stroke-width="1.6"/><path d="M15.500 15.500L20.500 20.500" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+            </span>
+            <span class="inteligencia-artificial__recurso-textos">
+              <strong>Pesquisa inteligente</strong>
+              <span>Busque informações internas e externas</span>
+            </span>
+          </li>
+          <li class="inteligencia-artificial__recurso">
+            <span class="inteligencia-artificial__recurso-icone inteligencia-artificial__recurso-icone--verde" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M11 4H6a2 2 0 00-2 2v12a2 2 0 002 2h12a2 2 0 002-2v-5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><path d="M17.500 3.500a2.100 2.100 0 013 3L12 15l-4 1 1-4 8.500-8.500z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="inteligencia-artificial__recurso-textos">
+              <strong>Geração de conteúdo</strong>
+              <span>Crie textos, e-mails, planos e muito mais</span>
+            </span>
+          </li>
+          <li class="inteligencia-artificial__recurso">
+            <span class="inteligencia-artificial__recurso-icone inteligencia-artificial__recurso-icone--azul" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" focusable="false"><path d="M4 20V10M10 20V4M16 20v-7M21 20H3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <span class="inteligencia-artificial__recurso-textos">
+              <strong>Análise de dados</strong>
+              <span>Interprete dados e gere insights</span>
+            </span>
+          </li>
+        </ul>
+      </section>
+
+      <section class="inteligencia-artificial__card" aria-labelledby="iaRecentesTitulo">
+        <h2 class="inteligencia-artificial__card-titulo" id="iaRecentesTitulo">Conversas recentes</h2>
+        <!-- Preenchido pelo JS (carregando / erro / vazio / lista) -->
+        <div class="inteligencia-artificial__recentes" id="iaRecentes" aria-busy="true"></div>
+      </section>
+
+    </aside>
+  </main>
+</div>
+
+<!-- Confirmação de exclusão -->
+<dialog class="inteligencia-artificial__dialogo" id="iaDialogo" aria-labelledby="iaDialogoTitulo">
+  <h2 class="inteligencia-artificial__dialogo-titulo" id="iaDialogoTitulo">Excluir conversa?</h2>
+  <p class="inteligencia-artificial__dialogo-texto" id="iaDialogoTexto">Essa ação não pode ser desfeita.</p>
+  <div class="inteligencia-artificial__dialogo-acoes">
+    <button type="button" class="inteligencia-artificial__dialogo-btn" id="iaDialogoCancelar">Cancelar</button>
+    <button type="button" class="inteligencia-artificial__dialogo-btn inteligencia-artificial__dialogo-btn--perigo" id="iaDialogoConfirmar">Excluir</button>
+  </div>
+</dialog>
+
+<script src="conteudo/cadastrado/inteligencia-artificial/js/inteligencia-artificial.js?v=11"></script>

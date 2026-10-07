@@ -1,0 +1,463 @@
+<?php
+/**
+ * CONTEÚDO — Equipes (área CADASTRADO)
+ * Componente incluído dentro de <main> no index.php quando o usuário está
+ * logado. Não contém <html>/<head>/<body> — só o conteúdo em si.
+ *
+ * Layout fiel ao Figma/prompt: menu lateral (mesmo componente das demais
+ * páginas) + chat central de 3 colunas (cabeçalho do canal, abas, mensagens,
+ * campo de envio) + painel direito (sobre o canal, arquivos fixados,
+ * membros, links úteis).
+ *
+ * O HTML abaixo é só a "casca": praticamente tudo dentro de
+ * #equipesMain (cabeçalho do canal, mensagens, painel direito) é
+ * preenchido pelo equipes.js a partir de api/equipes/canal.php e
+ * api/equipes/mensagens.php — inclusive a troca entre o chat normal e o
+ * estado de "acesso restrito" quando o usuário não é membro da equipe.
+ */
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+if (empty($_SESSION['csrf_equipes'])) {
+    $_SESSION['csrf_equipes'] = bin2hex(random_bytes(32));
+}
+$csrfEquipes = (string)$_SESSION['csrf_equipes'];
+
+$equipeInicial = strtolower((string)($_GET['equipe'] ?? 'geral'));
+$equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
+?>
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
+<link rel="stylesheet" href="conteudo/cadastrado/equipes/css/equipes.css?v=11">
+<link rel="stylesheet" href="conteudo/cadastrado/equipes/responsivo/equipes.responsivo.css?v=4">
+
+<div
+  class="equipes"
+  id="equipesRaiz"
+  data-csrf="<?php echo htmlspecialchars($csrfEquipes, ENT_QUOTES, 'UTF-8'); ?>"
+  data-equipe="<?php echo htmlspecialchars($equipeInicial, ENT_QUOTES, 'UTF-8'); ?>"
+>
+
+  <!-- ===================== MENU LATERAL (idêntico ao das demais páginas) ===================== -->
+  <aside class="inicio__sidebar" id="sidebar">
+    <nav class="inicio__nav">
+      <a href="index.php?pagina=inicio" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-5a1 1 0 011-1h2a1 1 0 011 1v5h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Início</span>
+      </a>
+      <a href="index.php?pagina=servicos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Serviços</span>
+      </a>
+      <a href="index.php?pagina=inteligencia-artificial" class="inicio__nav-item">
+        <svg class="inicio__icon inicio__icon--ia" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.6 4.6H6.5A3.9 3.9 0 0 0 2.6 8.5V17.5A3.9 3.9 0 0 0 6.5 21.4H14.5A3.9 3.9 0 0 0 18.4 17.5V9.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <text x="10.4" y="17.5" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="10.8" fill="currentColor" text-anchor="middle">IA</text>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(17.4 3.6) scale(0.34) translate(-12 -12)"/>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(21 6.6) scale(0.16) translate(-12 -12)"/>
+        </svg>
+        <span>Inteligência Artificial</span>
+      </a>
+      <a href="index.php?pagina=documentos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Documentos</span>
+      </a>
+      <a href="index.php?pagina=unidade" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 20.5V6l7-2.5 7 2.5v14.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 20.5v-5h6v5M9 9.5h.01M12 9.5h.01M15 9.5h.01M9 13h.01M12 13h.01M15 13h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Unidade</span>
+      </a>
+      <a href="index.php?pagina=chamadas" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chamadas</span>
+      </a>
+      <a href="index.php?pagina=cursos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L12 4l9.5 4.5L12 13 2.5 8.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 10.7v4.3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>Cursos</span>
+      </a>
+      <a href="index.php?pagina=loja" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/><path d="M3 4h2l2.2 11.2a1.5 1.5 0 001.5 1.3h7.6a1.5 1.5 0 001.47-1.2L19.5 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Loja</span>
+      </a>
+      <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
+      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Usuários</span>
+      </a>
+      <?php endif; ?>
+    </nav>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">EQUIPES</span>
+      <div class="inicio__channel-list">
+        <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
+          <span class="inicio__channel-dot" style="background:#00A859"></span>
+          <span>Geral</span>
+          <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
+          <span class="inicio__channel-dot" style="background:#3B82F6"></span>
+          <span>Projetos</span>
+          <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
+          <span class="inicio__channel-dot" style="background:#F59E0B"></span>
+          <span>Marketing</span>
+          <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
+          <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
+          <span>RH</span>
+          <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
+          <span class="inicio__channel-dot" style="background:#EC4899"></span>
+          <span>Financeiro</span>
+          <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
+          <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
+          <span>TI</span>
+          <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
+          <span class="inicio__channel-dot" style="background:#EF4444"></span>
+          <span>SAC / Ouvidoria</span>
+          <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
+        </a>
+      </div>
+      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
+    </div>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">ATALHOS</span>
+      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Nova conversa</span>
+      </a>
+      <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>Agendar reunião</span>
+      </a>
+    </div>
+
+    <button class="inicio__collapse" id="btnRecolher" aria-label="Fechar menu">
+      <span>«</span> Recolher
+    </button>
+  </aside>
+
+  <!-- ===================== FAIXA "RECONECTANDO..." (offline) ===================== -->
+  <div class="equipes__offline" id="equipesOffline" role="status" hidden>
+    Reconectando… suas mensagens serão enviadas assim que a conexão voltar.
+  </div>
+
+  <!-- ===================== ÁREA PRINCIPAL ===================== -->
+  <main class="equipes__main" id="equipesMain">
+
+    <!-- ----- Carregando (skeleton) ----- -->
+    <div class="equipes__skeleton" id="equipesSkeleton">
+      <div class="equipes__skeleton-chat">
+        <div class="equipes__skeleton-header">
+          <span class="equipes__skeleton-box" style="width:50px;height:50px;border-radius:12px"></span>
+          <span class="equipes__skeleton-lines">
+            <span class="equipes__skeleton-box" style="width:160px;height:18px"></span>
+            <span class="equipes__skeleton-box" style="width:220px;height:12px"></span>
+          </span>
+        </div>
+        <div class="equipes__skeleton-msg" style="--w:64%"></div>
+        <div class="equipes__skeleton-msg equipes__skeleton-msg--direita" style="--w:48%"></div>
+        <div class="equipes__skeleton-msg" style="--w:72%"></div>
+        <div class="equipes__skeleton-msg" style="--w:38%"></div>
+      </div>
+      <div class="equipes__skeleton-painel">
+        <span class="equipes__skeleton-box" style="width:70%;height:14px"></span>
+        <span class="equipes__skeleton-box" style="width:100%;height:60px"></span>
+        <span class="equipes__skeleton-box" style="width:50%;height:14px;margin-top:18px"></span>
+        <span class="equipes__skeleton-box" style="width:100%;height:120px"></span>
+      </div>
+    </div>
+
+    <!-- ----- Estado: acesso restrito (usuário não é membro da equipe) ----- -->
+    <div class="equipes__restrito" id="equipesRestrito" hidden>
+      <div class="equipes__restrito-card">
+        <span class="equipes__restrito-icone" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10.5" width="14" height="10" rx="2" stroke="currentColor" stroke-width="1.8"/><path d="M8 10.5V7.5a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="12" cy="15.2" r="1.6" fill="currentColor"/></svg>
+        </span>
+        <h1 class="equipes__restrito-titulo">Você não faz parte desta equipe</h1>
+        <p class="equipes__restrito-texto" id="equipesRestritoTexto">
+          Só membros da equipe <strong id="equipesRestritoNome">—</strong> podem ver e participar deste chat.
+        </p>
+        <button type="button" class="equipes__restrito-btn" id="equipesBtnSolicitar">Solicitar acesso</button>
+        <p class="equipes__restrito-aviso" id="equipesRestritoAviso" hidden></p>
+      </div>
+    </div>
+
+    <!-- ----- Chat (mostrado quando o usuário é membro) ----- -->
+    <div class="equipes__chat" id="equipesChat" hidden>
+
+      <!-- Cabeçalho do canal -->
+      <header class="equipes__chat-header">
+        <span class="equipes__canal-icone" id="equipesCanalIcone" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="9" r="3.2" stroke="white" stroke-width="1.7"/><path d="M2.8 19c.7-3.6 3-5.5 6.2-5.5s5.5 1.9 6.2 5.5" stroke="white" stroke-width="1.7" stroke-linecap="round"/><circle cx="17" cy="9.5" r="2.4" stroke="white" stroke-width="1.6"/><path d="M15.6 13.6c2.3.3 3.9 1.9 4.4 4.5" stroke="white" stroke-width="1.6" stroke-linecap="round"/></svg>
+        </span>
+        <div class="equipes__canal-titulo-bloco">
+          <div class="equipes__canal-titulo-linha">
+            <h1 class="equipes__canal-titulo" id="equipesCanalTitulo">Geral</h1>
+            <button type="button" class="equipes__favorito" id="equipesBtnFavorito" aria-pressed="false" aria-label="Favoritar canal">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.6l2.6 5.4 5.9.8-4.3 4.2 1 5.9-5.2-2.8-5.2 2.8 1-5.9L3.5 9.8l5.9-.8L12 3.6z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+          <p class="equipes__canal-subtitulo" id="equipesCanalSubtitulo">Conversas da equipe</p>
+        </div>
+        <div class="equipes__canal-acoes">
+          <button type="button" class="equipes__icone-btn" id="equipesBtnVideo" aria-label="Iniciar videochamada" title="Iniciar videochamada">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 9.5l5-2.8v10.6l-5-2.8" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><rect x="3" y="6" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>
+          </button>
+          <button type="button" class="equipes__icone-btn" id="equipesBtnVoz" aria-label="Iniciar chamada de voz" title="Iniciar chamada de voz">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <button type="button" class="equipes__icone-btn equipes__icone-btn--membros" id="equipesBtnMembros" aria-label="Ver membros" title="Membros">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="8.5" cy="8" r="2.6" stroke="currentColor" stroke-width="1.6"/><path d="M3 19c.5-3.2 2.6-4.9 5.5-4.9s5 1.7 5.5 4.9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/><circle cx="16.5" cy="8.6" r="2" stroke="currentColor" stroke-width="1.5"/><path d="M15.3 14.4c2 .3 3.4 1.7 3.9 4" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>
+            <span id="equipesMembrosCount">0</span>
+          </button>
+          <div class="equipes__menu-wrap">
+            <button type="button" class="equipes__icone-btn" id="equipesBtnMais" aria-label="Mais opções" aria-haspopup="true" aria-expanded="false" title="Mais opções">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="5.5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="18.5" r="1.6" fill="currentColor"/></svg>
+            </button>
+            <div class="equipes__menu" id="equipesMenuMais" hidden>
+              <button type="button" class="equipes__menu-item" id="equipesMenuSilenciar">Silenciar canal</button>
+              <button type="button" class="equipes__menu-item" id="equipesMenuVerDocumentos">Ver documentos da equipe</button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      <!-- Abas do canal -->
+      <nav class="equipes__tabs" aria-label="Seções do canal">
+        <button type="button" class="equipes__tab equipes__tab--ativa" data-aba="chat">Chat</button>
+        <button type="button" class="equipes__tab" data-aba="arquivos">Arquivos</button>
+        <button type="button" class="equipes__tab" data-aba="tarefas">Tarefas</button>
+        <button type="button" class="equipes__tab" data-aba="calendario">Calendário</button>
+        <button type="button" class="equipes__tab" data-aba="notas">Notas</button>
+        <button type="button" class="equipes__tab equipes__tab--add" id="equipesBtnNovaAba" aria-label="Adicionar aba">+</button>
+      </nav>
+
+      <!-- Corpo da aba Chat -->
+      <div class="equipes__corpo-aba" data-corpo-aba="chat">
+
+        <!-- Área de mensagens -->
+        <div class="equipes__messages" id="equipesMessages">
+          <div class="equipes__messages-lista" id="equipesLista"></div>
+
+          <div class="equipes__vazio" id="equipesVazio" hidden>
+            <span class="equipes__vazio-icone" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <p class="equipes__vazio-titulo">Inicie a conversa com sua equipe</p>
+            <p class="equipes__vazio-texto">Ainda não há mensagens neste canal. Diga oi para começar.</p>
+          </div>
+
+          <div class="equipes__digitando" id="equipesDigitando" hidden>
+            <span class="equipes__digitando-pontos"><i></i><i></i><i></i></span>
+            <span id="equipesDigitandoTexto"></span>
+          </div>
+        </div>
+
+        <button type="button" class="equipes__ir-fim" id="equipesIrFim" hidden>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4v14M6 12l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Ir para o fim
+        </button>
+
+        <!-- Campo de envio -->
+        <div class="equipes__composer-wrap">
+
+          <!-- Aviso de canal somente leitura (substitui o composer) -->
+          <div class="equipes__somente-leitura" id="equipesSomenteLeitura" hidden>
+            🔒 Este canal é somente leitura. Só administradores podem enviar mensagens.
+          </div>
+
+          <form class="equipes__composer" id="equipesComposer">
+
+            <!-- Prévia de "respondendo a" -->
+            <div class="equipes__resposta-preview" id="equipesRespostaPreview" hidden>
+              <span class="equipes__resposta-barra" aria-hidden="true"></span>
+              <span class="equipes__resposta-texto">
+                Respondendo a <strong id="equipesRespostaAutor"></strong>: <span id="equipesRespostaTrecho"></span>
+              </span>
+              <button type="button" class="equipes__resposta-fechar" id="equipesRespostaFechar" aria-label="Cancelar resposta">&times;</button>
+            </div>
+
+            <!-- Prévia do anexo escolhido -->
+            <div class="equipes__anexo-preview" id="equipesAnexoPreview" hidden>
+              <span class="equipes__anexo-preview-icone" aria-hidden="true">📎</span>
+              <span class="equipes__anexo-preview-nome" id="equipesAnexoNome"></span>
+              <button type="button" class="equipes__resposta-fechar" id="equipesAnexoRemover" aria-label="Remover anexo">&times;</button>
+            </div>
+
+            <!-- Barra de formatação (estilo Teams): aparece ao clicar no "A" -->
+            <div class="equipes__formatacao" id="equipesFormatacao" role="toolbar" aria-label="Formatação de texto" hidden>
+              <button type="button" data-formatar="negrito" data-cmd="bold" title="Negrito (Ctrl+B)" aria-label="Negrito"><strong>B</strong></button>
+              <button type="button" data-formatar="italico" data-cmd="italic" title="Itálico (Ctrl+I)" aria-label="Itálico"><em>I</em></button>
+              <button type="button" data-formatar="sublinhado" data-cmd="underline" title="Sublinhado (Ctrl+U)" aria-label="Sublinhado"><u>U</u></button>
+              <button type="button" data-formatar="tachado" data-cmd="strikeThrough" title="Tachado" aria-label="Tachado"><s>S</s></button>
+              <span class="equipes__formatacao-sep" aria-hidden="true"></span>
+              <button type="button" data-formatar="lista" data-cmd="insertUnorderedList" title="Lista com marcadores" aria-label="Lista com marcadores">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="7" r="1.3" fill="currentColor"/><circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="5" cy="17" r="1.3" fill="currentColor"/><path d="M10 7h10M10 12h10M10 17h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" data-formatar="numerada" data-cmd="insertOrderedList" title="Lista numerada" aria-label="Lista numerada">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 7h10M10 12h10M10 17h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 6l1.2-.8V9M3.8 11.2c.6-.9 2-.8 2 .2 0 .7-1.2 1.2-2 2.1h2.2M3.8 16.3h2l-1 1.1c.8 0 1.2.4 1.2.9 0 .7-.8 1-2.2.7" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="equipes__formatacao-sep" aria-hidden="true"></span>
+              <button type="button" data-formatar="link" title="Inserir link" aria-label="Inserir link">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" class="equipes__formatacao-descartar" id="equipesFormatacaoDescartar" title="Descartar mensagem" aria-label="Descartar mensagem">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1.5 1.5 0 001.5 1.4h7A1.5 1.5 0 0017 19l1-12M9 7V4.5h6V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+
+            <!-- Diálogo "Inserir link" (abre ao clicar no botão de link da barra) -->
+            <div class="equipes__link-dialogo" id="equipesLinkDialogo" role="dialog" aria-labelledby="equipesLinkTitulo" hidden>
+              <h3 class="equipes__link-titulo" id="equipesLinkTitulo">Inserir link</h3>
+              <label for="equipesLinkTexto">Texto a ser exibido</label>
+              <input type="text" id="equipesLinkTexto" placeholder="Texto a ser exibido" autocomplete="off">
+              <label for="equipesLinkEndereco">Endereço</label>
+              <input type="text" id="equipesLinkEndereco" placeholder="Link para um arquivo ou página da web" autocomplete="off" inputmode="url">
+              <p class="equipes__link-erro" id="equipesLinkErro" role="alert" hidden>Endereço de link inválido. Use algo como https://exemplo.com.</p>
+              <div class="equipes__link-acoes">
+                <button type="button" class="equipes__link-cancelar" id="equipesLinkCancelar">Cancelar</button>
+                <button type="button" class="equipes__link-inserir" id="equipesLinkInserir" disabled>Inserir</button>
+              </div>
+            </div>
+
+            <div class="equipes__composer-linha">
+              <button type="button" class="equipes__composer-btn" id="equipesBtnAnexar" aria-label="Anexar arquivo" title="Anexar arquivo">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 12.5l6.5-6.5a3 3 0 114.2 4.2L11 18a5 5 0 11-7-7l7.3-7.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <input type="file" id="equipesInputArquivo" hidden>
+
+              <div class="equipes__campo-wrap">
+                <textarea
+                  class="equipes__campo"
+                  id="equipesCampoTexto"
+                  rows="1"
+                  placeholder="Digite uma mensagem..."
+                  maxlength="4000"
+                ></textarea>
+
+                <!-- Editor com formatação visual (só aparece depois de clicar no "A") -->
+                <div
+                  class="equipes__editor"
+                  id="equipesEditor"
+                  contenteditable="true"
+                  role="textbox"
+                  aria-multiline="true"
+                  aria-label="Digite uma mensagem"
+                  data-placeholder="Digite uma mensagem..."
+                  hidden
+                ></div>
+
+                <!-- Popover de menção (@) -->
+                <div class="equipes__popover equipes__popover--mencao" id="equipesMencaoPopover" hidden></div>
+                <!-- Popover de comandos (/) -->
+                <div class="equipes__popover equipes__popover--comando" id="equipesComandoPopover" hidden>
+                  <button type="button" class="equipes__popover-item" data-comando="agendar">/agendar — agendar reunião</button>
+                  <button type="button" class="equipes__popover-item" data-comando="arquivo">/arquivo — ver arquivos fixados</button>
+                </div>
+              </div>
+
+              <div class="equipes__composer-icones">
+                <button type="button" class="equipes__composer-btn" id="equipesBtnFormatar" aria-label="Formatação de texto" title="Formatação de texto">A</button>
+                <div class="equipes__emoji-wrap">
+                  <button type="button" class="equipes__composer-btn" id="equipesBtnEmoji" aria-label="Emoji" title="Emoji">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><circle cx="9" cy="10.3" r="1.1" fill="currentColor"/><circle cx="15" cy="10.3" r="1.1" fill="currentColor"/><path d="M8 14.3c1 1.3 2.3 2 4 2s3-.7 4-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  </button>
+                  <div class="equipes__popover equipes__popover--emoji" id="equipesEmojiPopover" hidden>
+                    <div class="equipes__emoji-abas" role="tablist" aria-label="Tipo de conteúdo">
+                      <button type="button" class="equipes__emoji-aba equipes__emoji-aba--ativa" role="tab" aria-selected="true" data-emoji-aba="emoji">Emoji</button>
+                    </div>
+                    <div class="equipes__emoji-busca-linha">
+                      <div class="equipes__emoji-busca">
+                        <input type="text" id="equipesEmojiBusca" placeholder="Encontre algo divertido" autocomplete="off" aria-label="Buscar emoji">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                      </div>
+                      <div class="equipes__emoji-tom-wrap" id="equipesEmojiTomWrap">
+                        <button type="button" class="equipes__emoji-tom-btn" id="equipesEmojiTomBtn" aria-label="Tom de pele" aria-haspopup="true" aria-expanded="false" title="Tom de pele">✋</button>
+                        <div class="equipes__emoji-tom-menu" id="equipesEmojiTomMenu" hidden></div>
+                      </div>
+                    </div>
+                    <div class="equipes__emoji-grade" id="equipesEmojiGrade"></div>
+                    <div class="equipes__emoji-categorias" id="equipesEmojiCategorias" hidden></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="equipes__enviar-wrap">
+                <button type="submit" class="equipes__enviar" id="equipesBtnEnviar" disabled aria-label="Enviar mensagem">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" fill="white"/></svg>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+      </div>
+
+      <!-- Corpo das demais abas (placeholders "em breve", mesmo padrão das seções ainda não desenvolvidas do projeto) -->
+      <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="arquivos" hidden>
+        <p>Os arquivos desta equipe já aparecem em <a href="index.php?pagina=documentos">Documentos</a>. Uma visão dedicada aqui está a caminho.</p>
+      </div>
+      <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="tarefas" hidden>
+        <p>Tarefas — em breve.</p>
+      </div>
+      <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="calendario" hidden>
+        <p>Calendário — em breve.</p>
+      </div>
+      <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="notas" hidden>
+        <p>Notas — em breve.</p>
+      </div>
+    </div>
+
+    <!-- ----- Painel direito ----- -->
+    <aside class="equipes__painel" id="equipesPainel" hidden>
+      <button type="button" class="equipes__painel-fechar" id="equipesPainelFechar" aria-label="Fechar painel">&times;</button>
+
+      <section class="equipes__painel-secao">
+        <div class="equipes__painel-cabecalho">
+          <h2 class="equipes__painel-titulo">Sobre este canal</h2>
+          <button type="button" class="equipes__painel-menu-btn" aria-label="Mais opções">⋮</button>
+        </div>
+        <p class="equipes__painel-descricao" id="equipesSobreDescricao"></p>
+      </section>
+
+      <section class="equipes__painel-secao">
+        <button type="button" class="equipes__painel-linha equipes__painel-linha--acao" id="equipesBtnFixados">
+          <span class="equipes__painel-linha-icone" aria-hidden="true">📌</span>
+          <span class="equipes__painel-linha-texto">Arquivos fixados</span>
+          <span class="equipes__painel-linha-contagem" id="equipesFixadosCount">0</span>
+          <span aria-hidden="true">›</span>
+        </button>
+        <div class="equipes__fixados-lista" id="equipesFixadosLista" hidden></div>
+      </section>
+
+      <section class="equipes__painel-secao">
+        <div class="equipes__painel-cabecalho">
+          <h2 class="equipes__painel-titulo">Membros (<span id="equipesPainelMembrosTotal">0</span>)</h2>
+          <button type="button" class="equipes__painel-ver-todos" id="equipesVerTodosMembros">Ver todos</button>
+        </div>
+        <div class="equipes__membros-lista" id="equipesMembrosLista"></div>
+        <button type="button" class="equipes__painel-mais-membros" id="equipesMaisMembros" hidden></button>
+      </section>
+
+      <section class="equipes__painel-secao">
+        <h2 class="equipes__painel-titulo">Links úteis</h2>
+        <div class="equipes__links-lista" id="equipesLinksLista"></div>
+      </section>
+    </aside>
+
+  </main>
+
+  <!-- Toast de erro de envio / ação -->
+  <div class="equipes__toast" id="equipesToast" role="alert" hidden></div>
+</div>
+
+<script src="conteudo/cadastrado/equipes/js/emojis-dados.js?v=2"></script>
+<script src="conteudo/cadastrado/equipes/js/equipes.js?v=7"></script>

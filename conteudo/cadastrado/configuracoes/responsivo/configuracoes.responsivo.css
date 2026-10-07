@@ -1,0 +1,130 @@
+/* ============================================================
+   CONTEÚDO — Configurações — Estilos responsivos
+   Só @media queries; o estilo base (desktop) fica em
+   css/configuracoes.css. A largura do menu lateral aberto
+   (200px/220px) já é tratada por inicio.responsivo.css, que o
+   próprio configuracoes.html carrega.
+============================================================= */
+
+/* ---------- Notebook (1024–1439px): cards laterais descem ---------- */
+@media (max-width: 1439px) {
+  .configuracoes__grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .configuracoes__coluna-lateral {
+    flex-direction: row;
+    flex-wrap: wrap;
+  }
+
+  .configuracoes__coluna-lateral .configuracoes__card--lateral {
+    flex: 1 1 280px;
+    min-width: 260px;
+  }
+}
+
+/* ---------- Tablet (768–1023px): menu de abas vira barra horizontal ---------- */
+@media (max-width: 1023px) {
+  .configuracoes__main {
+    padding: 20px 18px 36px;
+  }
+
+  .configuracoes__card--principal {
+    flex-direction: column;
+  }
+
+  .configuracoes__menu {
+    width: auto;
+    flex-direction: row;
+    align-items: center;
+    gap: 4px;
+    padding: 12px;
+    border-right: none;
+    border-bottom: 1px solid var(--cfg-borda);
+    overflow-x: auto;
+    white-space: nowrap;
+  }
+
+  .configuracoes__menu-item {
+    flex-shrink: 0;
+  }
+
+  .configuracoes__conteudo {
+    padding: 22px 20px 28px;
+  }
+
+  .configuracoes__coluna-lateral {
+    flex-direction: column;
+  }
+}
+
+/* ---------- Mobile (<768px) ---------- */
+@media (max-width: 767px) {
+  .configuracoes__cabecalho {
+    align-items: flex-start;
+  }
+
+  .configuracoes__cabecalho-icone {
+    width: 52px;
+    height: 52px;
+  }
+
+  .configuracoes__cabecalho-icone svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .configuracoes__titulo {
+    font-size: 22px;
+  }
+
+  .configuracoes__foto {
+    flex-wrap: wrap;
+  }
+
+  .configuracoes__linha-pref {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .configuracoes__linha-pref select {
+    width: 100%;
+  }
+
+  .configuracoes__linha-pref .seletor {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .configuracoes__acoes {
+    position: sticky;
+    bottom: 0;
+    background: #fff;
+    margin: 16px -20px -28px;
+    padding: 12px 20px calc(12px + env(safe-area-inset-bottom, 0px));
+    border-top: 1px solid var(--cfg-borda);
+  }
+
+  .configuracoes__acoes .configuracoes__btn {
+    width: 100%;
+  }
+
+  .configuracoes__opcoes-cards {
+    justify-content: space-between;
+  }
+
+  .configuracoes__opcao-card {
+    width: calc(33.333% - 10px);
+  }
+
+  .configuracoes__modal-caixa {
+    padding: 18px;
+  }
+
+  .configuracoes__toast {
+    left: 16px;
+    right: 16px;
+    top: 12px;
+  }
+}

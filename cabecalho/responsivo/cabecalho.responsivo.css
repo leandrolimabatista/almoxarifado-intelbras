@@ -1,0 +1,116 @@
+/* ============================================================
+   CABEÇALHO — Intelbras — Estilos responsivos
+============================================================= */
+
+@media (max-width: 768px) {
+  .header__container {
+    flex-wrap: nowrap;
+    gap: 16px;
+  }
+
+  /* Ordem da linha: logo à esquerda | hambúrguer, sino, chat, avatar e lupa
+     agrupados à direita (mesma linha, sem quebrar) */
+  .header__logo {
+    order: 1;
+    margin: 0;
+  }
+
+  .header__categories {
+    order: 2;
+    /* empurra o grupo de ícones (categorias + notificações + usuário + lupa)
+       todo para a direita, deixando a logo sozinha à esquerda */
+    margin-left: auto;
+  }
+
+  .header__quick-icons {
+    order: 3;
+    margin-left: 0;
+  }
+
+  .header__user {
+    order: 4;
+    margin-left: 0;
+  }
+
+  .header__search-toggle {
+    order: 5;
+    display: flex;
+  }
+
+  .header__categories span,
+  .header__user-text {
+    display: none;
+  }
+
+  /* Barra de busca some por padrão; abre ao tocar no ícone de lupa,
+     ocupando a linha inteira abaixo do cabeçalho */
+  .header__search {
+    order: 6;
+    max-width: 100%;
+    flex-basis: 100%;
+    display: none;
+  }
+
+  .header__container:has(.header__search.is-open) {
+    flex-wrap: wrap;
+  }
+
+  .header__search.is-open {
+    display: flex;
+  }
+
+  /* Dentro da barra aberta: lupa à esquerda, campo no meio, X à direita
+     (mesmos ícones já usados, só reordenados) */
+  .header__search-btn {
+    order: 1;
+  }
+
+  .header__search-input {
+    order: 2;
+  }
+
+  .header__search-close {
+    order: 3;
+    display: flex;
+  }
+
+  /* O X de "fechar busca" acima já cumpre esse papel: esconde o X nativo de limpar */
+  .header__search-input::-webkit-search-cancel-button {
+    display: none;
+  }
+}
+
+@media (max-width: 480px) {
+  .login-modal__arrow {
+    display: none;
+  }
+
+  .login-modal {
+    position: fixed;
+    top: 72px;
+    left: 50%;
+    right: auto;
+    transform: translateX(-50%);
+    width: calc(100vw - 32px);
+  }
+
+  .login-modal__card {
+    width: 100%;
+    max-width: 360px;
+    margin: 0 auto;
+    padding: 24px 20px 20px;
+  }
+
+  .login-modal__actions {
+    flex-wrap: wrap;
+  }
+
+  .login-modal__submit {
+    width: 100%;
+    order: -1;
+  }
+
+  .login-modal__back {
+    margin: 0 auto;
+  }
+}

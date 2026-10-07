@@ -1,0 +1,51 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Intelbras</title>
+  <link rel="stylesheet" href="assets/css/popout-bloqueio.css">
+  <link rel="stylesheet" href="assets/css/seletor.css">
+</head>
+<body style="margin:0;">
+
+  <!-- O cabeçalho é injetado aqui em tempo de execução (versão de preview estático) -->
+  <div id="cabecalho-placeholder"></div>
+
+  <main id="conteudo-placeholder">
+    <!-- Conteúdo entra aqui -->
+  </main>
+
+  <!-- Rodapé entra aqui -->
+  <div id="rodape-placeholder"></div>
+
+  <script>
+    // Preview estático: carrega cada bloco via fetch.
+    // Quando o back-end tiver PHP, troque isso por:
+    // <?php include 'cabecalho/html/cabecalho.html'; ?>, etc. (veja index.php)
+
+    function carregarBloco(url, placeholderId, scriptSrc) {
+      fetch(url)
+        .then(res => res.text())
+        .then(html => {
+          document.getElementById(placeholderId).innerHTML = html;
+          if (scriptSrc) {
+            const script = document.createElement('script');
+            script.src = scriptSrc;
+            document.body.appendChild(script);
+          }
+        });
+    }
+
+    carregarBloco('cabecalho/html/cabecalho.html', 'cabecalho-placeholder', 'cabecalho/js/cabecalho.js?v=1787771373');
+    carregarBloco('conteudo/nao-cadastrado/inicio/html/conteudo.html', 'conteudo-placeholder', 'conteudo/nao-cadastrado/inicio/js/conteudo.js?v=1788201758');
+    carregarBloco('rodape/html/rodape.html', 'rodape-placeholder', null);
+  </script>
+
+  <!-- Popout global "Acesso negado" (independe de qual bloco carregou primeiro,
+       pois escuta cliques no document inteiro via delegação) -->
+  <script src="assets/js/popout-bloqueio.js?v=1788205181"></script>
+  <script src="assets/js/seletor.js?v=2"></script>
+
+</body>
+</html>

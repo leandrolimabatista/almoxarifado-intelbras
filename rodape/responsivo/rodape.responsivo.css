@@ -1,0 +1,10 @@
+/* ============================================================
+   RODAPÉ — Intelbras — Estilos responsivos
+============================================================= */
+
+@media (max-width: 560px) {
+  .footer {
+    justify-content: center;
+    text-align: center;
+  }
+}

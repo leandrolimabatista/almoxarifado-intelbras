@@ -1,0 +1,4 @@
+# Nunca servir o arquivo de segredos pelo navegador
+<FilesMatch "^config\.local(\.example)?\.php$">
+    Require all denied
+</FilesMatch>

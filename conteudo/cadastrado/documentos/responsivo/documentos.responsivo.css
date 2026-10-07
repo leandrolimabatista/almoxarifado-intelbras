@@ -1,0 +1,277 @@
+/* ============================================================
+   CONTEÚDO — Documentos (área CADASTRADO) — Estilos responsivos
+   Só @media queries; o estilo base (desktop) fica em css/documentos.css.
+   A largura do menu lateral aberto (200px/220px) já é tratada por
+   inicio.responsivo.css, que o próprio documentos.html carrega.
+============================================================= */
+
+/* ---------- Tablet largo: acesso rápido e atividade em coluna única ---------- */
+@media (max-width: 1100px) {
+  .documentos__duo {
+    grid-template-columns: 1fr;
+  }
+
+  /* "Atualizado por" sai da coluna própria e vai para baixo da data */
+  .documentos__col-por {
+    display: none;
+  }
+
+  .documentos__stat {
+    gap: 12px;
+    padding: 0 14px;
+  }
+
+  .documentos__col-nome   { width: 44%; }
+  .documentos__col-equipe { width: 20%; }
+  .documentos__col-data   { width: 24%; }
+  .documentos__col-acoes  { width: 12%; }
+
+  .documentos__tabela td.documentos__col-data {
+    white-space: normal;
+  }
+
+  .documentos__data,
+  .documentos__por-inline {
+    display: block;
+  }
+
+  .documentos__por-inline {
+    margin-top: 1px;
+    font-size: 12px;
+    color: var(--intelbras-cinza);
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+}
+
+/* ---------- Tablet: resumo em 2 x 2 ---------- */
+@media (max-width: 860px) {
+  .documentos__resumo {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 20px;
+    padding: 20px 8px;
+  }
+
+  .documentos__stat {
+    padding: 0 20px;
+  }
+
+  /* o divisor vertical só entre as duas colunas */
+  .documentos__stat:nth-child(odd) {
+    border-left: 0;
+  }
+}
+
+/* ---------- Celular: a tabela vira lista de cartões ---------- */
+@media (max-width: 720px) {
+  .documentos__main {
+    padding: 24px 20px 32px;
+  }
+
+  .documentos__lista {
+    padding: 18px 16px 10px;
+  }
+
+  .documentos__tabela,
+  .documentos__tabela tbody {
+    display: block;
+  }
+
+  .documentos__tabela thead {
+    display: none;
+  }
+
+  .documentos__tabela tbody tr {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      "nome  acoes"
+      "equipe equipe"
+      "data  data";
+    row-gap: 8px;
+    padding: 12px 0;
+    border-bottom: 1px solid #F1F1F1;
+  }
+
+  .documentos__tabela tbody tr:last-child {
+    border-bottom: 0;
+  }
+
+  .documentos__tabela tbody tr:hover td {
+    background: transparent;
+  }
+
+  .documentos__tabela td,
+  .documentos__tabela td:first-child,
+  .documentos__tabela td:last-child {
+    display: block;
+    width: auto;
+    padding: 0;
+    border-bottom: 0;
+  }
+
+  /* o autor já aparece na linha da data ("por ...") */
+  .documentos__tabela td.documentos__col-por {
+    display: none;
+  }
+
+  .documentos__tabela td.documentos__col-nome   { grid-area: nome; }
+  .documentos__tabela td.documentos__col-acoes  { grid-area: acoes; }
+  .documentos__tabela td.documentos__col-equipe { grid-area: equipe; }
+  .documentos__tabela td.documentos__col-data   { grid-area: data; }
+
+  .documentos__tabela td.documentos__col-data {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0 6px;
+    font-size: 12px;
+    color: var(--intelbras-cinza);
+  }
+
+  .documentos__data,
+  .documentos__por-inline {
+    display: inline;
+    margin: 0;
+  }
+
+  .documentos__por-inline:not(:empty)::before {
+    content: 'por ';
+  }
+
+  .documentos__tabela td.documentos__col-data::before {
+    content: 'Atualizado em';
+  }
+
+  .documentos__tabela td.documentos__col-data[data-rotulo]::before {
+    content: attr(data-rotulo);
+  }
+
+  /* esqueleto de carregamento: uma barra por cartão */
+  .documentos__tabela tbody tr.documentos__esqueleto {
+    grid-template-columns: 1fr;
+    grid-template-areas: none;
+  }
+
+  .documentos__esqueleto td {
+    grid-area: auto !important;
+    padding: 0 !important;
+  }
+
+  .documentos__esqueleto td:not(:first-child) {
+    display: none;
+  }
+
+  .documentos__esqueleto td:first-child span {
+    width: 80%;
+  }
+}
+
+/* ---------- Celular: cabeçalho, filtros e diálogos ---------- */
+@media (max-width: 600px) {
+  .documentos__cabecalho {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .documentos__novo {
+    width: 100%;
+  }
+
+  .documentos__btn--novo {
+    flex: 1;
+  }
+
+  .documentos__barra {
+    gap: 10px;
+  }
+
+  .documentos__busca {
+    flex: 1 1 100%;
+  }
+
+  .documentos__filtro {
+    flex: 1 1 calc(50% - 5px);
+    min-width: 0;
+  }
+
+  .documentos__abas {
+    gap: 20px;
+  }
+
+  .documentos__stat-icone {
+    width: 44px;
+    height: 44px;
+  }
+
+  .documentos__stat-icone svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .documentos__stat {
+    gap: 12px;
+    padding: 0 12px;
+  }
+
+  .documentos__stat-numero {
+    font-size: 20px;
+  }
+
+  .documentos__stat-rotulo {
+    font-size: 12px;
+  }
+
+  .documentos__dialogo {
+    padding: 20px;
+  }
+
+  .documentos__dialogo--visualizador {
+    padding: 0;
+    width: calc(100vw - 16px);
+    height: calc(100vh - 16px);
+  }
+
+  .documentos__ver-cabecalho {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+
+  .documentos__ver-titulos {
+    flex-basis: calc(100% - 100px);
+  }
+
+  .documentos__mais {
+    flex-direction: column-reverse;
+    align-items: stretch;
+    text-align: center;
+  }
+}
+
+/* ---------- Celular pequeno ---------- */
+@media (max-width: 480px) {
+  .documentos__main {
+    padding: 20px 16px 28px;
+  }
+
+  .documentos__titulo {
+    font-size: 22px;
+  }
+
+  .documentos__filtro {
+    flex-basis: 100%;
+  }
+
+  .documentos__dialogo-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .documentos__dialogo-acoes .documentos__btn {
+    width: 100%;
+  }
+
+  .documentos__toasts {
+    bottom: 16px;
+  }
+}

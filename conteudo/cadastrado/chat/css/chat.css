@@ -1,0 +1,94 @@
+/* ============================================================
+   CONTEÚDO — Chat (área CADASTRADO)
+   Placeholder "em breve" (destino de "Iniciar conversa") — reaproveita o menu lateral da Home
+   e os tokens de cor/tipografia da identidade Intelbras.
+============================================================= */
+
+:root {
+  --intelbras-verde: #00A859;
+  --intelbras-verde-escuro: #007A40;
+  --intelbras-verde-100: #E7F7EE;
+  --intelbras-preto: #1A1A1A;
+  --intelbras-cinza: #6B6B6B;
+  --intelbras-cinza-claro: #E8E8E8;
+  --content-bg: #F4F5F7;
+  --content-border: #ECECEC;
+}
+
+.chat {
+  display: flex;
+  align-items: stretch;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  background: var(--content-bg);
+  min-height: calc(100vh - 73px);
+}
+
+.chat__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 32px;
+}
+
+.chat__empty {
+  max-width: 380px;
+  text-align: center;
+}
+
+.chat__empty-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde);
+  margin-bottom: 18px;
+}
+
+.chat__empty-icon svg {
+  width: 26px;
+  height: 26px;
+}
+
+.chat__empty-title {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+  margin: 0 0 8px;
+}
+
+.chat__empty-text {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--intelbras-cinza);
+}
+
+.chat__empty-back {
+  display: inline-block;
+  padding: 10px 20px;
+  border-radius: 999px;
+  background: var(--intelbras-verde);
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.chat__empty-back:hover {
+  background: var(--intelbras-verde-escuro);
+}
+
+.inicio__shortcut--active {
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde);
+}
+
+.inicio__shortcut--active .inicio__icon {
+  color: var(--intelbras-verde);
+}

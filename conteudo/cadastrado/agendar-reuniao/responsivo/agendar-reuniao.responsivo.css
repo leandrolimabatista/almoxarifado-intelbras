@@ -1,0 +1,145 @@
+/* ============================================================
+   CONTEÚDO — Agendar reunião (área CADASTRADO) — Estilos responsivos
+
+   ≥ 1280px      : duas colunas (formulário + detalhes); menu lateral
+                   padrão do site.
+   768 – 1279px  : card "Detalhes"
+                   abaixo do formulário.
+   < 768px       : coluna única; botões em
+                   largura total, empilhados.
+============================================================= */
+
+@media (max-width: 1279px) {
+  .reuniao__layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reuniao__main {
+    padding: 28px 24px 40px;
+  }
+
+  /* Resumo em duas colunas quando há espaço */
+  .reuniao__card--resumo {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 32px;
+  }
+
+  .reuniao__resumo-titulo {
+    grid-column: 1 / -1;
+  }
+
+  .reuniao__item:nth-of-type(n) {
+    border-bottom: 1px solid var(--reu-border);
+  }
+
+  .reuniao__item:last-child {
+    border-bottom: 0;
+    padding-bottom: 16px;
+  }
+}
+
+@media (max-width: 767px) {
+  .reuniao__main {
+    padding: 20px 16px 32px;
+  }
+
+  .reuniao__titulo {
+    font-size: 22px;
+  }
+
+  .reuniao__cabecalho-icone {
+    width: 28px;
+    height: 28px;
+  }
+
+  .reuniao__card {
+    padding: 16px;
+  }
+
+  .reuniao__linha {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 0;
+  }
+
+  .reuniao__rec .reuniao__linha {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .reuniao__card--resumo {
+    display: block;
+  }
+
+  .reuniao__item:last-child {
+    padding-bottom: 0;
+  }
+
+  /* Área de toque mínima de 44×44 px */
+  .reuniao__campo,
+  .reuniao__input,
+  .reuniao__btn {
+    min-height: 44px;
+  }
+
+  .reuniao__chip,
+  .reuniao__chip-add {
+    height: 44px;
+  }
+
+  .reuniao__chip-remover {
+    width: 32px;
+    height: 32px;
+  }
+
+  .reuniao__dia {
+    width: 44px;
+    height: 44px;
+  }
+
+  .reuniao__opcao {
+    min-height: 44px;
+  }
+
+  .reuniao__pessoa {
+    min-height: 52px;
+  }
+
+  .reuniao__check {
+    min-height: 44px;
+  }
+
+  .reuniao__radio {
+    min-height: 44px;
+  }
+
+  /* Botões em largura total, empilhados */
+  .reuniao__botoes {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .reuniao__botoes .reuniao__btn {
+    width: 100%;
+  }
+
+  /* Datepicker ocupa a largura do campo */
+  .reuniao__pop--cal {
+    width: 100%;
+  }
+
+  .reuniao__toasts {
+    top: 72px;
+  }
+
+  .reuniao__dlg-rodape {
+    flex-wrap: wrap;
+  }
+
+  .reuniao__dlg-rodape .reuniao__btn {
+    flex: 1 1 auto;
+  }
+
+  .reuniao__dlg-contagem {
+    flex-basis: 100%;
+  }
+}

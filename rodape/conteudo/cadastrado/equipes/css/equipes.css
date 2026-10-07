@@ -1,0 +1,1940 @@
+/* ============================================================
+   CONTEÚDO — Equipes (área CADASTRADO)
+   Chat de equipe estilo Teams: cabeçalho do canal + abas + área de
+   mensagens + campo de envio (coluna central) e painel "Sobre este
+   canal / Arquivos fixados / Membros / Links úteis" (coluna direita).
+
+   Reaproveita as variáveis de marca já definidas em inicio.css
+   (--intelbras-verde etc.) — a sidebar esquerda, aliás, É o mesmo
+   componente .inicio__sidebar das demais páginas, só incluído aqui
+   de novo (ver equipes.html).
+============================================================= */
+
+/* ------------------------------------------------------------
+   Fonte de emoji embutida (Noto Color Emoji, licença OFL).
+   O Windows 10 só tem emojis antigos na Segoe UI Emoji; os mais novos
+   aparecem como quadradinhos (☐). Esta fonte cobre todos e deixa o
+   visual igual em qualquer sistema. O unicode-range limita o uso a
+   caracteres de emoji, então textos, números e #, *, ©, ®, ™ seguem
+   na fonte normal.
+------------------------------------------------------------ */
+@font-face {
+  font-family: 'Noto Emoji Equipes';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../fonts/NotoColorEmoji.woff2') format('woff2');
+  unicode-range: U+1F000-1FFFF, U+200D, U+FE0F, U+20E3, U+203C, U+2049, U+2139,
+    U+2194-21AA, U+231A-23FF, U+24C2, U+25AA-25AB, U+25B6, U+25C0, U+25FB-25FE,
+    U+2600-27BF, U+2934-2935, U+2B05-2B07, U+2B1B-2B1C, U+2B50, U+2B55,
+    U+3030, U+303D, U+3297, U+3299, U+E0020-E007F;
+}
+
+:root {
+  --eq-verde: var(--intelbras-verde, #00A859);
+  --eq-verde-escuro: var(--intelbras-verde-escuro, #007A40);
+  --eq-verde-100: var(--intelbras-verde-100, #E7F7EE);
+  --eq-preto: var(--intelbras-preto, #1A1A1A);
+  --eq-cinza: var(--intelbras-cinza, #6B6B6B);
+  --eq-cinza-claro: var(--intelbras-cinza-claro, #E8E8E8);
+  --eq-borda: #ECECEC;
+  --eq-bg: #F7F8F9;
+  --eq-bolha-recebida: #F2F3F5;
+  --eq-erro: #DC2626;
+  --eq-online: #22C55E;
+  --eq-reuniao: #EF4444;
+  --eq-ausente: #F59E0B;
+  --eq-offline: #9CA3AF;
+  --eq-sombra-1: 0 1px 2px rgba(0, 0, 0, .06);
+  --eq-sombra-2: 0 4px 16px rgba(0, 0, 0, .10);
+}
+
+.equipes {
+  display: flex;
+  align-items: stretch;
+  font-family: 'Noto Emoji Equipes', 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  background: var(--eq-bg);
+  min-height: calc(100vh - 73px);
+  position: relative;
+}
+
+.equipes * {
+  box-sizing: border-box;
+}
+
+/* Classes com "display" explícito (flex/grid) vencem a regra nativa do
+   navegador para o atributo [hidden] (mesma especificidade, autor > user
+   agent) — sem isto, elementos "escondidos" via JS (skeleton, estado de
+   acesso restrito, popovers, abas) continuariam ocupando layout. */
+.equipes [hidden] {
+  display: none !important;
+}
+
+/* ===================== FAIXA OFFLINE ===================== */
+.equipes__offline {
+  position: fixed;
+  top: 73px;
+  left: 0;
+  right: 0;
+  z-index: 60;
+  background: #FEF3C7;
+  color: #92400E;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  padding: 8px 16px;
+}
+
+/* ===================== ÁREA PRINCIPAL (chat + painel) ===================== */
+.equipes__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  position: relative;
+}
+
+/* ===================== SKELETON (carregando) ===================== */
+.equipes__skeleton {
+  flex: 1;
+  display: flex;
+  gap: 0;
+  padding: 24px;
+  min-height: calc(100vh - 73px);
+}
+
+.equipes__skeleton-chat {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  min-width: 0;
+}
+
+.equipes__skeleton-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  margin-bottom: 10px;
+}
+
+.equipes__skeleton-lines {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equipes__skeleton-box {
+  display: block;
+  border-radius: 8px;
+  background: linear-gradient(90deg, #ECEEF0 25%, #F6F7F8 37%, #ECEEF0 63%);
+  background-size: 400% 100%;
+  animation: equipesShimmer 1.4s ease infinite;
+}
+
+.equipes__skeleton-msg {
+  height: 52px;
+  width: var(--w, 60%);
+  border-radius: 12px;
+  background: linear-gradient(90deg, #ECEEF0 25%, #F6F7F8 37%, #ECEEF0 63%);
+  background-size: 400% 100%;
+  animation: equipesShimmer 1.4s ease infinite;
+}
+
+.equipes__skeleton-msg--direita {
+  margin-left: auto;
+}
+
+.equipes__skeleton-painel {
+  width: 296px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding-left: 24px;
+  border-left: 1px solid var(--eq-borda);
+}
+
+@keyframes equipesShimmer {
+  0% { background-position: 100% 50%; }
+  100% { background-position: 0 50%; }
+}
+
+/* ===================== ACESSO RESTRITO ===================== */
+.equipes__restrito {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 40px 24px;
+}
+
+.equipes__restrito-card {
+  max-width: 380px;
+  text-align: center;
+}
+
+.equipes__restrito-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 56px;
+  height: 56px;
+  border-radius: 50%;
+  background: var(--eq-verde-100);
+  color: var(--eq-verde);
+  margin-bottom: 18px;
+}
+
+.equipes__restrito-icone svg {
+  width: 26px;
+  height: 26px;
+}
+
+.equipes__restrito-titulo {
+  font-family: 'Noto Emoji Equipes', 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 19px;
+  font-weight: 700;
+  color: var(--eq-preto);
+  margin: 0 0 8px;
+}
+
+.equipes__restrito-texto {
+  margin: 0 0 20px;
+  font-size: 13.5px;
+  line-height: 1.5;
+  color: var(--eq-cinza);
+}
+
+.equipes__restrito-btn {
+  padding: 10px 22px;
+  border: none;
+  border-radius: 999px;
+  background: var(--eq-verde);
+  color: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.equipes__restrito-btn:hover {
+  background: var(--eq-verde-escuro);
+}
+
+.equipes__restrito-btn:disabled {
+  background: var(--eq-cinza-claro);
+  color: var(--eq-cinza);
+  cursor: default;
+}
+
+.equipes__restrito-aviso {
+  margin: 14px 0 0;
+  font-size: 12.5px;
+  color: var(--eq-cinza);
+}
+
+/* ===================== CHAT (coluna central) ===================== */
+.equipes__chat {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+}
+
+/* ----- Cabeçalho do canal ----- */
+.equipes__chat-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--eq-borda);
+  flex-shrink: 0;
+}
+
+.equipes__canal-icone {
+  width: 50px;
+  height: 50px;
+  border-radius: 12px;
+  background: var(--eq-verde);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.equipes__canal-icone svg {
+  width: 24px;
+  height: 24px;
+}
+
+.equipes__canal-titulo-bloco {
+  min-width: 0;
+  flex: 1;
+}
+
+.equipes__canal-titulo-linha {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.equipes__canal-titulo {
+  font-family: 'Noto Emoji Equipes', 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 21px;
+  font-weight: 700;
+  color: var(--eq-preto);
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equipes__canal-subtitulo {
+  margin: 2px 0 0;
+  font-size: 13.5px;
+  color: var(--eq-cinza);
+}
+
+.equipes__favorito {
+  background: none;
+  border: none;
+  color: var(--eq-cinza);
+  cursor: pointer;
+  padding: 2px;
+  flex-shrink: 0;
+  display: flex;
+}
+
+.equipes__favorito svg {
+  width: 18px;
+  height: 18px;
+}
+
+.equipes__favorito[aria-pressed="true"] {
+  color: #F59E0B;
+}
+
+.equipes__favorito[aria-pressed="true"] svg path {
+  fill: #F59E0B;
+}
+
+.equipes__canal-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.equipes__icone-btn {
+  width: 38px;
+  height: 38px;
+  border-radius: 8px;
+  border: 1px solid var(--eq-borda);
+  background: #fff;
+  color: var(--eq-preto);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.equipes__icone-btn svg {
+  width: 17px;
+  height: 17px;
+}
+
+.equipes__icone-btn:hover {
+  background: #F5F5F5;
+}
+
+.equipes__icone-btn--membros {
+  width: auto;
+  padding: 0 10px;
+}
+
+.equipes__menu-wrap {
+  position: relative;
+}
+
+.equipes__menu {
+  position: absolute;
+  top: 44px;
+  right: 0;
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  border-radius: 8px;
+  box-shadow: var(--eq-sombra-2);
+  min-width: 200px;
+  padding: 6px;
+  z-index: 40;
+}
+
+.equipes__menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--eq-preto);
+  cursor: pointer;
+}
+
+.equipes__menu-item:hover {
+  background: #F5F5F5;
+}
+
+/* ----- Abas ----- */
+.equipes__tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 24px;
+  border-bottom: 1px solid var(--eq-borda);
+  flex-shrink: 0;
+  overflow-x: auto;
+}
+
+.equipes__tab {
+  background: none;
+  border: none;
+  border-bottom: 3px solid transparent;
+  padding: 12px 10px 10px;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--eq-cinza);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.equipes__tab:hover {
+  background: #FAFAFA;
+  color: var(--eq-preto);
+}
+
+.equipes__tab--ativa {
+  color: var(--eq-verde);
+  border-bottom-color: var(--eq-verde);
+}
+
+.equipes__tab--ativa:hover {
+  color: var(--eq-verde);
+  background: none;
+}
+
+.equipes__tab--add {
+  font-size: 16px;
+  font-weight: 700;
+  padding: 12px 12px 10px;
+}
+
+.equipes__corpo-aba {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+}
+
+.equipes__corpo-aba--placeholder {
+  align-items: center;
+  justify-content: center;
+  padding: 60px 24px;
+  color: var(--eq-cinza);
+  font-size: 14px;
+  text-align: center;
+}
+
+.equipes__corpo-aba--placeholder a {
+  color: var(--eq-verde);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+/* ----- Área de mensagens ----- */
+.equipes__messages {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 20px 24px 12px;
+  position: relative;
+}
+
+.equipes__messages-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+/* Separador de data */
+.equipes__data-divisor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 18px 0 14px;
+  color: var(--eq-cinza);
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.equipes__data-divisor::before,
+.equipes__data-divisor::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--eq-borda);
+}
+
+.equipes__data-divisor span {
+  padding: 4px 12px;
+  border: 1px solid var(--eq-borda);
+  border-radius: 999px;
+  white-space: nowrap;
+}
+
+/* Divisor "Novas mensagens" */
+.equipes__novas-divisor {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin: 16px 0;
+}
+
+.equipes__novas-divisor::before,
+.equipes__novas-divisor::after {
+  content: '';
+  flex: 1;
+  height: 1px;
+  background: var(--eq-verde);
+}
+
+.equipes__novas-divisor span {
+  padding: 3px 12px;
+  border: 1px solid var(--eq-verde);
+  color: var(--eq-verde);
+  border-radius: 999px;
+  font-size: 11.5px;
+  font-weight: 700;
+  white-space: nowrap;
+}
+
+/* Grupo de mensagens de um mesmo autor */
+.equipes__grupo {
+  display: flex;
+  gap: 12px;
+  padding: 3px 0;
+  position: relative;
+}
+
+.equipes__grupo--minha {
+  flex-direction: row-reverse;
+}
+
+.equipes__grupo-avatar {
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: var(--eq-cinza-claro);
+  color: var(--eq-preto);
+  font-weight: 700;
+  font-size: 14px;
+  visibility: hidden;
+}
+
+.equipes__grupo--minha .equipes__grupo-avatar {
+  background: var(--eq-verde);
+  color: #fff;
+}
+
+.equipes__grupo--inicio .equipes__grupo-avatar {
+  visibility: visible;
+}
+
+.equipes__grupo-corpo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-width: 560px;
+  min-width: 0;
+}
+
+.equipes__grupo--minha .equipes__grupo-corpo {
+  align-items: flex-end;
+}
+
+.equipes__grupo-meta {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  font-size: 12px;
+  color: var(--eq-cinza);
+  padding: 0 2px;
+  height: 0;
+  overflow: hidden;
+}
+
+.equipes__grupo--inicio .equipes__grupo-meta {
+  height: auto;
+  overflow: visible;
+}
+
+.equipes__grupo-meta strong {
+  color: var(--eq-preto);
+  font-size: 13px;
+  font-weight: 700;
+}
+
+/* Mensagem individual dentro do grupo */
+.equipes__msg {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  max-width: 100%;
+}
+
+.equipes__msg--minha {
+  align-items: flex-end;
+}
+
+.equipes__bolha {
+  background: var(--eq-bolha-recebida);
+  border-radius: 12px;
+  padding: 11px 15px;
+  font-size: 14.5px;
+  line-height: 1.5;
+  color: var(--eq-preto);
+  word-break: break-word;
+  max-width: 100%;
+}
+
+.equipes__bolha [data-texto] {
+  white-space: pre-wrap;
+}
+
+.equipes__msg--minha .equipes__bolha {
+  background: var(--eq-verde-100);
+}
+
+.equipes__bolha--apagada {
+  font-style: italic;
+  color: var(--eq-cinza);
+  background: transparent;
+  border: 1px dashed var(--eq-borda);
+}
+
+.equipes__bolha--erro {
+  border: 1.5px solid var(--eq-erro);
+}
+
+.equipes__bolha mark.equipes__mencao {
+  background: var(--eq-verde-100);
+  color: var(--eq-verde-escuro);
+  font-weight: 700;
+  padding: 1px 3px;
+  border-radius: 4px;
+}
+
+.equipes__bolha a {
+  color: var(--eq-verde-escuro);
+  font-weight: 600;
+}
+
+.equipes__editada-rotulo {
+  font-size: 11px;
+  color: var(--eq-cinza);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+/* Resposta citada, dentro da bolha */
+.equipes__citacao {
+  display: flex;
+  gap: 8px;
+  border-left: 3px solid var(--eq-verde);
+  padding: 2px 0 2px 10px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  color: var(--eq-cinza);
+}
+
+.equipes__citacao strong {
+  color: var(--eq-preto);
+}
+
+/* Card de arquivo anexado */
+.equipes__anexo-card {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  border: 1px solid var(--eq-borda);
+  border-radius: 8px;
+  padding: 9px 10px;
+  background: #fff;
+  margin-top: 4px;
+  text-decoration: none;
+  color: inherit;
+}
+
+.equipes__anexo-icone {
+  width: 34px;
+  height: 34px;
+  border-radius: 6px;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.equipes__anexo-info {
+  min-width: 0;
+  flex: 1;
+}
+
+.equipes__anexo-nome {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--eq-preto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equipes__anexo-tamanho {
+  display: block;
+  font-size: 11.5px;
+  color: var(--eq-cinza);
+}
+
+.equipes__anexo-menu {
+  background: none;
+  border: none;
+  color: var(--eq-cinza);
+  cursor: pointer;
+  font-size: 16px;
+  padding: 4px;
+}
+
+/* Imagens inline */
+.equipes__imagens-grade {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 4px;
+  margin-top: 4px;
+  max-width: 280px;
+}
+
+.equipes__imagens-grade img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  border-radius: 8px;
+  max-height: 140px;
+}
+
+/* Reações */
+.equipes__reacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.equipes__msg--minha .equipes__reacoes {
+  justify-content: flex-end;
+}
+
+.equipes__reacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--eq-bolha-recebida);
+  border: 1px solid transparent;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--eq-preto);
+}
+
+.equipes__reacao:hover {
+  background: #E9EBED;
+}
+
+.equipes__reacao--minha {
+  background: var(--eq-verde-100);
+  border-color: var(--eq-verde);
+  color: var(--eq-verde-escuro);
+}
+
+/* Status enviada/lida */
+.equipes__status {
+  font-size: 11px;
+  color: var(--eq-cinza);
+}
+
+.equipes__status--lida {
+  color: var(--eq-verde);
+}
+
+/* Toolbar ao passar o mouse */
+.equipes__toolbar {
+  position: absolute;
+  top: -18px;
+  right: 8px;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  border-radius: 8px;
+  box-shadow: var(--eq-sombra-2);
+  padding: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease;
+  z-index: 5;
+}
+
+.equipes__grupo--minha .equipes__toolbar {
+  right: auto;
+  left: 8px;
+}
+
+.equipes__msg:hover .equipes__toolbar,
+.equipes__toolbar:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.equipes__toolbar-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--eq-preto);
+}
+
+.equipes__toolbar-btn:hover {
+  background: #F2F3F5;
+}
+
+.equipes__toolbar-wrap {
+  position: relative;
+}
+
+/* Seletor rápido de reações */
+.equipes__reacao-picker {
+  position: absolute;
+  top: -40px;
+  right: 0;
+  display: flex;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  border-radius: 999px;
+  box-shadow: var(--eq-sombra-2);
+  padding: 4px 6px;
+  z-index: 10;
+}
+
+.equipes__reacao-picker button {
+  border: none;
+  background: none;
+  font-size: 17px;
+  cursor: pointer;
+  padding: 2px 3px;
+  border-radius: 999px;
+}
+
+.equipes__reacao-picker button:hover {
+  background: var(--eq-bolha-recebida);
+}
+
+/* Menu "mais" (editar/copiar/apagar) por mensagem */
+.equipes__msg-menu {
+  position: absolute;
+  top: -14px;
+  right: 4px;
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  border-radius: 8px;
+  box-shadow: var(--eq-sombra-2);
+  min-width: 150px;
+  padding: 6px;
+  z-index: 20;
+}
+
+.equipes__grupo--minha .equipes__msg-menu {
+  right: auto;
+  left: 4px;
+}
+
+/* Vazio / digitando */
+.equipes__vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 60px 20px;
+  color: var(--eq-cinza);
+  height: 100%;
+}
+
+.equipes__vazio-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  background: var(--eq-verde-100);
+  color: var(--eq-verde);
+  margin-bottom: 14px;
+}
+
+.equipes__vazio-icone svg {
+  width: 24px;
+  height: 24px;
+}
+
+.equipes__vazio-titulo {
+  font-family: 'Noto Emoji Equipes', 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 16px;
+  color: var(--eq-preto);
+  margin: 0 0 4px;
+}
+
+.equipes__vazio-texto {
+  font-size: 13px;
+  margin: 0;
+}
+
+.equipes__digitando {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 2px 2px;
+  font-size: 12.5px;
+  color: var(--eq-cinza);
+}
+
+.equipes__digitando-pontos {
+  display: inline-flex;
+  gap: 3px;
+}
+
+.equipes__digitando-pontos i {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: var(--eq-cinza);
+  display: block;
+  animation: equipesPonto 1.1s infinite ease-in-out;
+}
+
+.equipes__digitando-pontos i:nth-child(2) { animation-delay: .15s; }
+.equipes__digitando-pontos i:nth-child(3) { animation-delay: .3s; }
+
+@keyframes equipesPonto {
+  0%, 60%, 100% { transform: translateY(0); opacity: .5; }
+  30% { transform: translateY(-3px); opacity: 1; }
+}
+
+/* Botão "Ir para o fim" */
+.equipes__ir-fim {
+  position: absolute;
+  bottom: 118px;
+  right: 32px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  border-radius: 999px;
+  box-shadow: var(--eq-sombra-2);
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--eq-preto);
+  cursor: pointer;
+  z-index: 15;
+}
+
+.equipes__ir-fim svg {
+  width: 14px;
+  height: 14px;
+}
+
+.equipes__ir-fim:hover {
+  background: #F5F5F5;
+}
+
+/* ===================== CAMPO DE ENVIO ===================== */
+.equipes__composer-wrap {
+  flex-shrink: 0;
+  border-top: 1px solid var(--eq-borda);
+  padding: 12px 24px 16px;
+  background: #fff;
+}
+
+.equipes__somente-leitura {
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eq-cinza);
+  background: var(--eq-bolha-recebida);
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.equipes__resposta-preview,
+.equipes__anexo-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: var(--eq-bolha-recebida);
+  border-radius: 8px;
+  padding: 8px 10px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+}
+
+.equipes__resposta-barra {
+  width: 3px;
+  align-self: stretch;
+  background: var(--eq-verde);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.equipes__resposta-texto {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--eq-cinza);
+}
+
+.equipes__resposta-texto strong {
+  color: var(--eq-preto);
+}
+
+.equipes__resposta-fechar {
+  background: none;
+  border: none;
+  color: var(--eq-cinza);
+  font-size: 16px;
+  cursor: pointer;
+  line-height: 1;
+  padding: 2px 4px;
+}
+
+.equipes__anexo-preview-nome {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 600;
+}
+
+/* (estilos da barra de formatação estão no fim do arquivo) */
+
+.equipes__composer-linha {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+}
+
+.equipes__composer-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 8px;
+  border: 1px solid var(--eq-borda);
+  background: #fff;
+  color: var(--eq-preto);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  font-size: 13px;
+  font-weight: 700;
+}
+
+.equipes__composer-btn svg {
+  width: 18px;
+  height: 18px;
+}
+
+.equipes__composer-btn:hover {
+  background: #F5F5F5;
+}
+
+.equipes__campo-wrap {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+}
+
+.equipes__campo {
+  width: 100%;
+  min-height: 44px;
+  max-height: 130px;
+  resize: none;
+  border: 1px solid var(--eq-borda);
+  border-radius: 22px;
+  padding: 11px 18px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--eq-preto);
+  outline: none;
+  overflow-y: auto;
+}
+
+.equipes__campo:focus {
+  border-color: var(--eq-verde);
+  border-width: 2px;
+  padding: 10px 17px;
+}
+
+.equipes__composer-icones {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  background: var(--eq-bg);
+  border-radius: 999px;
+  padding: 4px;
+}
+
+.equipes__composer-icones .equipes__composer-btn {
+  border-color: transparent;
+  background: transparent;
+}
+
+.equipes__composer-icones .equipes__composer-btn:hover {
+  background: #fff;
+  border-color: var(--eq-borda);
+}
+
+.equipes__emoji-wrap {
+  position: relative;
+}
+
+.equipes__enviar-wrap {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+  position: relative;
+}
+
+.equipes__enviar {
+  width: 52px;
+  height: 52px;
+  border-radius: 50%;
+  border: none;
+  background: var(--eq-verde);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.equipes__enviar svg {
+  width: 20px;
+  height: 20px;
+  margin-left: -2px;
+}
+
+.equipes__enviar:hover:not(:disabled) {
+  background: var(--eq-verde-escuro);
+}
+
+.equipes__enviar:disabled {
+  background: var(--eq-cinza-claro);
+  cursor: default;
+}
+
+.equipes__enviar-chevron {
+  width: 20px;
+  height: 52px;
+  border: none;
+  background: none;
+  color: var(--eq-cinza);
+  cursor: pointer;
+}
+
+/* Popovers genéricos (menção, comando, emoji, envio) */
+.equipes__popover {
+  position: absolute;
+  bottom: calc(100% + 8px);
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  border-radius: 10px;
+  box-shadow: var(--eq-sombra-2);
+  z-index: 30;
+}
+
+.equipes__popover--mencao,
+.equipes__popover--comando {
+  left: 0;
+  width: 260px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.equipes__popover--emoji {
+  right: 0;
+  width: 330px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.equipes__popover--emoji[hidden] {
+  display: none;
+}
+
+.equipes__composer-btn--ativo {
+  background: var(--eq-verde-100) !important;
+  border-color: var(--eq-verde) !important;
+  color: var(--eq-verde-escuro);
+}
+
+/* Abas (Todos / Emoji) */
+.equipes__emoji-abas {
+  display: flex;
+  justify-content: center;
+  gap: 28px;
+  padding: 0 16px;
+  border-bottom: 1px solid var(--eq-borda);
+}
+
+.equipes__emoji-aba {
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--eq-cinza);
+  padding: 12px 2px 10px;
+  border-bottom: 3px solid transparent;
+  margin-bottom: -1px;
+}
+
+.equipes__emoji-aba:hover {
+  color: var(--eq-preto);
+}
+
+.equipes__emoji-aba--ativa {
+  color: var(--eq-preto);
+  font-weight: 700;
+  border-bottom-color: var(--eq-verde);
+}
+
+/* Busca (campo com linha embaixo, lupa à direita) */
+.equipes__emoji-busca-linha {
+  display: flex;
+  align-items: flex-end;
+  gap: 8px;
+  margin: 12px 16px 6px;
+}
+
+.equipes__emoji-busca {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 8px;
+  background: var(--eq-bg);
+  border-bottom: 2px solid var(--eq-verde);
+  border-radius: 4px 4px 0 0;
+}
+
+.equipes__emoji-busca input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: none;
+  outline: none;
+  font-family: inherit;
+  font-size: 13.5px;
+  padding: 9px 0;
+  color: var(--eq-preto);
+}
+
+.equipes__emoji-busca svg {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  color: var(--eq-cinza);
+}
+
+/* Grade: 6 colunas, categorias rolando juntas */
+.equipes__emoji-grade {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+  height: 250px;
+  overflow-y: auto;
+  padding: 0 14px 6px;
+}
+
+.equipes__emoji-grade--todos {
+  display: block;
+  height: auto;
+  min-height: 0;
+  padding: 10px 16px 18px;
+  overflow: visible;
+}
+
+.equipes__emoji-grade-titulo {
+  grid-column: 1 / -1;
+  font-size: 13px;
+  color: var(--eq-cinza);
+  padding: 10px 2px 4px;
+}
+
+.equipes__emoji-grade button {
+  border: none;
+  background: none;
+  font-size: 24px;
+  cursor: pointer;
+  padding: 6px 0;
+  border-radius: 8px;
+  line-height: 1.15;
+}
+
+.equipes__emoji-grade button:hover {
+  background: var(--eq-bolha-recebida);
+}
+
+.equipes__emoji-grade-vazio {
+  grid-column: 1 / -1;
+  text-align: center;
+  color: var(--eq-cinza);
+  font-size: 12.5px;
+  padding: 24px 8px;
+}
+
+/* Aba "Todos": cabeçalho da seção + uma linha de emojis */
+.equipes__emoji-secao-cab {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--eq-preto);
+  margin-bottom: 6px;
+}
+
+.equipes__emoji-secao-cab button {
+  font-size: 12.5px;
+  font-weight: 400;
+  color: var(--eq-cinza);
+  padding: 2px 4px;
+}
+
+.equipes__emoji-secao-cab button:hover {
+  color: var(--eq-preto);
+  background: none;
+}
+
+.equipes__emoji-linha {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 2px;
+}
+
+/* Barra de categorias (embaixo, como no Teams) */
+.equipes__emoji-categorias {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  border-top: 1px solid var(--eq-borda);
+  padding: 6px 8px;
+  flex-shrink: 0;
+}
+
+.equipes__emoji-categorias[hidden] {
+  display: none;
+}
+
+.equipes__emoji-categoria {
+  flex: 1;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 16px;
+  padding: 7px 0;
+  border-radius: 6px;
+  line-height: 1;
+  filter: grayscale(1);
+  opacity: .7;
+}
+
+.equipes__emoji-categoria:hover {
+  background: var(--eq-bolha-recebida);
+  opacity: 1;
+}
+
+.equipes__emoji-categoria--ativa {
+  background: var(--eq-verde-100);
+  filter: none;
+  opacity: 1;
+}
+
+.equipes__popover--envio {
+  right: 0;
+  width: 190px;
+  padding: 6px;
+}
+
+.equipes__popover-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  padding: 9px 10px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-family: inherit;
+  font-size: 13px;
+  color: var(--eq-preto);
+  cursor: pointer;
+}
+
+.equipes__popover-item:hover,
+.equipes__popover-item--ativo {
+  background: var(--eq-bolha-recebida);
+}
+
+/* ===================== PAINEL DIREITO ===================== */
+.equipes__painel {
+  width: 296px;
+  flex-shrink: 0;
+  background: #fff;
+  border-left: 1px solid var(--eq-borda);
+  padding: 18px;
+  overflow-y: auto;
+  position: relative;
+}
+
+.equipes__painel-fechar {
+  display: none;
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  border: none;
+  background: none;
+  font-size: 20px;
+  color: var(--eq-cinza);
+  cursor: pointer;
+}
+
+.equipes__painel-secao {
+  padding-bottom: 16px;
+  margin-bottom: 16px;
+  border-bottom: 1px solid var(--eq-borda);
+}
+
+.equipes__painel-secao:last-child {
+  border-bottom: none;
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+
+.equipes__painel-cabecalho {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 8px;
+}
+
+.equipes__painel-titulo {
+  font-family: 'Noto Emoji Equipes', 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 14.5px;
+  font-weight: 700;
+  color: var(--eq-preto);
+  margin: 0;
+}
+
+.equipes__painel-menu-btn {
+  background: none;
+  border: none;
+  color: var(--eq-cinza);
+  cursor: pointer;
+  font-size: 15px;
+}
+
+.equipes__painel-descricao {
+  font-size: 12.5px;
+  line-height: 1.6;
+  color: var(--eq-cinza);
+  margin: 0;
+  white-space: pre-line;
+}
+
+.equipes__painel-linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  background: none;
+  border: none;
+  padding: 4px 0;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+  color: var(--eq-preto);
+}
+
+.equipes__painel-linha-icone {
+  font-size: 15px;
+}
+
+.equipes__painel-linha-texto {
+  flex: 1;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.equipes__painel-linha-contagem {
+  font-size: 12px;
+  color: var(--eq-cinza);
+}
+
+.equipes__fixados-lista {
+  margin-top: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.equipes__fixado-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 12.5px;
+  text-decoration: none;
+  color: var(--eq-preto);
+}
+
+.equipes__fixado-item:hover {
+  color: var(--eq-verde-escuro);
+}
+
+.equipes__painel-ver-todos {
+  background: none;
+  border: none;
+  color: var(--eq-verde);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.equipes__painel-ver-todos:hover {
+  color: var(--eq-verde-escuro);
+}
+
+.equipes__membros-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.equipes__membro {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.equipes__membro-avatar-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.equipes__membro-avatar {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--eq-verde-100);
+  color: var(--eq-verde-escuro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.equipes__membro-presenca {
+  position: absolute;
+  bottom: -1px;
+  right: -1px;
+  width: 11px;
+  height: 11px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+}
+
+.equipes__membro-presenca--online { background: var(--eq-online); }
+.equipes__membro-presenca--reuniao { background: var(--eq-reuniao); }
+.equipes__membro-presenca--ausente { background: var(--eq-ausente); }
+.equipes__membro-presenca--offline { background: var(--eq-offline); }
+
+.equipes__membro-info {
+  min-width: 0;
+}
+
+.equipes__membro-nome {
+  display: block;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--eq-preto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equipes__membro-status {
+  display: block;
+  font-size: 11.5px;
+  color: var(--eq-cinza);
+}
+
+.equipes__painel-mais-membros {
+  display: block;
+  margin-top: 10px;
+  background: none;
+  border: none;
+  color: var(--eq-verde);
+  font-size: 12.5px;
+  font-weight: 700;
+  cursor: pointer;
+  padding: 0;
+}
+
+.equipes__links-lista {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.equipes__link-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 0;
+  color: var(--eq-preto);
+  text-decoration: none;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.equipes__link-item:hover {
+  color: var(--eq-verde-escuro);
+}
+
+.equipes__link-icone {
+  font-size: 14px;
+}
+
+.equipes__link-item > span:last-child {
+  margin-left: auto;
+  color: var(--eq-cinza);
+}
+
+/* ===================== TOAST DE ERRO ===================== */
+.equipes__toast {
+  position: fixed;
+  bottom: 24px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--eq-preto);
+  color: #fff;
+  padding: 12px 20px;
+  border-radius: 10px;
+  font-size: 13px;
+  box-shadow: var(--eq-sombra-2);
+  z-index: 100;
+  max-width: 90vw;
+}
+
+.equipes__toast--erro {
+  background: var(--eq-erro);
+}
+
+
+/* ===================== FORMATAÇÃO DE TEXTO (estilo Teams) =====================
+   Clicar no "A" expande o campo: barra de formatação no topo, editor com
+   formatação visual no meio e os botões (anexo, A, emoji, enviar) embaixo. */
+.equipes__composer--expandido {
+  border: 1px solid var(--eq-borda);
+  border-radius: 12px;
+  padding: 8px 12px 10px;
+  background: #fff;
+}
+
+.equipes__composer--expandido:focus-within {
+  border-color: var(--eq-verde);
+}
+
+.equipes__formatacao {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding-bottom: 6px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--eq-borda);
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.equipes__formatacao::-webkit-scrollbar {
+  display: none;
+}
+
+.equipes__formatacao[hidden] {
+  display: none;
+}
+
+.equipes__formatacao button {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 6px;
+  border: none;
+  background: transparent;
+  color: var(--eq-preto);
+  font-family: inherit;
+  font-size: 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.equipes__formatacao button svg {
+  width: 18px;
+  height: 18px;
+}
+
+.equipes__formatacao button:hover {
+  background: #F1F2F3;
+}
+
+.equipes__formatacao .equipes__formatacao-ativo {
+  background: var(--eq-verde-100);
+  color: var(--eq-verde-escuro);
+}
+
+.equipes__formatacao-sep {
+  flex-shrink: 0;
+  width: 1px;
+  height: 18px;
+  background: var(--eq-borda);
+  margin: 0 6px;
+}
+
+.equipes__formatacao .equipes__formatacao-descartar {
+  margin-left: auto;
+  color: var(--eq-cinza);
+}
+
+.equipes__formatacao .equipes__formatacao-descartar:hover {
+  color: var(--eq-erro);
+}
+
+/* Editor visual */
+.equipes__editor {
+  width: 100%;
+  min-height: 84px;
+  max-height: 220px;
+  overflow-y: auto;
+  padding: 8px 4px;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.45;
+  color: var(--eq-preto);
+  outline: none;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.equipes__editor[hidden] {
+  display: none;
+}
+
+.equipes__editor:empty::before {
+  content: attr(data-placeholder);
+  color: var(--eq-cinza);
+  pointer-events: none;
+}
+
+.equipes__editor ul,
+.equipes__editor ol {
+  margin: 4px 0;
+  padding-left: 22px;
+  white-space: normal;
+}
+
+.equipes__editor code {
+  background: #F1F2F3;
+  border-radius: 4px;
+  padding: 1px 5px;
+  font-size: 13px;
+}
+
+.equipes__editor a {
+  color: #1D6FD8;
+  text-decoration: underline;
+}
+
+/* Layout da caixa expandida: editor em cima, botões na linha de baixo */
+.equipes__composer--expandido .equipes__composer-linha {
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.equipes__composer--expandido .equipes__campo-wrap {
+  order: 1;
+  flex: 1 1 100%;
+}
+
+.equipes__composer--expandido .equipes__composer-linha > .equipes__composer-btn,
+.equipes__composer--expandido .equipes__composer-icones,
+.equipes__composer--expandido .equipes__enviar-wrap {
+  order: 2;
+}
+
+.equipes__composer--expandido #equipesBtnAnexar {
+  margin-right: auto;
+}
+
+.equipes__composer--expandido .equipes__enviar {
+  width: 40px;
+  height: 40px;
+}
+
+.equipes__composer--expandido .equipes__enviar svg {
+  width: 17px;
+  height: 17px;
+}
+
+.equipes__composer--expandido .equipes__enviar-chevron {
+  height: 40px;
+}
+
+
+/* Seletor de tom de pele (ao lado da busca, só nas abas com a grade completa) */
+.equipes__emoji-tom-wrap {
+  position: relative;
+  flex-shrink: 0;
+}
+
+.equipes__emoji-tom-wrap[hidden] {
+  display: none;
+}
+
+.equipes__emoji-tom-btn {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: none;
+  border-radius: 6px;
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.equipes__emoji-tom-btn:hover {
+  background: var(--eq-bolha-recebida);
+}
+
+.equipes__emoji-tom-menu {
+  position: absolute;
+  top: calc(100% + 6px);
+  right: 0;
+  z-index: 5;
+  display: flex;
+  gap: 2px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  border-radius: 10px;
+  box-shadow: var(--eq-sombra-2);
+}
+
+.equipes__emoji-tom-menu[hidden] {
+  display: none;
+}
+
+.equipes__emoji-tom-menu button {
+  width: 34px;
+  height: 34px;
+  border: none;
+  background: none;
+  border-radius: 8px;
+  font-size: 20px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.equipes__emoji-tom-menu button:hover {
+  background: var(--eq-bolha-recebida);
+}
+
+.equipes__emoji-tom-menu .equipes__emoji-tom--ativo {
+  background: var(--eq-verde-100);
+  box-shadow: inset 0 0 0 2px var(--eq-verde);
+}
+
+
+/* Emojis: garante a fonte embutida em todos os pontos onde aparecem
+   (botões não herdam font-family por padrão). */
+.equipes__emoji-grade button,
+.equipes__emoji-linha button,
+.equipes__emoji-secao-cab button,
+.equipes__emoji-categoria,
+.equipes__emoji-aba,
+.equipes__emoji-tom-btn,
+.equipes__emoji-tom-menu button,
+.equipes__reacao,
+.equipes__popover button,
+#equipesEditor {
+  font-family: 'Noto Emoji Equipes', 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+}

@@ -1,0 +1,665 @@
+<?php
+// Token CSRF do módulo Configurações: gerado uma vez por sessão e enviado
+// pelo JS no header X-CSRF-Token em todas as requisições que alteram dados.
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+if (empty($_SESSION['csrf_configuracoes'])) {
+    $_SESSION['csrf_configuracoes'] = bin2hex(random_bytes(32));
+}
+$csrfConfiguracoes = (string)$_SESSION['csrf_configuracoes'];
+
+// Links externos de "Ajuda e suporte" (sidebar + card lateral). Centralizados
+// aqui pra facilitar trocar depois sem mexer no HTML.
+$cfgLinks = [
+    'ajuda'       => '#',
+    'central'     => '#',
+    'fale_conosco'=> '#',
+    'termos'      => '#',
+    'privacidade' => '#',
+];
+?>
+<!-- ============================================================
+     CONTEÚDO — Configurações (área CADASTRADO)
+     Componente incluído dentro de <main> no index.php quando o
+     usuário está logado. Não contém <html>/<head>/<body> — só o
+     conteúdo em si.
+
+     Layout: menu lateral (cópia do Início/Documentos, mantido igual,
+     com "Configurações" marcado como item ativo no rodapé) + card
+     grande (menu de abas + conteúdo da aba) + coluna de 3 cards
+     (Sua conta, Segurança, Ajuda e suporte).
+
+     Todas as abas (Meu perfil, Notificações, Privacidade, Aparência,
+     Dispositivos, Segurança, Integrações, Sobre) já existem no DOM;
+     a troca é só visual (JS mostra/esconde), sem recarregar a página.
+     Os dados (perfil, preferências, sessões) vêm de api/configuracoes/*.php.
+     Se a API/banco ainda não estiverem prontos (SQL de
+     database/configuracoes.sql não executado), o JS avisa na tela
+     e mantém os campos com os valores vindos do PHP/sessão.
+============================================================= -->
+<link rel="stylesheet" href="conteudo/cadastrado/configuracoes/css/configuracoes.css?v=1">
+<link rel="stylesheet" href="conteudo/cadastrado/configuracoes/responsivo/configuracoes.responsivo.css?v=1">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
+
+<div class="configuracoes" id="cfgRaiz" data-csrf="<?php echo htmlspecialchars($csrfConfiguracoes, ENT_QUOTES, 'UTF-8'); ?>">
+
+  <aside class="inicio__sidebar" id="sidebar">
+    <nav class="inicio__nav">
+      <a href="index.php?pagina=inicio" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-5a1 1 0 011-1h2a1 1 0 011 1v5h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Início</span>
+      </a>
+      <a href="index.php?pagina=servicos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Serviços</span>
+      </a>
+      <a href="index.php?pagina=inteligencia-artificial" class="inicio__nav-item">
+        <svg class="inicio__icon inicio__icon--ia" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.6 4.6H6.5A3.9 3.9 0 0 0 2.6 8.5V17.5A3.9 3.9 0 0 0 6.5 21.4H14.5A3.9 3.9 0 0 0 18.4 17.5V9.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <text x="10.4" y="17.5" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="10.8" fill="currentColor" text-anchor="middle">IA</text>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(17.4 3.6) scale(0.34) translate(-12 -12)"/>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(21 6.6) scale(0.16) translate(-12 -12)"/>
+        </svg>
+        <span>Inteligência Artificial</span>
+      </a>
+      <a href="index.php?pagina=documentos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Documentos</span>
+      </a>
+      <a href="index.php?pagina=unidade" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 20.5V6l7-2.5 7 2.5v14.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 20.5v-5h6v5M9 9.5h.01M12 9.5h.01M15 9.5h.01M9 13h.01M12 13h.01M15 13h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Unidade</span>
+      </a>
+      <a href="index.php?pagina=chamadas" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chamadas</span>
+      </a>
+      <a href="index.php?pagina=cursos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L12 4l9.5 4.5L12 13 2.5 8.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 10.7v4.3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>Cursos</span>
+      </a>
+      <a href="index.php?pagina=loja" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/><path d="M3 4h2l2.2 11.2a1.5 1.5 0 001.5 1.3h7.6a1.5 1.5 0 001.47-1.2L19.5 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Loja</span>
+      </a>
+      <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
+      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Usuários</span>
+      </a>
+      <?php endif; ?>
+    </nav>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">EQUIPES</span>
+      <div class="inicio__channel-list">
+        <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
+          <span class="inicio__channel-dot" style="background:#00A859"></span>
+          <span>Geral</span>
+          <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
+          <span class="inicio__channel-dot" style="background:#3B82F6"></span>
+          <span>Projetos</span>
+          <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
+          <span class="inicio__channel-dot" style="background:#F59E0B"></span>
+          <span>Marketing</span>
+          <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
+          <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
+          <span>RH</span>
+          <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
+          <span class="inicio__channel-dot" style="background:#EC4899"></span>
+          <span>Financeiro</span>
+          <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
+          <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
+          <span>TI</span>
+          <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
+          <span class="inicio__channel-dot" style="background:#EF4444"></span>
+          <span>SAC / Ouvidoria</span>
+          <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
+        </a>
+      </div>
+      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
+    </div>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">ATALHOS</span>
+      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Nova conversa</span>
+      </a>
+      <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>Agendar reunião</span>
+      </a>
+    </div>
+
+    <button class="inicio__collapse" id="btnRecolher" aria-label="Fechar menu">
+      <span>«</span> Recolher
+    </button>
+  </aside>
+
+  <main class="configuracoes__main">
+
+    <!-- ===================== CABEÇALHO DA ÁREA ===================== -->
+    <header class="configuracoes__cabecalho">
+      <span class="configuracoes__cabecalho-icone" aria-hidden="true">
+        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+      </span>
+      <div class="configuracoes__titulos">
+        <h1 class="configuracoes__titulo">Configurações</h1>
+        <p class="configuracoes__subtitulo">Gerencie suas preferências, notificações e informações da sua conta.</p>
+      </div>
+    </header>
+
+    <!-- Aviso do modo demonstração (só aparece se a API não responder) -->
+    <div class="configuracoes__aviso" id="cfgAviso" role="status" hidden></div>
+
+    <div class="configuracoes__grade">
+
+      <!-- ===================== CARD GRANDE: menu de abas + conteúdo ===================== -->
+      <section class="configuracoes__card configuracoes__card--principal">
+
+        <!-- ---------- Coluna 1: menu de abas ---------- -->
+        <nav class="configuracoes__menu" id="cfgMenu" aria-label="Abas de configurações">
+          <button type="button" class="configuracoes__menu-item configuracoes__menu-item--ativo" data-aba="perfil" aria-current="page">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8.5" r="3.5" stroke="currentColor" stroke-width="1.7"/><path d="M4.5 20c.7-4 3.6-6 7.5-6s6.8 2 7.5 6" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <span>Meu perfil</span>
+          </button>
+          <button type="button" class="configuracoes__menu-item" data-aba="notificacoes">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M6 9.5a6 6 0 0112 0v4.2c0 .5.16.98.47 1.38l.9 1.15c.6.77.05 1.9-.93 1.9H5.56c-.98 0-1.53-1.13-.93-1.9l.9-1.15c.3-.4.47-.88.47-1.38V9.5z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/><path d="M9.5 19a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <span>Notificações</span>
+          </button>
+          <button type="button" class="configuracoes__menu-item" data-aba="privacidade">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10.5" width="14" height="9.5" rx="1.8" stroke="currentColor" stroke-width="1.7"/><path d="M8 10.5V7.5a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <span>Privacidade</span>
+          </button>
+          <button type="button" class="configuracoes__menu-item" data-aba="aparencia">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.7"/><path d="M12 3.5a4.4 4.4 0 000 8.8 4.4 4.4 0 010 8.8" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            <span>Aparência</span>
+          </button>
+          <button type="button" class="configuracoes__menu-item" data-aba="dispositivos">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="12" rx="1.6" stroke="currentColor" stroke-width="1.7"/><path d="M8 20.5h8M12 17v3.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            <span>Dispositivos</span>
+          </button>
+          <button type="button" class="configuracoes__menu-item" data-aba="seguranca">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5l7 3v5.3c0 4.4-2.9 7.8-7 8.7-4.1-.9-7-4.3-7-8.7V6.5l7-3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            <span>Segurança</span>
+          </button>
+          <button type="button" class="configuracoes__menu-item" data-aba="integracoes">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 15l6-6M8.5 8.5l-2 2a3.2 3.2 0 004.5 4.5l2-2M15.5 15.5l2-2a3.2 3.2 0 00-4.5-4.5l-2 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            <span>Integrações</span>
+          </button>
+          <button type="button" class="configuracoes__menu-item" data-aba="sobre">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v6M12 7.5h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
+            <span>Sobre</span>
+          </button>
+        </nav>
+
+        <!-- ---------- Coluna 2: conteúdo da aba ---------- -->
+        <div class="configuracoes__conteudo">
+
+          <!-- ================= ABA: Meu perfil ================= -->
+          <section class="configuracoes__painel configuracoes__painel--ativo" data-painel="perfil">
+            <header class="configuracoes__secao-cab">
+              <h2 class="configuracoes__secao-titulo">Meu perfil</h2>
+              <p class="configuracoes__secao-sub">Veja e edite suas informações pessoais.</p>
+            </header>
+
+            <div class="configuracoes__foto">
+              <div class="configuracoes__avatar-wrap">
+                <span class="configuracoes__avatar" id="cfgAvatarLetra" aria-hidden="true"><?php echo htmlspecialchars(mb_strtoupper(mb_substr((string)($_SESSION['usuario_nome'] ?? 'A'), 0, 1)), ENT_QUOTES, 'UTF-8'); ?></span>
+                <img class="configuracoes__avatar-img" id="cfgAvatarImg" alt="" hidden>
+                <button type="button" class="configuracoes__avatar-cam" id="cfgBtnCamera" aria-label="Alterar foto">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 8.5A1.5 1.5 0 015.5 7h2l1-1.6c.27-.44.75-.7 1.27-.7h4.46c.52 0 1 .26 1.27.7L16.5 7h2A1.5 1.5 0 0120 8.5v9A1.5 1.5 0 0118.5 19h-13A1.5 1.5 0 014 17.5v-9z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><circle cx="12" cy="13" r="3.2" stroke="currentColor" stroke-width="1.6"/></svg>
+                </button>
+              </div>
+              <div class="configuracoes__foto-info">
+                <button type="button" class="configuracoes__btn configuracoes__btn--contorno" id="cfgBtnAlterarFoto">Alterar foto</button>
+                <p class="configuracoes__ajuda">Formatos aceitos: JPG, PNG. Tamanho máximo: 5MB.</p>
+              </div>
+              <input type="file" id="cfgFotoInput" accept="image/png,image/jpeg" hidden>
+            </div>
+
+            <form class="configuracoes__form" id="cfgFormPerfil" novalidate>
+              <div class="configuracoes__campo">
+                <label for="cfgNome">Nome completo</label>
+                <input type="text" id="cfgNome" name="nome" maxlength="150" required>
+                <span class="configuracoes__erro" data-erro-para="nome"></span>
+              </div>
+
+              <div class="configuracoes__campo">
+                <label for="cfgEmail">E-mail corporativo</label>
+                <input type="email" id="cfgEmail" name="email" disabled>
+              </div>
+
+              <div class="configuracoes__campo">
+                <label for="cfgCargo">Cargo</label>
+                <input type="text" id="cfgCargo" name="cargo" disabled>
+              </div>
+
+              <div class="configuracoes__campo">
+                <label for="cfgTelefone">Telefone</label>
+                <input type="tel" id="cfgTelefone" name="telefone" placeholder="(11) 98765-4321" inputmode="numeric" maxlength="15">
+                <span class="configuracoes__erro" data-erro-para="telefone"></span>
+              </div>
+
+              <div class="configuracoes__divisor"></div>
+              <h3 class="configuracoes__subsecao">Preferências</h3>
+
+              <div class="configuracoes__linha-pref">
+                <span class="configuracoes__linha-pref-rotulo">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 12h17M12 3.5c2.2 2.3 3.4 5.3 3.4 8.5s-1.2 6.2-3.4 8.5c-2.2-2.3-3.4-5.3-3.4-8.5S9.8 5.8 12 3.5z" stroke="currentColor" stroke-width="1.6"/></svg>
+                  <label for="cfgIdioma">Idioma</label>
+                </span>
+                <select id="cfgIdioma" name="idioma" data-seletor>
+                  <option value="pt-BR">Português (Brasil)</option>
+                  <option value="en-US">English (US)</option>
+                  <option value="es-ES">Español</option>
+                </select>
+              </div>
+
+              <div class="configuracoes__linha-pref">
+                <span class="configuracoes__linha-pref-rotulo">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                  <label for="cfgFuso">Fuso horário</label>
+                </span>
+                <select id="cfgFuso" name="fuso" data-seletor>
+                  <option value="America/Noronha">(GMT-02:00) Fernando de Noronha</option>
+                  <option value="America/Sao_Paulo">(GMT-03:00) Brasília</option>
+                  <option value="America/Manaus">(GMT-04:00) Manaus</option>
+                  <option value="America/Rio_Branco">(GMT-05:00) Rio Branco</option>
+                </select>
+              </div>
+
+              <div class="configuracoes__acoes">
+                <button type="submit" class="configuracoes__btn configuracoes__btn--primario" id="cfgBtnSalvarPerfil" disabled>
+                  <span class="configuracoes__spinner" hidden></span>
+                  <span>Salvar alterações</span>
+                </button>
+              </div>
+            </form>
+          </section>
+
+          <!-- ================= ABA: Notificações ================= -->
+          <section class="configuracoes__painel" data-painel="notificacoes">
+            <header class="configuracoes__secao-cab">
+              <h2 class="configuracoes__secao-titulo">Notificações</h2>
+              <p class="configuracoes__secao-sub">Escolha como e quando quer ser avisado.</p>
+            </header>
+
+            <h3 class="configuracoes__subsecao">Canais</h3>
+            <div class="configuracoes__lista-toggle" data-grupo="notificacoes">
+              <label class="configuracoes__toggle-linha">
+                <span>No app</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="canal_app"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+              <label class="configuracoes__toggle-linha">
+                <span>E-mail</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="canal_email"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+              <label class="configuracoes__toggle-linha">
+                <span>Push (navegador)</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="canal_push"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+            </div>
+
+            <h3 class="configuracoes__subsecao">Tipos de notificação</h3>
+            <div class="configuracoes__lista-toggle" data-grupo="notificacoes">
+              <label class="configuracoes__toggle-linha">
+                <span>Mensagens diretas</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="tipo_mensagens"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+              <label class="configuracoes__toggle-linha">
+                <span>Menções</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="tipo_mencoes"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+              <label class="configuracoes__toggle-linha">
+                <span>Novas reuniões</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="tipo_reunioes_novas"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+              <label class="configuracoes__toggle-linha">
+                <span>Lembretes de reunião</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="tipo_reunioes_lembretes"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+              <label class="configuracoes__toggle-linha">
+                <span>Atividade das equipes</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="tipo_equipes"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+            </div>
+
+            <h3 class="configuracoes__subsecao">Não perturbe</h3>
+            <div class="configuracoes__lista-toggle" data-grupo="notificacoes">
+              <label class="configuracoes__toggle-linha">
+                <span>Ativar horário silencioso</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="nao_perturbe" id="cfgNaoPerturbe"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+            </div>
+            <div class="configuracoes__linha-horario" id="cfgNaoPerturbeHorario">
+              <label>De <input type="time" data-pref="nao_perturbe_de"></label>
+              <label>Até <input type="time" data-pref="nao_perturbe_ate"></label>
+            </div>
+
+            <div class="configuracoes__acoes">
+              <button type="button" class="configuracoes__btn configuracoes__btn--primario" data-salvar-grupo="notificacoes">Salvar alterações</button>
+            </div>
+          </section>
+
+          <!-- ================= ABA: Privacidade ================= -->
+          <section class="configuracoes__painel" data-painel="privacidade">
+            <header class="configuracoes__secao-cab">
+              <h2 class="configuracoes__secao-titulo">Privacidade</h2>
+              <p class="configuracoes__secao-sub">Controle quem enxerga suas informações.</p>
+            </header>
+
+            <div class="configuracoes__linha-pref">
+              <span class="configuracoes__linha-pref-rotulo"><label>Quem pode ver meu status</label></span>
+              <select data-pref="status_visivel" data-seletor>
+                <option value="todos">Todos</option>
+                <option value="equipe">Minha equipe</option>
+                <option value="ninguem">Ninguém</option>
+              </select>
+            </div>
+
+            <div class="configuracoes__lista-toggle" data-grupo="privacidade">
+              <label class="configuracoes__toggle-linha">
+                <span>Mostrar confirmação de leitura</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="confirmacao_leitura"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+              <label class="configuracoes__toggle-linha">
+                <span>Mostrar "última vez online"</span>
+                <span class="configuracoes__toggle"><input type="checkbox" data-pref="ultima_vez_online"><span class="configuracoes__toggle-trilho"></span></span>
+              </label>
+            </div>
+
+            <div class="configuracoes__linha-pref">
+              <span class="configuracoes__linha-pref-rotulo"><label>Quem pode me enviar mensagens diretas</label></span>
+              <select data-pref="mensagens_diretas" data-seletor>
+                <option value="todos">Todos</option>
+                <option value="equipe">Minha equipe</option>
+                <option value="ninguem">Ninguém</option>
+              </select>
+            </div>
+
+            <p class="configuracoes__link-linha">
+              <a href="<?php echo htmlspecialchars($cfgLinks['privacidade'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">Política de privacidade</a>
+            </p>
+
+            <div class="configuracoes__acoes">
+              <button type="button" class="configuracoes__btn configuracoes__btn--primario" data-salvar-grupo="privacidade">Salvar alterações</button>
+            </div>
+          </section>
+
+          <!-- ================= ABA: Aparência ================= -->
+          <section class="configuracoes__painel" data-painel="aparencia">
+            <header class="configuracoes__secao-cab">
+              <h2 class="configuracoes__secao-titulo">Aparência</h2>
+              <p class="configuracoes__secao-sub">Ajuste como a plataforma é exibida para você.</p>
+            </header>
+
+            <h3 class="configuracoes__subsecao">Tema</h3>
+            <div class="configuracoes__opcoes-cards" data-grupo="aparencia" data-pref="tema">
+              <button type="button" class="configuracoes__opcao-card" data-valor="claro">
+                <span class="configuracoes__opcao-preview configuracoes__opcao-preview--claro" aria-hidden="true"></span>
+                <span>Claro</span>
+              </button>
+              <button type="button" class="configuracoes__opcao-card" data-valor="escuro">
+                <span class="configuracoes__opcao-preview configuracoes__opcao-preview--escuro" aria-hidden="true"></span>
+                <span>Escuro</span>
+              </button>
+              <button type="button" class="configuracoes__opcao-card" data-valor="automatico">
+                <span class="configuracoes__opcao-preview configuracoes__opcao-preview--automatico" aria-hidden="true"></span>
+                <span>Automático</span>
+              </button>
+            </div>
+
+            <h3 class="configuracoes__subsecao">Densidade da interface</h3>
+            <div class="configuracoes__opcoes-pill" data-grupo="aparencia" data-pref="densidade">
+              <button type="button" class="configuracoes__pill" data-valor="confortavel">Confortável</button>
+              <button type="button" class="configuracoes__pill" data-valor="compacta">Compacta</button>
+            </div>
+
+            <h3 class="configuracoes__subsecao">Tamanho da fonte</h3>
+            <div class="configuracoes__opcoes-pill" data-grupo="aparencia" data-pref="fonte">
+              <button type="button" class="configuracoes__pill" data-valor="p">P</button>
+              <button type="button" class="configuracoes__pill" data-valor="m">M</button>
+              <button type="button" class="configuracoes__pill" data-valor="g">G</button>
+            </div>
+          </section>
+
+          <!-- ================= ABA: Dispositivos ================= -->
+          <section class="configuracoes__painel" data-painel="dispositivos">
+            <header class="configuracoes__secao-cab">
+              <h2 class="configuracoes__secao-titulo">Dispositivos</h2>
+              <p class="configuracoes__secao-sub">Veja onde sua conta está conectada no momento.</p>
+            </header>
+            <ul class="configuracoes__dispositivos" id="cfgListaDispositivos" aria-live="polite"></ul>
+          </section>
+
+          <!-- ================= ABA: Segurança ================= -->
+          <section class="configuracoes__painel" data-painel="seguranca">
+            <header class="configuracoes__secao-cab">
+              <h2 class="configuracoes__secao-titulo">Segurança</h2>
+              <p class="configuracoes__secao-sub">Mantenha sua conta protegida.</p>
+            </header>
+
+            <h3 class="configuracoes__subsecao">Alterar senha</h3>
+            <form class="configuracoes__form" id="cfgFormSenha" novalidate>
+              <div class="configuracoes__campo">
+                <label for="cfgSenhaAtual">Senha atual</label>
+                <input type="password" id="cfgSenhaAtual" autocomplete="current-password">
+                <span class="configuracoes__erro" data-erro-para="atual"></span>
+              </div>
+              <div class="configuracoes__campo">
+                <label for="cfgSenhaNova">Nova senha</label>
+                <input type="password" id="cfgSenhaNova" autocomplete="new-password">
+                <span class="configuracoes__forca" id="cfgForcaSenha"></span>
+                <span class="configuracoes__erro" data-erro-para="nova"></span>
+              </div>
+              <div class="configuracoes__campo">
+                <label for="cfgSenhaConfirmar">Confirmar nova senha</label>
+                <input type="password" id="cfgSenhaConfirmar" autocomplete="new-password">
+                <span class="configuracoes__erro" data-erro-para="confirmar"></span>
+              </div>
+              <div class="configuracoes__acoes">
+                <button type="submit" class="configuracoes__btn configuracoes__btn--primario">Alterar senha</button>
+              </div>
+            </form>
+
+            <div class="configuracoes__divisor"></div>
+
+            <h3 class="configuracoes__subsecao">Autenticação em duas etapas</h3>
+            <label class="configuracoes__toggle-linha">
+              <span>Exigir um código adicional ao entrar</span>
+              <span class="configuracoes__toggle"><input type="checkbox" data-pref="duas_etapas" data-grupo="seguranca"><span class="configuracoes__toggle-trilho"></span></span>
+            </label>
+
+            <div class="configuracoes__divisor"></div>
+
+            <h3 class="configuracoes__subsecao">Sessões ativas</h3>
+            <ul class="configuracoes__dispositivos" id="cfgListaSessoesAba" aria-live="polite"></ul>
+            <div class="configuracoes__acoes">
+              <button type="button" class="configuracoes__btn configuracoes__btn--contorno" id="cfgBtnEncerrarOutras">Encerrar todas as outras sessões</button>
+            </div>
+          </section>
+
+          <!-- ================= ABA: Integrações ================= -->
+          <section class="configuracoes__painel" data-painel="integracoes">
+            <header class="configuracoes__secao-cab">
+              <h2 class="configuracoes__secao-titulo">Integrações</h2>
+              <p class="configuracoes__secao-sub">Conecte outras ferramentas à sua conta.</p>
+            </header>
+
+            <div class="configuracoes__integracoes" data-grupo="integracoes">
+              <div class="configuracoes__integracao-card">
+                <div class="configuracoes__integracao-info">
+                  <strong>Calendário</strong>
+                  <span class="configuracoes__integracao-status" data-status="calendario">Desconectado</span>
+                </div>
+                <button type="button" class="configuracoes__btn configuracoes__btn--contorno" data-pref="calendario">Conectar</button>
+              </div>
+              <div class="configuracoes__integracao-card">
+                <div class="configuracoes__integracao-info">
+                  <strong>E-mail corporativo</strong>
+                  <span class="configuracoes__integracao-status" data-status="email">Desconectado</span>
+                </div>
+                <button type="button" class="configuracoes__btn configuracoes__btn--contorno" data-pref="email">Conectar</button>
+              </div>
+              <div class="configuracoes__integracao-card">
+                <div class="configuracoes__integracao-info">
+                  <strong>Armazenamento</strong>
+                  <span class="configuracoes__integracao-status" data-status="armazenamento">Desconectado</span>
+                </div>
+                <button type="button" class="configuracoes__btn configuracoes__btn--contorno" data-pref="armazenamento">Conectar</button>
+              </div>
+            </div>
+          </section>
+
+          <!-- ================= ABA: Sobre ================= -->
+          <section class="configuracoes__painel" data-painel="sobre">
+            <header class="configuracoes__secao-cab">
+              <h2 class="configuracoes__secao-titulo">Sobre</h2>
+              <p class="configuracoes__secao-sub">Informações da plataforma.</p>
+            </header>
+
+            <div class="configuracoes__lista-chave">
+              <div class="configuracoes__linha-chave"><span>Versão da plataforma</span><span>1.0.0</span></div>
+              <div class="configuracoes__linha-chave"><span>Notas de versão</span><a href="#">Ver notas</a></div>
+              <div class="configuracoes__linha-chave"><span>Licenças</span><a href="#">Ver licenças</a></div>
+              <div class="configuracoes__linha-chave"><span>Contato de suporte</span><a href="<?php echo htmlspecialchars($cfgLinks['fale_conosco'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">Fale conosco</a></div>
+              <div class="configuracoes__linha-chave"><span>Termos de uso</span><a href="<?php echo htmlspecialchars($cfgLinks['termos'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">Ver termos</a></div>
+              <div class="configuracoes__linha-chave"><span>Política de privacidade</span><a href="<?php echo htmlspecialchars($cfgLinks['privacidade'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">Ver política</a></div>
+            </div>
+          </section>
+
+        </div>
+      </section>
+
+      <!-- ===================== COLUNA 3: cards laterais ===================== -->
+      <div class="configuracoes__coluna-lateral">
+
+        <button type="button" class="configuracoes__card configuracoes__card--lateral configuracoes__card--clicavel" id="cfgCardConta" data-ir-para="perfil">
+          <header class="configuracoes__card-cab">
+            <span class="configuracoes__card-icone" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8.5" r="3.2" stroke="currentColor" stroke-width="1.7"/><path d="M5 19.5c.7-3.6 3.4-5.5 7-5.5s6.3 1.9 7 5.5" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </span>
+            <h3>Sua conta</h3>
+            <svg class="configuracoes__card-seta" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </header>
+          <div class="configuracoes__lista-chave">
+            <div class="configuracoes__linha-chave"><span>Nome</span><span id="cfgContaNome">—</span></div>
+            <div class="configuracoes__linha-chave"><span>E-mail</span><span id="cfgContaEmail">—</span></div>
+            <div class="configuracoes__linha-chave"><span>Cargo</span><span id="cfgContaCargo">—</span></div>
+          </div>
+        </button>
+
+        <section class="configuracoes__card configuracoes__card--lateral">
+          <header class="configuracoes__card-cab">
+            <span class="configuracoes__card-icone" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5l7 3v5.3c0 4.4-2.9 7.8-7 8.7-4.1-.9-7-4.3-7-8.7V6.5l7-3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h3>Segurança</h3>
+              <p class="configuracoes__card-sub">Mantenha sua conta segura.</p>
+            </div>
+          </header>
+          <div class="configuracoes__lista-linhas">
+            <button type="button" class="configuracoes__linha-clicavel" data-ir-para="seguranca">
+              <span class="configuracoes__linha-icone" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="5" y="10.5" width="14" height="9" rx="1.8" stroke="currentColor" stroke-width="1.6"/><path d="M8 10.5V7.5a4 4 0 018 0v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <span>Alterar senha</span>
+              <svg class="configuracoes__card-seta" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="configuracoes__linha-toggle">
+              <span class="configuracoes__linha-icone" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5l7 3v5.3c0 4.4-2.9 7.8-7 8.7-4.1-.9-7-4.3-7-8.7V6.5l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+              </span>
+              <span>Autenticação em duas etapas</span>
+              <span class="configuracoes__toggle"><input type="checkbox" data-pref="duas_etapas" data-grupo="seguranca" data-espelho="1"><span class="configuracoes__toggle-trilho"></span></span>
+            </div>
+            <button type="button" class="configuracoes__linha-clicavel" data-ir-para="dispositivos">
+              <span class="configuracoes__linha-icone" aria-hidden="true">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="12" rx="1.6" stroke="currentColor" stroke-width="1.6"/><path d="M8 20.5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+              </span>
+              <span>Sessões ativas</span>
+              <svg class="configuracoes__card-seta" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+          </div>
+        </section>
+
+        <section class="configuracoes__card configuracoes__card--lateral">
+          <header class="configuracoes__card-cab">
+            <span class="configuracoes__card-icone" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <div>
+              <h3>Ajuda e suporte</h3>
+              <p class="configuracoes__card-sub">Precisa de ajuda? Acesse nossos canais de suporte e tire suas dúvidas.</p>
+            </div>
+          </header>
+          <div class="configuracoes__lista-linhas">
+            <a class="configuracoes__linha-clicavel" href="<?php echo htmlspecialchars($cfgLinks['central'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
+              <span>Central de ajuda</span>
+              <svg class="configuracoes__card-externo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M8 5H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="configuracoes__linha-clicavel" href="<?php echo htmlspecialchars($cfgLinks['fale_conosco'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
+              <span>Fale conosco</span>
+              <svg class="configuracoes__card-externo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M8 5H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="configuracoes__linha-clicavel" href="<?php echo htmlspecialchars($cfgLinks['termos'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
+              <span>Termos de uso</span>
+              <svg class="configuracoes__card-externo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M8 5H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+            <a class="configuracoes__linha-clicavel" href="<?php echo htmlspecialchars($cfgLinks['privacidade'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
+              <span>Política de privacidade</span>
+              <svg class="configuracoes__card-externo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M8 5H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </a>
+          </div>
+        </section>
+
+      </div>
+    </div>
+  </main>
+</div>
+
+<!-- ===================== MODAL: Alterar foto ===================== -->
+<div class="configuracoes__modal" id="cfgModalFoto" aria-hidden="true">
+  <div class="configuracoes__modal-fundo" data-fechar-modal></div>
+  <div class="configuracoes__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="cfgModalFotoTitulo">
+    <h2 id="cfgModalFotoTitulo">Alterar foto</h2>
+    <div class="configuracoes__modal-drop" id="cfgModalDrop">
+      <img id="cfgModalPreview" alt="" hidden>
+      <p id="cfgModalDropTexto">Arraste uma imagem aqui ou <button type="button" id="cfgModalEscolher" class="configuracoes__link-botao">escolha um arquivo</button></p>
+    </div>
+    <p class="configuracoes__erro" id="cfgModalErro"></p>
+    <div class="configuracoes__modal-acoes">
+      <button type="button" class="configuracoes__btn configuracoes__btn--perigo" id="cfgModalRemover" hidden>Remover foto</button>
+      <div class="configuracoes__modal-acoes-dir">
+        <button type="button" class="configuracoes__btn configuracoes__btn--contorno" data-fechar-modal>Cancelar</button>
+        <button type="button" class="configuracoes__btn configuracoes__btn--primario" id="cfgModalSalvar" disabled>Salvar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ===================== TOAST DE SUCESSO ===================== -->
+<div class="configuracoes__toast" id="cfgToast" role="status" aria-live="polite" hidden>
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#00A335"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <span id="cfgToastTexto">Alterações salvas com sucesso</span>
+</div>
+
+<script src="assets/js/equipes-badges.js?v=1"></script>
+<script src="conteudo/cadastrado/configuracoes/js/configuracoes.js?v=1"></script>

@@ -1,0 +1,123 @@
+/* ============================================================
+   CONTEÚDO — Cursos (área CADASTRADO) — Estilos responsivos
+   Desktop 1920 (base) -> 1440 -> tablet (2 colunas) -> mobile (1 coluna)
+============================================================= */
+
+@media (max-width: 1440px) {
+  .cursos__main {
+    padding: 24px 24px 40px;
+  }
+
+  .cursos__grade {
+    gap: 16px;
+  }
+
+  .cursos__banner {
+    width: 380px;
+  }
+
+  .curso-hero__capa {
+    flex-basis: 320px;
+  }
+}
+
+@media (max-width: 1200px) {
+  .cursos__grade {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .curso-layout,
+  .modulo-layout {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .modulo-lateral {
+    order: 2;
+  }
+}
+
+/* Tablet: grade de 2 colunas */
+@media (max-width: 900px) {
+  .cursos__topo {
+    flex-direction: column;
+  }
+
+  .cursos__banner {
+    width: 100%;
+  }
+
+  .cursos__grade {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .curso-hero {
+    flex-direction: column;
+  }
+
+  .curso-hero__capa {
+    flex-basis: auto;
+    min-height: 180px;
+  }
+}
+
+/* Mobile: 1 coluna */
+@media (max-width: 600px) {
+  .cursos__main {
+    padding: 20px 16px 32px;
+  }
+
+  .cursos__titulo {
+    font-size: 24px;
+  }
+
+  .cursos__grade {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  /* chips em uma linha com rolagem horizontal */
+  .cursos__chips {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    margin-right: -16px;
+    padding-right: 16px;
+    padding-bottom: 4px;
+    scrollbar-width: none;
+  }
+
+  .cursos__chips::-webkit-scrollbar {
+    display: none;
+  }
+
+  .chip-filtro {
+    flex-shrink: 0;
+  }
+
+  .modulo-card {
+    flex-wrap: wrap;
+    gap: 10px 12px;
+  }
+
+  .modulo-card__texto {
+    flex-basis: calc(100% - 60px);
+  }
+
+  .modulo-card__texto p {
+    white-space: normal;
+  }
+
+  .modulo-status {
+    min-width: 0;
+  }
+
+  .modulo-acoes {
+    flex-direction: column-reverse;
+  }
+
+  .modulo-acoes .btn-curso {
+    width: 100%;
+  }
+
+  .cursos__estado {
+    margin-top: 40px;
+  }
+}

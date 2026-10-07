@@ -1,0 +1,504 @@
+/* ============================================================
+   CONTEÚDO — Unidade (área CADASTRADO)
+   Página "Minha Unidade" — reaproveita o menu lateral da Home
+   (classes .inicio__*) e os tokens de cor/tipografia da
+   identidade Intelbras. Prefixo .unidade__ = só desta página.
+============================================================= */
+
+:root {
+  --intelbras-verde: #00A859;
+  --intelbras-verde-escuro: #007A40;
+  --intelbras-verde-100: #E7F7EE;
+  --intelbras-preto: #1A1A1A;
+  --intelbras-cinza: #6B6B6B;
+  --intelbras-cinza-claro: #E8E8E8;
+  --content-bg: #F4F5F7;
+  --content-border: #ECECEC;
+}
+
+.unidade {
+  display: flex;
+  align-items: stretch;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  background: var(--content-bg);
+  min-height: calc(100vh - 73px);
+}
+
+/* ===================== ÁREA PRINCIPAL ===================== */
+.unidade__main {
+  flex: 1;
+  min-width: 0;
+  padding: 28px 40px 48px;
+}
+
+.unidade__wrap {
+  /* Ocupa toda a largura disponível (antes limitado a 1320px, o que
+     deixava sobras grandes nas laterais em telas largas). */
+  max-width: none;
+  margin: 0 auto;
+}
+
+.unidade__header {
+  margin-bottom: 18px;
+}
+
+.unidade__title {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+  margin: 0 0 4px;
+}
+
+.unidade__subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--intelbras-cinza);
+}
+
+/* Grade: coluna esquerda empilhada + "Localização" ocupando a
+   lateral direita ao lado dos 3 primeiros blocos (igual à referência). */
+.unidade__grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1.45fr) minmax(0, 1fr);
+  grid-template-areas:
+    "hero     mapa"
+    "info     mapa"
+    "contatos mapa"
+    "avisos   .";
+  gap: 14px;
+  align-items: stretch;
+}
+
+.unidade__hero     { grid-area: hero; }
+.unidade__mapa     { grid-area: mapa; }
+.unidade__info     { grid-area: info; }
+.unidade__contatos { grid-area: contatos; }
+.unidade__avisos   { grid-area: avisos; }
+
+.unidade__card {
+  background: #fff;
+  border: 1px solid var(--content-border);
+  border-radius: 10px;
+  padding: 18px 20px;
+  min-width: 0;
+}
+
+/* Permite que a grade de tiles se adapte à largura do PRÓPRIO card
+   (ver @container em responsivo/unidade.responsivo.css) e não só da tela:
+   com o menu lateral aberto, o card fica mais estreito que o normal. */
+.unidade__info,
+.unidade__contatos {
+  container-type: inline-size;
+}
+
+.unidade__card-titulo {
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+  margin: 0 0 14px;
+}
+
+/* ===================== ÍCONES ===================== */
+.unidade__ic {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+/* ===================== CARD PRINCIPAL ===================== */
+.unidade__hero {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 24px 28px;
+}
+
+.unidade__hero-icon {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 120px;
+  border-radius: 50%;
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde);
+  flex-shrink: 0;
+}
+
+.unidade__hero-icon .unidade__ic {
+  width: 54px;
+  height: 54px;
+  stroke-width: 1.5;
+}
+
+.unidade__hero-body {
+  min-width: 0;
+}
+
+.unidade__hero-nome {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  line-height: 1.25;
+  color: var(--intelbras-preto);
+  margin: 0 0 8px;
+}
+
+.unidade__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  padding: 3px 11px 3px 9px;
+  border-radius: 999px;
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde-escuro);
+  font-size: 12.5px;
+  font-weight: 700;
+}
+
+.unidade__status-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--intelbras-verde);
+}
+
+.unidade__status--inativa {
+  background: #F1F1F1;
+  color: var(--intelbras-cinza);
+}
+
+.unidade__status--inativa .unidade__status-dot {
+  background: #A8A8A8;
+}
+
+.unidade__hero-lista {
+  list-style: none;
+  margin: 12px 0 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.unidade__hero-lista li {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  font-size: 13.5px;
+  color: #4B4B4B;
+}
+
+.unidade__hero-lista .unidade__ic {
+  width: 16px;
+  height: 16px;
+  color: var(--intelbras-cinza);
+}
+
+/* ===================== LOCALIZAÇÃO ===================== */
+.unidade__mapa {
+  display: flex;
+  flex-direction: column;
+}
+
+.unidade__mapa-box {
+  position: relative;
+  flex: 1;
+  min-height: 320px;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid var(--content-border);
+  background: #F0F0EC;
+}
+
+.unidade__mapa-img {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.unidade__mapa-link {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 10px 16px;
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde-escuro);
+  font-size: 13.5px;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.unidade__mapa-link .unidade__ic {
+  color: var(--intelbras-verde);
+}
+
+.unidade__mapa-link:hover {
+  background: #D5EFE1;
+}
+
+/* ===================== TILES (informações e contatos) ===================== */
+.unidade__tiles {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.unidade__tile {
+  display: flex;
+  gap: 10px;
+  padding: 14px;
+  border: 1px solid var(--content-border);
+  border-radius: 8px;
+  background: #fff;
+  min-width: 0;
+}
+
+.unidade__tile-icon {
+  width: 20px;
+  height: 20px;
+  margin-top: 1px;
+  color: var(--intelbras-verde);
+}
+
+.unidade__tile-body {
+  min-width: 0;
+}
+
+.unidade__tile-label {
+  margin: 0 0 3px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.unidade__tile-valor {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.5;
+  color: #4B4B4B;
+  overflow-wrap: anywhere;
+}
+
+.unidade__tile-valor--vazio {
+  color: #8A8A8A;
+}
+
+/* Tile com ação no rodapé (Informações da unidade): o conteúdo fica no topo
+   e a ação (Copiar / Ligar / selo de horário) desce para o fim do card, na
+   mesma linha em todos os tiles — assim os cards altos não deixam os baixos
+   com um vazio embaixo. */
+.unidade__tile--coluna {
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.unidade__tile-topo {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.unidade__tile-acao {
+  display: flex;
+  align-items: center;
+  min-height: 34px;
+}
+
+.unidade__tile-acao .unidade__btn {
+  width: 100%;
+}
+
+/* ===================== CONTATOS ===================== */
+.unidade__contato {
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.unidade__contato-topo {
+  display: flex;
+  gap: 10px;
+  min-width: 0;
+}
+
+.unidade__contato-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde);
+  flex-shrink: 0;
+}
+
+.unidade__contato-icone .unidade__ic {
+  width: 19px;
+  height: 19px;
+}
+
+.unidade__btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 10px;
+  border: 1px solid var(--intelbras-verde);
+  border-radius: 6px;
+  background: #fff;
+  color: var(--intelbras-verde);
+  font-family: inherit;
+  font-size: 12.5px;
+  font-weight: 700;
+  line-height: 1.25;
+  text-align: center;
+  text-decoration: none;
+}
+
+.unidade__btn .unidade__ic {
+  width: 15px;
+  height: 15px;
+}
+
+button.unidade__btn {
+  cursor: pointer;
+}
+
+a.unidade__btn:hover,
+button.unidade__btn:hover {
+  background: var(--intelbras-verde-100);
+}
+
+/* Feedback do botão "Copiar endereço" (classe aplicada pelo JS por ~2s) */
+button.unidade__btn--copiado {
+  background: var(--intelbras-verde);
+  color: #fff;
+}
+
+button.unidade__btn--copiado:hover {
+  background: var(--intelbras-verde);
+}
+
+a.unidade__btn:focus-visible,
+button.unidade__btn:focus-visible,
+.unidade__mapa-link:focus-visible {
+  outline: 2px solid var(--intelbras-verde);
+  outline-offset: 2px;
+}
+
+.unidade__btn--desabilitado {
+  border-color: #E0E0E0;
+  color: #A8A8A8;
+  cursor: not-allowed;
+}
+
+/* ===================== AVISOS ===================== */
+.unidade__avisos-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.unidade__aviso {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 11px 0;
+  border-bottom: 1px solid #F0F0F0;
+}
+
+.unidade__aviso:first-child {
+  padding-top: 0;
+}
+
+.unidade__aviso:last-child {
+  padding-bottom: 0;
+  border-bottom: none;
+}
+
+.unidade__aviso-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde);
+  flex-shrink: 0;
+}
+
+.unidade__aviso-corpo {
+  min-width: 0;
+}
+
+.unidade__aviso-titulo {
+  margin: 0 0 2px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.unidade__aviso-texto {
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.45;
+  color: var(--intelbras-cinza);
+}
+
+.unidade__pill {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde-escuro);
+  font-size: 11px;
+  font-weight: 700;
+  vertical-align: 1px;
+}
+
+/* Estado vazio */
+.unidade__avisos-vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 10px;
+  padding: 18px 12px 12px;
+  text-align: center;
+}
+
+.unidade__avisos-vazio .unidade__aviso-icone {
+  width: 44px;
+  height: 44px;
+}
+
+.unidade__avisos-vazio .unidade__aviso-icone .unidade__ic {
+  width: 21px;
+  height: 21px;
+}
+
+.unidade__avisos-vazio-titulo {
+  margin: 0 0 3px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.unidade__avisos-vazio-texto {
+  margin: 0;
+  font-size: 12.5px;
+  color: var(--intelbras-cinza);
+}

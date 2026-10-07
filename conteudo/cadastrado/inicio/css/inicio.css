@@ -1,0 +1,825 @@
+/* ============================================================
+   CONTEÚDO — Início (área CADASTRADO)
+   Menu lateral + banner + grade 3 colunas de cards
+   (reaproveita os mesmos tokens de cor/tipografia da área
+   não-cadastrada e do cabeçalho — identidade Intelbras)
+============================================================= */
+
+:root {
+  --intelbras-verde: #00A859;
+  --intelbras-verde-escuro: #007A40;
+  --intelbras-verde-100: #E7F7EE;
+  --intelbras-preto: #1A1A1A;
+  --intelbras-cinza: #6B6B6B;
+  --intelbras-cinza-claro: #E8E8E8;
+  --content-bg: #F4F5F7;
+  --content-border: #ECECEC;
+}
+
+.inicio {
+  display: flex;
+  align-items: stretch;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  background:
+    radial-gradient(560px 320px at 8% 0%, rgba(0, 168, 89, 0.06), transparent 65%),
+    radial-gradient(620px 360px at 100% 30%, rgba(0, 168, 89, 0.05), transparent 60%),
+    var(--content-bg);
+  min-height: calc(100vh - 73px);
+}
+
+/* ===================== MENU LATERAL =====================
+   Escondido por padrão (largura 0); ao clicar em "Todas
+   categorias" no cabeçalho, a classe "sidebar-open" é
+   aplicada ao <body> e a barra "abre", empurrando o
+   conteúdo ao lado. */
+.inicio__sidebar {
+  width: 0;
+  flex-shrink: 0;
+
+  /* ALTURA IGUAL EM TODAS AS ABAS
+     Antes, a sidebar "esticava" (align-items: stretch) até a altura do
+     conteúdo da página. Como o Início é bem mais alto que as abas
+     "em breve", o espaço entre "Agendar reunião" e o rodapé mudava de
+     uma aba pra outra. Agora a altura da sidebar não depende mais do
+     conteúdo: ela ocupa no mínimo a altura da tela (menos o cabeçalho
+     de 73px) e fica "grudada" abaixo do cabeçalho ao rolar a página. */
+  align-self: flex-start;
+  position: sticky;
+  top: 73px;
+  min-height: calc(100vh - 73px);
+
+  background: #fff;
+  border-right: 0px solid var(--content-border);
+  padding: 20px 0;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+  white-space: nowrap;
+  transition: width 0.25s ease, padding 0.25s ease, border-color 0.25s ease;
+}
+
+body.sidebar-open .inicio__sidebar {
+  width: 220px;
+  padding: 20px 16px;
+  border-right: 1px solid var(--content-border);
+}
+
+.inicio__nav {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inicio__nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 8px;
+  border-radius: 6px;
+  color: var(--intelbras-preto);
+  text-decoration: none;
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.inicio__nav-item:hover {
+  background: #F5F5F5;
+}
+
+.inicio__nav-item--active {
+  color: var(--intelbras-verde);
+  background: var(--intelbras-verde-100);
+}
+
+.inicio__icon {
+  width: 19px;
+  height: 19px;
+  flex-shrink: 0;
+}
+
+.inicio__icon--ia {
+  width: 25px;
+  height: 25px;
+  margin: -3px -3px -3px 0;
+}
+
+.inicio__sidebar-section {
+  margin-top: 22px;
+}
+
+/* Espaço mínimo entre o último bloco (ATALHOS) e o botão "Recolher",
+   igual em todas as abas, mesmo quando o menu ocupa a altura toda. */
+.inicio__sidebar-section:last-of-type {
+  margin-bottom: 28px;
+}
+
+.inicio__sidebar-label {
+  display: block;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  color: #B3B3B3;
+  padding: 0 8px;
+  margin-bottom: 10px;
+}
+
+.inicio__channel-list {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inicio__channel-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 7px 8px;
+  border-radius: 6px;
+  color: var(--intelbras-preto);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.inicio__channel-item:hover {
+  background: #F5F5F5;
+}
+
+.inicio__channel-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.inicio__see-all {
+  display: block;
+  margin-top: 10px;
+  padding: 0 8px;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--intelbras-verde);
+  text-decoration: none;
+}
+
+.inicio__see-all:hover {
+  color: var(--intelbras-verde-escuro);
+}
+
+.inicio__see-all--inline {
+  margin-top: 0;
+  padding: 0;
+}
+
+.inicio__shortcut {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border-radius: 6px;
+  color: var(--intelbras-preto);
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.inicio__shortcut:hover {
+  background: #F5F5F5;
+}
+
+.inicio__shortcut .inicio__icon {
+  color: var(--intelbras-cinza);
+  width: 17px;
+  height: 17px;
+}
+
+/* Atalho ativo (página aberta pelo atalho: Nova conversa / Agendar reunião) */
+.inicio__shortcut--active {
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde);
+}
+
+.inicio__shortcut--active .inicio__icon {
+  color: var(--intelbras-verde);
+}
+
+.inicio__collapse {
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 1px solid var(--content-border);
+  background: none;
+  border-left: none;
+  border-right: none;
+  border-bottom: none;
+  color: var(--intelbras-cinza);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inicio__collapse:hover {
+  color: var(--intelbras-preto);
+}
+
+/* ===================== ÁREA PRINCIPAL ===================== */
+.inicio__main {
+  flex: 1;
+  padding: 28px 32px 40px;
+  min-width: 0;
+}
+
+.inicio__header-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 20px;
+  flex-wrap: wrap;
+}
+
+.inicio__title {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+  margin: 0 0 4px;
+}
+
+.inicio__wave {
+  display: inline-block;
+}
+
+.inicio__subtitle {
+  margin: 0;
+  font-size: 14px;
+  color: var(--intelbras-cinza);
+}
+
+.inicio__actions {
+  display: flex;
+  gap: 12px;
+}
+
+.inicio__btn {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  border-radius: 6px;
+  padding: 10px 18px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.inicio__btn svg {
+  width: 16px;
+  height: 16px;
+}
+
+.inicio__btn--primary {
+  background: var(--intelbras-verde);
+  color: #fff;
+  border: 1px solid var(--intelbras-verde);
+}
+
+.inicio__btn--primary:hover {
+  background: var(--intelbras-verde-escuro);
+}
+
+.inicio__btn--outline {
+  background: #fff;
+  color: var(--intelbras-preto);
+  border: 1px solid var(--intelbras-cinza-claro);
+}
+
+.inicio__btn--outline:hover {
+  border-color: #C9C9C9;
+}
+
+/* ===================== BANNER ===================== */
+.inicio__banner {
+  position: relative;
+  overflow: hidden;
+  border-radius: 12px;
+  background: linear-gradient(115deg, #0B2A19 0%, #163D26 55%, #1F5233 100%);
+  padding: 30px 34px;
+  margin-bottom: 22px;
+  min-height: 190px;
+  display: flex;
+  align-items: center;
+}
+
+.inicio__banner-text {
+  position: relative;
+  z-index: 2;
+  color: #fff;
+  max-width: 380px;
+}
+
+.inicio__banner-logo {
+  display: inline-block;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 20px;
+  color: var(--intelbras-verde);
+  margin-bottom: 14px;
+}
+
+.inicio__banner-text h2 {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 22px;
+  font-weight: 700;
+  margin: 0 0 10px;
+  line-height: 1.25;
+}
+
+.inicio__banner-text p {
+  margin: 0;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #D7E4DC;
+}
+
+.inicio__banner-art {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+}
+
+.inicio__banner-art svg {
+  width: 100%;
+  height: 100%;
+}
+
+.inicio__banner-arrow {
+  position: absolute;
+  bottom: 16px;
+  right: 66px;
+  z-index: 3;
+  width: 30px;
+  height: 30px;
+  border-radius: 50%;
+  border: none;
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+}
+
+.inicio__banner-arrow svg {
+  width: 16px;
+  height: 16px;
+}
+
+.inicio__banner-arrow--right {
+  right: 24px;
+}
+
+.inicio__banner-arrow:hover {
+  background: rgba(255, 255, 255, 0.28);
+}
+
+.inicio__banner-dots {
+  position: absolute;
+  bottom: 24px;
+  left: 34px;
+  z-index: 3;
+  display: flex;
+  gap: 6px;
+}
+
+.inicio__banner-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.inicio__banner-dot--active {
+  background: var(--intelbras-verde);
+  width: 16px;
+  border-radius: 4px;
+}
+
+/* ===================== GRADE 3 COLUNAS =====================
+   Fiel ao Figma: 3 colunas independentes. Cada coluna empilha
+   seus 2 cards com flexbox, sem se prender à altura dos cards
+   das colunas vizinhas — por isso o efeito escalonado (o card
+   de baixo começa logo após o de cima da MESMA coluna, e não
+   alinhado com os das outras colunas). */
+.inicio__grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.inicio__grid-col {
+  display: flex;
+  flex-direction: column;
+  gap: 28px;
+  min-width: 0;
+}
+
+.inicio__card {
+  background: #fff;
+  border: 1px solid rgba(0, 0, 0, 0.02);
+  border-radius: 14px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.03), 0 10px 24px rgba(20, 20, 20, 0.045);
+}
+
+.inicio__card--compact {
+  align-self: stretch;
+}
+
+.inicio__card-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2px;
+}
+
+.inicio__card-title {
+  margin: 0 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.inicio__card-head .inicio__card-title {
+  margin-bottom: 0;
+}
+
+.inicio__card-footnote {
+  display: block;
+  margin-top: 10px;
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+  text-align: center;
+}
+
+.inicio__card-footnote--toggle {
+  width: 100%;
+  border: none;
+  background: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.inicio__card-footnote--toggle:hover {
+  color: var(--intelbras-verde);
+}
+
+/* Listas genéricas (canais / atividades / avisos) */
+.inicio__list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inicio__type-icon {
+  flex-shrink: 0;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inicio__type-icon svg {
+  width: 17px;
+  height: 17px;
+}
+
+.inicio__type-icon--video   { background: #E8F0FE; color: #3B82F6; }
+.inicio__type-icon--doc     { background: #F1ECFB; color: #8B5CF6; }
+.inicio__type-icon--sheet   { background: #E7F7EE; color: #00A859; }
+.inicio__type-icon--pdf     { background: #FDEDED; color: #EF4444; }
+.inicio__type-icon--comment { background: #E8F0FE; color: #3B82F6; }
+.inicio__type-icon--share   { background: #E5F8F6; color: #0D9488; }
+.inicio__type-icon--mention { background: #F1ECFB; color: #8B5CF6; }
+.inicio__type-icon--channel { background: #E5F8F6; color: #0D9488; }
+.inicio__type-icon--home    { background: #E7F7EE; color: #00A859; }
+.inicio__type-icon--survey  { background: #FEF5E7; color: #F59E0B; }
+
+/* Canais em destaque */
+.inicio__channel-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 8px 4px;
+  border-radius: 8px;
+}
+
+.inicio__channel-row:hover {
+  background: #F8F8F9;
+}
+
+.inicio__row-main {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.inicio__row-title {
+  font-size: 13.5px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inicio__row-meta {
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+}
+
+.inicio__row-time {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+  white-space: nowrap;
+}
+
+.inicio__row-menu {
+  flex-shrink: 0;
+  border: none;
+  background: transparent;
+  color: var(--intelbras-cinza);
+  font-size: 16px;
+  line-height: 1;
+  width: 24px;
+  height: 24px;
+  border-radius: 6px;
+  cursor: pointer;
+}
+
+.inicio__row-menu:hover {
+  background: #EFEFEF;
+  color: var(--intelbras-preto);
+}
+
+/* Atividades recentes */
+.inicio__activity-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 4px;
+  border-radius: 8px;
+}
+
+.inicio__activity-row:hover {
+  background: #F8F8F9;
+}
+
+.inicio__row-avatar {
+  flex-shrink: 0;
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  background: #F0F0F0;
+  color: var(--intelbras-cinza);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: -4px;
+}
+
+.inicio__row-avatar svg {
+  width: 15px;
+  height: 15px;
+}
+
+.inicio__activity-row .inicio__row-title {
+  font-size: 13px;
+  font-weight: 600;
+  white-space: normal;
+  line-height: 1.4;
+}
+
+.inicio__activity-row .inicio__row-title strong {
+  font-weight: 700;
+}
+
+/* "Geral" sempre na linha de baixo, sozinho (igual aos outros itens:
+   "Projeto Nova Sede", "Marketing", "Suporte Interno"), tanto com o
+   menu "Todas categorias" aberto quanto fechado. O <br> dentro do
+   HTML só precisa estar visível o tempo todo. */
+.inicio__row-break {
+  display: block;
+}
+
+.inicio__status-dot {
+  flex-shrink: 0;
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--intelbras-verde);
+}
+
+/* Agenda do dia */
+.inicio__agenda-data {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--intelbras-cinza);
+}
+
+.inicio__agenda-list {
+  list-style: none;
+  margin: 0 0 4px;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inicio__agenda-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--content-border);
+  cursor: pointer;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.inicio__agenda-item[hidden] {
+  display: none;
+}
+
+.inicio__agenda-item:hover {
+  border-color: var(--intelbras-verde);
+}
+
+.inicio__agenda-item--current {
+  background: var(--intelbras-verde-100);
+  border-color: transparent;
+}
+
+.inicio__agenda-item--current:hover {
+  border-color: transparent;
+}
+
+.inicio__agenda-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.inicio__agenda-title {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.inicio__agenda-hora {
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+}
+
+.inicio__agenda-entrar {
+  display: none;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 999px;
+  background: var(--intelbras-verde);
+  color: #fff;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 700;
+  padding: 7px 16px;
+  cursor: pointer;
+}
+
+.inicio__agenda-item--current .inicio__agenda-entrar {
+  display: inline-block;
+}
+
+.inicio__agenda-entrar:hover {
+  background: var(--intelbras-verde-escuro);
+}
+
+/* Equipes favoritas */
+.inicio__chip-row {
+  display: flex;
+  flex-wrap: nowrap;
+  gap: 8px;
+}
+
+.inicio__chip {
+  flex: 1 1 auto;
+  min-width: 0;
+  padding: 7px 14px;
+  border-radius: 999px;
+  background: #F5F5F5;
+  color: var(--intelbras-preto);
+  font-size: 12.5px;
+  font-weight: 700;
+  text-decoration: none;
+  text-align: center;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  transition: font-size 0.15s ease, padding 0.15s ease;
+}
+
+/* Quando o menu "Todas categorias" abre e a coluna fica mais
+   estreita, os chips encolhem (padding/fonte menores) para
+   continuar cabendo todos em uma única linha, sem scroll. */
+body.sidebar-open .inicio__chip {
+  padding: 6px 8px;
+  font-size: 11px;
+}
+
+.inicio__chip:hover {
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde-escuro);
+}
+
+/* Atalhos rápidos */
+.inicio__shortcut-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 8px;
+}
+
+.inicio__shortcut-tile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding: 14px 6px;
+  border-radius: 10px;
+  border: 1px solid var(--content-border);
+  color: var(--intelbras-preto);
+  font-size: 11px;
+  font-weight: 700;
+  text-align: center;
+  text-decoration: none;
+}
+
+.inicio__shortcut-tile:hover {
+  border-color: var(--intelbras-verde);
+  background: var(--intelbras-verde-100);
+}
+
+.inicio__shortcut-icon {
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  background: #F0F0F0;
+  color: var(--intelbras-cinza);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inicio__shortcut-icon svg {
+  width: 16px;
+  height: 16px;
+}
+
+.inicio__shortcut-tile:hover .inicio__shortcut-icon {
+  background: #fff;
+  color: var(--intelbras-verde);
+}
+
+/* Avisos importantes */
+.inicio__notice-row {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 8px 4px;
+  border-radius: 8px;
+}
+
+.inicio__notice-row:hover {
+  background: #F8F8F9;
+}
+
+.inicio__row-desc {
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+  line-height: 1.4;
+}
+
+.inicio__notice-row .inicio__row-time {
+  margin-top: 2px;
+}

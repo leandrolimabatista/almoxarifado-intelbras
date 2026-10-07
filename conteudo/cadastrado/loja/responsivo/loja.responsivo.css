@@ -1,0 +1,57 @@
+/* ============================================================
+   CONTEÚDO — Loja (área CADASTRADO) — Estilos responsivos
+   Grid: 6 colunas (desktop) -> 4 -> 3 -> 2 -> 1 (mobile)
+============================================================= */
+
+/* Telas grandes: já é 6 no loja.css. Reduz a partir daqui. */
+@media (max-width: 1400px) {
+  .loja__grid { grid-template-columns: repeat(4, 1fr); }
+}
+
+@media (max-width: 1180px) {
+  body.sidebar-open .loja__grid { grid-template-columns: repeat(3, 1fr); }
+}
+
+@media (max-width: 860px) {
+
+  .loja__main { padding: 20px 16px 48px; }
+  .loja__grid { grid-template-columns: repeat(3, 1fr); }
+
+  .loja__page-head { align-items: flex-start; }
+  .loja__page-head-actions { width: 100%; justify-content: space-between; }
+  .loja__ordenar { flex: 1; }
+  .loja__page-head-actions .seletor { flex: 1; min-width: 0; }
+}
+
+@media (max-width: 680px) {
+  .loja__grid { grid-template-columns: repeat(2, 1fr); }
+  .loja__filtros { flex-direction: column; }
+  .loja__cat-wrap { width: 100%; }
+  .loja__cat-btn { width: 100%; justify-content: space-between; padding: 11px 14px; }
+  .loja__cat-panel { left: 0; right: 0; width: auto; }
+}
+
+@media (max-width: 480px) {
+  .loja__grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
+  .loja__page-head-title h1 { font-size: 19px; }
+  .loja__saldo-pill { font-size: 11.5px; }
+  .loja__drawer { width: 100%; max-width: 100%; }
+}
+
+@media (max-width: 360px) {
+  .loja__grid { grid-template-columns: 1fr; }
+}
+
+/* ---------------- Compra: checkout ---------------- */
+@media (max-width: 980px) {
+  .lck__wrap { grid-template-columns: 1fr; }
+  .lck__resumo { position: static; order: -1; }
+}
+@media (max-width: 560px) {
+  .lck__card { padding: 18px 16px; }
+  .lck__row--num { grid-template-columns: 1fr 100px; }
+}
+@media (max-width: 420px) {
+  .lck__row { grid-template-columns: 1fr; gap: 0; }
+  .lck__row--num { grid-template-columns: 1fr 96px; gap: 10px; }
+}

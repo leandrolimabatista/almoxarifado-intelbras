@@ -1,0 +1,51 @@
+/* ============================================================
+   CONTEÚDO — Início (área CADASTRADO) — Estilos responsivos
+============================================================= */
+
+@media (max-width: 1180px) {
+  /* Com 3 colunas independentes (cada uma com 2 cards), uma
+     grade 2x2 deixaria a 3ª coluna sozinha e desalinhada —
+     por isso empilha tudo em coluna única já a partir daqui;
+     dentro de cada .inicio__grid-col os 2 cards continuam
+     colados um no outro, igual ao Figma. */
+  .inicio__grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 860px) {
+  body.sidebar-open .inicio__sidebar {
+    width: 200px;
+  }
+  .inicio__shortcut-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+/* ===================== BEM-VINDO + BOTÕES (título/ações) ===================== */
+@media (max-width: 600px) {
+  .inicio__header-row {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .inicio__actions {
+    width: 100%;
+  }
+
+  .inicio__btn {
+    flex: 1 1 0;
+    justify-content: center;
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .inicio__actions {
+    flex-direction: column;
+  }
+
+  .inicio__btn {
+    width: 100%;
+  }
+}

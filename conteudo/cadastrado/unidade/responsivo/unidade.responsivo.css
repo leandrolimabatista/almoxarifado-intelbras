@@ -1,0 +1,92 @@
+/* ============================================================
+   CONTEÚDO — Unidade (área CADASTRADO) — Estilos responsivos
+============================================================= */
+
+@media (max-width: 1180px) {
+  /* Sem espaço para duas colunas: "Localização" vem logo depois do
+     card principal e o resto empilha em coluna única. */
+  .unidade__grid {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "hero"
+      "mapa"
+      "info"
+      "contatos"
+      "avisos";
+  }
+
+  .unidade__mapa-box {
+    flex: none;
+    height: 300px;
+    min-height: 0;
+  }
+}
+
+@media (max-width: 1020px) {
+  .unidade__tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+/* Card estreito (ex.: menu lateral aberto em tela de ~1440px): 4 tiles
+   lado a lado ficariam apertados demais, então passam para 2 por linha. */
+@container (max-width: 700px) {
+  .unidade__tiles {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@container (max-width: 400px) {
+  .unidade__tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}
+
+@media (max-width: 860px) {
+  .unidade__main {
+    padding: 24px 20px 40px;
+  }
+}
+
+@media (max-width: 560px) {
+  .unidade__main {
+    padding: 20px 16px 32px;
+  }
+
+  .unidade__card {
+    padding: 16px;
+  }
+
+  .unidade__hero {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+    padding: 20px 16px;
+  }
+
+  .unidade__hero-icon {
+    width: 84px;
+    height: 84px;
+  }
+
+  .unidade__hero-icon .unidade__ic {
+    width: 38px;
+    height: 38px;
+  }
+
+  .unidade__hero-nome {
+    font-size: 19px;
+  }
+
+  .unidade__hero-lista li {
+    align-items: flex-start;
+  }
+
+  .unidade__tiles {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .unidade__mapa-box {
+    height: 240px;
+  }
+}

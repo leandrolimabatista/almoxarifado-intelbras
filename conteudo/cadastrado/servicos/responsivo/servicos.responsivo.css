@@ -1,0 +1,13 @@
+/* ============================================================
+   CONTEÚDO — Serviços (área CADASTRADO) — Estilos responsivos
+============================================================= */
+@media (max-width: 1280px) { .servicos__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
+
+@media (max-width: 960px) { .servicos__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+
+@media (max-width: 560px) {
+  .servicos__main { padding: 24px 20px 40px; }
+  .servicos__grid { grid-template-columns: 1fr; }
+  .servicos__card { min-height: 0; }
+}

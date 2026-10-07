@@ -1,0 +1,68 @@
+/* ============================================================
+   CONTEÚDO — Serviços (área CADASTRADO)
+   Catálogo de serviços Google. O menu lateral reutiliza as
+   classes .inicio__* (inicio.css); aqui só o conteúdo principal.
+============================================================= */
+:root {
+  --intelbras-verde: #00A859;
+  --intelbras-verde-escuro: #007A40;
+  --intelbras-preto: #1A1A1A;
+  --intelbras-cinza: #6B6B6B;
+  --content-bg: #F4F5F7;
+}
+
+.servicos {
+  display: flex;
+  align-items: stretch;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  background: var(--content-bg);
+  min-height: calc(100vh - 73px);
+}
+
+.servicos__main { flex: 1; min-width: 0; padding: 28px 32px 48px; }
+
+.servicos__title {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 26px; font-weight: 700;
+  color: var(--intelbras-preto);
+  margin: 0 0 6px;
+}
+.servicos__subtitle { margin: 0 0 36px; font-size: 14px; color: var(--intelbras-cinza); }
+
+.servicos__section + .servicos__section { margin-top: 32px; }
+.servicos__section-title { font-size: 15px; font-weight: 800; color: var(--intelbras-preto); margin: 0 0 14px; }
+
+.servicos__grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 20px; }
+
+.servicos__card {
+  position: relative;
+  display: flex; flex-direction: column; justify-content: space-between; gap: 22px;
+  min-height: 168px;
+  padding: 26px 24px 20px;
+  background: #fff;
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, .08), 0 4px 12px rgba(0, 0, 0, .04);
+  transition: transform .15s ease, box-shadow .15s ease;
+}
+.servicos__card:hover { transform: translateY(-2px); box-shadow: 0 2px 6px rgba(0, 0, 0, .1), 0 10px 22px rgba(0, 0, 0, .08); }
+
+.servicos__card-head { display: flex; align-items: flex-start; gap: 16px; }
+.servicos__icon { width: 48px; height: 48px; flex-shrink: 0; }
+.servicos__icon img { width: 100%; height: 100%; display: block; object-fit: contain; }
+.servicos__icon--vazio { background: #ECECEC; border-radius: 10px; }
+.servicos__icon--vazio img { visibility: hidden; }
+.servicos__name { font-size: 15px; font-weight: 700; color: var(--intelbras-preto); margin: 2px 0 6px; }
+.servicos__desc { font-size: 12.5px; line-height: 1.5; color: var(--intelbras-cinza); margin: 0; }
+
+/* Link "Abrir": o ::after estica a área clicável para o card inteiro */
+.servicos__abrir {
+  align-self: flex-start;
+  display: inline-flex; align-items: center; gap: 6px;
+  font-size: 13.5px; font-weight: 700;
+  color: var(--intelbras-verde); text-decoration: none;
+}
+.servicos__abrir::after { content: ''; position: absolute; inset: 0; border-radius: 10px; }
+.servicos__abrir svg { width: 13px; height: 13px; }
+.servicos__card:hover .servicos__abrir { color: var(--intelbras-verde-escuro); }
+.servicos__abrir:focus-visible { outline: none; }
+.servicos__abrir:focus-visible::after { outline: 2px solid var(--intelbras-verde); outline-offset: 2px; }

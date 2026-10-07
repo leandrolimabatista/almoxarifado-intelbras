@@ -1,0 +1,1220 @@
+/* ============================================================
+   CONTEÚDO — Inteligência Artificial (área CADASTRADO)
+   Chat + painel (Recursos da IA / Conversas recentes).
+   O menu lateral usa as classes .inicio__* (inicio.css); aqui
+   ficam só os estilos exclusivos desta página.
+   Os tokens --intelbras-* vêm do :root do inicio.css.
+============================================================= */
+
+.inteligencia-artificial {
+  /* Tokens exclusivos desta página */
+  --ia-verde-texto: var(--intelbras-verde-escuro); /* texto/links verdes pequenos (AA) */
+  --ia-sombra-card: 0 1px 2px rgba(20, 20, 20, 0.03), 0 10px 24px rgba(20, 20, 20, 0.045);
+  --ia-bolha-usuario: #00874A; /* verde da pergunta (branco sobre ele: contraste 4,6:1, AA) */
+  --ia-erro: #B42318;
+  --ia-erro-fundo: #FEF3F2;
+  --ia-erro-borda: #FECDCA;
+  --ia-roxo: #7C3AED;
+  --ia-roxo-fundo: #F1EAFE;
+  --ia-laranja: #EA7A0C;
+  --ia-laranja-fundo: #FFF1E0;
+  --ia-azul: #2563EB;
+  --ia-azul-fundo: #E5EEFF;
+  --ia-topo: 73px;      /* altura do cabeçalho do site */
+  --ia-respiro: 28px;   /* padding vertical do <main> */
+
+  display: flex;
+  align-items: stretch;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  color: var(--intelbras-preto);
+  background:
+    radial-gradient(560px 320px at 8% 0%, rgba(0, 168, 89, 0.06), transparent 65%),
+    radial-gradient(620px 360px at 100% 30%, rgba(0, 168, 89, 0.05), transparent 60%),
+    var(--content-bg);
+  min-height: calc(100vh - var(--ia-topo));
+}
+
+.inteligencia-artificial button,
+.inteligencia-artificial textarea,
+.inteligencia-artificial input {
+  font-family: inherit;
+}
+
+.inteligencia-artificial :focus-visible {
+  outline: 2px solid var(--intelbras-verde);
+  outline-offset: 2px;
+}
+
+.inteligencia-artificial__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===================== GRADE PRINCIPAL ===================== */
+.inteligencia-artificial__main {
+  flex: 1;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 340px;
+  gap: 24px;
+  align-items: start;
+  padding: var(--ia-respiro) 32px;
+}
+
+/* ===================== CARD DO CHAT ===================== */
+.inteligencia-artificial__chat {
+  display: flex;
+  flex-direction: column;
+  background: #fff;
+  border: 1px solid var(--content-border);
+  border-radius: 16px;
+  box-shadow: var(--ia-sombra-card);
+  position: relative; /* ancora a área de "soltar arquivos" */
+  min-width: 0;
+  min-height: 520px;
+  height: calc(100vh - var(--ia-topo) - var(--ia-respiro) * 2);
+  height: calc(100dvh - var(--ia-topo) - var(--ia-respiro) * 2);
+  overflow: hidden;
+}
+
+.inteligencia-artificial__chat-header {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  padding: 18px 24px;
+  border-bottom: 1px solid var(--content-border);
+  flex-shrink: 0;
+}
+
+.inteligencia-artificial__logo {
+  display: inline-flex;
+  width: 44px;
+  height: 44px;
+  flex-shrink: 0;
+  color: var(--intelbras-verde);
+}
+
+.inteligencia-artificial__logo-svg {
+  width: 100%;
+  height: 100%;
+}
+
+.inteligencia-artificial__chat-titulos {
+  flex: 1;
+  min-width: 0;
+}
+
+.inteligencia-artificial__titulo {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 20px;
+  font-weight: 700;
+  margin: 0 0 2px;
+}
+
+.inteligencia-artificial__subtitulo {
+  margin: 0;
+  font-size: 13px;
+  color: var(--intelbras-cinza);
+}
+
+.inteligencia-artificial__btn-nova {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--intelbras-verde);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ia-verde-texto);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.15s;
+}
+
+.inteligencia-artificial__btn-nova:hover {
+  background: var(--intelbras-verde-100);
+}
+
+.inteligencia-artificial__btn-nova svg {
+  width: 20px;
+  height: 20px;
+}
+
+.inteligencia-artificial__offline {
+  flex-shrink: 0;
+  padding: 8px 24px;
+  background: #FFF7E6;
+  border-bottom: 1px solid #FDE2A8;
+  color: #8A5A00;
+  font-size: 13px;
+  text-align: center;
+}
+
+.inteligencia-artificial__offline[hidden] {
+  display: none;
+}
+
+/* ===================== ÁREA DE MENSAGENS ===================== */
+.inteligencia-artificial__mensagens {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  padding: 24px 32px;
+  scroll-behavior: smooth;
+}
+
+.inteligencia-artificial__inicial {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.inteligencia-artificial__inicial[hidden],
+.inteligencia-artificial__lista[hidden] {
+  display: none;
+}
+
+.inteligencia-artificial__lista {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+}
+
+/* Mensagem (avatar + balão) */
+.inteligencia-artificial__msg {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  max-width: 100%;
+}
+
+.inteligencia-artificial__msg--usuario {
+  flex-direction: row-reverse;
+}
+
+.inteligencia-artificial__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border-radius: 50%;
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde);
+}
+
+.inteligencia-artificial__avatar svg {
+  width: 22px;
+  height: 22px;
+}
+
+.inteligencia-artificial__conteudo {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+  max-width: min(680px, 85%);
+}
+
+.inteligencia-artificial__msg--usuario .inteligencia-artificial__conteudo {
+  align-items: flex-end;
+}
+
+.inteligencia-artificial__balao {
+  background: #fff;
+  border: 1px solid var(--content-border);
+  border-radius: 12px;
+  padding: 14px 18px;
+  font-size: 14.5px;
+  line-height: 1.55;
+  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.04), 0 6px 16px rgba(20, 20, 20, 0.05);
+  overflow-wrap: anywhere;
+}
+
+.inteligencia-artificial__balao p {
+  margin: 0 0 10px;
+}
+
+.inteligencia-artificial__balao p:last-of-type {
+  margin-bottom: 8px;
+}
+
+/* Texto puro com quebras de linha preservadas (Fase 1) */
+.inteligencia-artificial__texto {
+  margin: 0;
+  white-space: pre-wrap;
+}
+
+.inteligencia-artificial__msg--usuario .inteligencia-artificial__balao {
+  background: var(--ia-bolha-usuario);
+  border-color: var(--ia-bolha-usuario);
+  color: #fff;
+  border-bottom-right-radius: 4px;
+}
+
+.inteligencia-artificial__msg--ia .inteligencia-artificial__balao {
+  border-top-left-radius: 4px;
+}
+
+.inteligencia-artificial__msg--erro .inteligencia-artificial__balao {
+  background: var(--ia-erro-fundo);
+  border-color: var(--ia-erro-borda);
+  color: var(--ia-erro);
+}
+
+.inteligencia-artificial__msg--erro .inteligencia-artificial__avatar {
+  background: var(--ia-erro-fundo);
+  color: var(--ia-erro);
+}
+
+.inteligencia-artificial__hora {
+  display: block;
+  font-size: 11px;
+  color: var(--intelbras-cinza);
+}
+
+.inteligencia-artificial__balao .inteligencia-artificial__hora {
+  margin-top: 6px;
+}
+
+.inteligencia-artificial__meta {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 0 4px;
+  font-size: 11px;
+  color: var(--intelbras-cinza);
+}
+
+.inteligencia-artificial__msg--usuario .inteligencia-artificial__meta {
+  flex-direction: row-reverse;
+}
+
+/* Copiar: a área do hover fica toda abaixo do balão (antes subia 8px e
+   invadia a caixa da pergunta) */
+.inteligencia-artificial__meta {
+  margin-top: 4px;
+}
+
+.inteligencia-artificial__meta .inteligencia-artificial__mini {
+  min-height: 32px;
+  margin: -4px 0;
+}
+
+/* Botões de texto dentro de mensagens (copiar / tentar novamente) */
+.inteligencia-artificial__mini {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 40px;
+  padding: 0 10px;
+  margin: -8px 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--intelbras-cinza);
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.inteligencia-artificial__mini:hover {
+  background: #F3F4F6;
+  color: var(--intelbras-preto);
+}
+
+.inteligencia-artificial__mini svg {
+  width: 16px;
+  height: 16px;
+}
+
+.inteligencia-artificial__mini--erro {
+  margin: 4px 0 -8px;
+  padding: 0 12px;
+  border: 1px solid var(--ia-erro-borda);
+  background: #fff;
+  color: var(--ia-erro);
+}
+
+.inteligencia-artificial__mini--erro:hover {
+  background: var(--ia-erro-fundo);
+  color: var(--ia-erro);
+}
+
+/* Separador de data ("Hoje", "Ontem", "dd/mm") */
+.inteligencia-artificial__data {
+  align-self: center;
+  padding: 4px 12px;
+  border-radius: 999px;
+  background: #F3F4F6;
+  color: var(--intelbras-cinza);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+/* Indicador "pensando" (3 pontos em onda) */
+.inteligencia-artificial__digitando {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 8px 4px;
+}
+
+.inteligencia-artificial__digitando span[aria-hidden] {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--intelbras-verde);
+  opacity: 0.35;
+  animation: ia-pulso 1.2s infinite ease-in-out;
+}
+
+/* O 1º filho é o texto para leitores de tela; os pontos são o 2º, 3º e 4º */
+.inteligencia-artificial__digitando span[aria-hidden]:nth-child(3) { animation-delay: 0.15s; }
+.inteligencia-artificial__digitando span[aria-hidden]:nth-child(4) { animation-delay: 0.3s; }
+
+@keyframes ia-pulso {
+  0%, 60%, 100% { transform: translateY(0) scale(0.85); opacity: 0.35; }
+  30% { transform: translateY(-5px) scale(1); opacity: 1; }
+}
+
+/* Resposta sendo digitada: cursor piscando no fim do texto */
+.inteligencia-artificial__texto--digitando::after {
+  content: '';
+  display: inline-block;
+  width: 2px;
+  height: 1.05em;
+  margin-left: 2px;
+  vertical-align: text-bottom;
+  background: var(--intelbras-verde);
+  animation: ia-cursor 0.9s steps(1) infinite;
+}
+
+@keyframes ia-cursor {
+  0%, 50% { opacity: 1; }
+  50.01%, 100% { opacity: 0; }
+}
+
+/* Hora e "Copiar" só aparecem quando terminou de digitar (mantém o espaço) */
+.inteligencia-artificial__meta--oculta {
+  visibility: hidden;
+}
+
+/* ===================== SUGESTÕES ===================== */
+.inteligencia-artificial__sugestoes {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  width: 100%;
+  max-width: 780px;
+  margin: auto auto 0;
+}
+
+.inteligencia-artificial__sugestao {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+  min-height: 64px;
+  padding: 14px 18px;
+  border: 1px solid var(--content-border);
+  border-radius: 12px;
+  background: #fff;
+  color: var(--intelbras-preto);
+  font-size: 14px;
+  text-align: left;
+  cursor: pointer;
+  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.03), 0 4px 12px rgba(20, 20, 20, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s, transform 0.15s;
+}
+
+.inteligencia-artificial__sugestao:hover {
+  border-color: var(--intelbras-verde);
+  box-shadow: 0 6px 16px rgba(0, 168, 89, 0.12);
+  transform: translateY(-1px);
+}
+
+.inteligencia-artificial__sugestao-icone,
+.inteligencia-artificial__recurso-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  color: var(--intelbras-verde);
+}
+
+.inteligencia-artificial__sugestao-icone {
+  width: 32px;
+  height: 32px;
+}
+
+.inteligencia-artificial__sugestao-icone svg {
+  width: 28px;
+  height: 28px;
+}
+
+.inteligencia-artificial__sugestao-icone--roxo,
+.inteligencia-artificial__recurso-icone--roxo  { color: var(--ia-roxo); }
+.inteligencia-artificial__sugestao-icone--laranja { color: var(--ia-laranja); }
+.inteligencia-artificial__sugestao-icone--azul,
+.inteligencia-artificial__recurso-icone--azul  { color: var(--ia-azul); }
+
+/* ===================== CAMPO DE ENTRADA ===================== */
+.inteligencia-artificial__entrada {
+  flex-shrink: 0;
+  padding: 8px 32px 14px;
+}
+
+.inteligencia-artificial__caixa {
+  max-width: 880px;
+  margin: 0 auto;
+  border: 1px solid #DADCE0;
+  border-radius: 14px;
+  background: #fff;
+  padding: 12px 14px 10px 16px;
+  box-shadow: 0 2px 8px rgba(20, 20, 20, 0.04);
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+.inteligencia-artificial__caixa:focus-within {
+  border-color: var(--intelbras-verde);
+  box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.15);
+}
+
+.inteligencia-artificial__campo {
+  display: block;
+  width: 100%;
+  min-height: 28px;
+  max-height: 144px; /* ~6 linhas */
+  padding: 0;
+  border: 0;
+  outline: none;
+  resize: none;
+  background: transparent;
+  color: var(--intelbras-preto);
+  font-size: 15px;
+  line-height: 24px;
+}
+
+.inteligencia-artificial__campo:focus,
+.inteligencia-artificial__campo:focus-visible {
+  /* O foco já é indicado pela borda/anel verde da caixa (:focus-within);
+     sem isto a regra global de :focus-visible desenha um 2º retângulo. */
+  outline: none;
+  box-shadow: none;
+}
+
+.inteligencia-artificial__campo::placeholder {
+  color: #767676;
+}
+
+.inteligencia-artificial__acoes {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.inteligencia-artificial__acao {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  min-height: 40px;
+  padding: 0 14px;
+  border: 1px solid var(--content-border);
+  border-radius: 8px;
+  background: #fff;
+  color: #4B4B4B;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: border-color 0.15s, box-shadow 0.15s;
+}
+
+/* Hover/foco do "Anexar": mesma borda verde (e anel) da caixa de mensagem */
+.inteligencia-artificial__acao:hover:not(:disabled),
+.inteligencia-artificial__acao:focus-visible:not(:disabled) {
+  border-color: var(--intelbras-verde);
+  box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.15);
+  outline: none;
+}
+
+.inteligencia-artificial__acao:disabled {
+  cursor: not-allowed;
+  opacity: 0.65;
+}
+
+.inteligencia-artificial__acao svg {
+  width: 18px;
+  height: 18px;
+}
+
+.inteligencia-artificial__enviar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  margin-left: auto;
+  border: 0;
+  border-radius: 10px;
+  background: var(--intelbras-verde);
+  color: #fff;
+  cursor: pointer;
+  transition: background 0.15s, opacity 0.15s;
+}
+
+.inteligencia-artificial__enviar:hover:not(:disabled) {
+  background: var(--intelbras-verde-escuro);
+}
+
+.inteligencia-artificial__enviar:disabled {
+  background: #B9E5CE;
+  cursor: not-allowed;
+}
+
+.inteligencia-artificial__enviar svg {
+  width: 22px;
+  height: 22px;
+}
+
+.inteligencia-artificial__enviar-parar {
+  display: none;
+}
+
+.inteligencia-artificial__enviar--parar .inteligencia-artificial__enviar-seta {
+  display: none;
+}
+
+.inteligencia-artificial__enviar--parar .inteligencia-artificial__enviar-parar {
+  display: block;
+}
+
+.inteligencia-artificial__aviso {
+  margin: 10px 0 0;
+  text-align: center;
+  font-size: 12px;
+  color: #6B6B6B;
+}
+
+/* ===================== PAINEL DIREITO ===================== */
+.inteligencia-artificial__painel {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+  min-width: 0;
+}
+
+.inteligencia-artificial__card {
+  background: #fff;
+  border: 1px solid var(--content-border);
+  border-radius: 14px;
+  padding: 22px 24px 24px;
+  box-shadow: var(--ia-sombra-card);
+}
+
+.inteligencia-artificial__card-titulo {
+  margin: 0 0 18px;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+/* Recursos da IA */
+.inteligencia-artificial__recursos {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inteligencia-artificial__recurso {
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+
+.inteligencia-artificial__recurso-icone {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+  background: var(--intelbras-verde-100);
+}
+
+.inteligencia-artificial__recurso-icone svg {
+  width: 22px;
+  height: 22px;
+}
+
+.inteligencia-artificial__recurso-icone--roxo { background: var(--ia-roxo-fundo); }
+.inteligencia-artificial__recurso-icone--azul { background: var(--ia-azul-fundo); }
+
+.inteligencia-artificial__recurso-textos {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+  font-size: 12.5px;
+  color: var(--intelbras-cinza);
+}
+
+.inteligencia-artificial__recurso-textos strong {
+  font-size: 14px;
+  color: var(--intelbras-preto);
+}
+
+/* ===================== CONVERSAS RECENTES ===================== */
+.inteligencia-artificial__recentes {
+  min-height: 24px;
+}
+
+.inteligencia-artificial__conversas {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.inteligencia-artificial__conversa {
+  position: relative;
+  display: flex;
+  align-items: center;
+  border-radius: 10px;
+}
+
+.inteligencia-artificial__conversa:hover {
+  background: #F7F8F9;
+}
+
+.inteligencia-artificial__conversa--ativa,
+.inteligencia-artificial__conversa--ativa:hover {
+  background: var(--intelbras-verde-100);
+}
+
+.inteligencia-artificial__conversa-abrir {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  min-height: 44px;
+  padding: 0 4px 0 10px;
+  border: 0;
+  border-radius: 10px;
+  background: transparent;
+  color: #3A3A3A;
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inteligencia-artificial__conversa--ativa .inteligencia-artificial__conversa-abrir {
+  color: var(--intelbras-preto);
+}
+
+.inteligencia-artificial__conversa-icone {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  color: #4B4B4B;
+}
+
+.inteligencia-artificial__conversa-icone--fixada {
+  color: var(--ia-verde-texto);
+}
+
+.inteligencia-artificial__conversa-titulo {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.inteligencia-artificial__conversa-data {
+  flex-shrink: 0;
+  font-size: 12px;
+  font-weight: 600;
+  color: #6B6B6B;
+}
+
+.inteligencia-artificial__conversa-editar {
+  flex: 1;
+  min-width: 0;
+  height: 36px;
+  margin: 0 8px 0 10px;
+  padding: 0 10px;
+  border: 1px solid var(--intelbras-verde);
+  border-radius: 8px;
+  font-size: 14px;
+  background: #fff;
+}
+
+.inteligencia-artificial__conversa-menu-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  flex-shrink: 0;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #4B4B4B;
+  cursor: pointer;
+  opacity: 0;
+}
+
+.inteligencia-artificial__conversa:hover .inteligencia-artificial__conversa-menu-btn,
+.inteligencia-artificial__conversa:focus-within .inteligencia-artificial__conversa-menu-btn,
+.inteligencia-artificial__conversa-menu-btn[aria-expanded="true"] {
+  opacity: 1;
+}
+
+@media (hover: none) {
+  .inteligencia-artificial__conversa-menu-btn { opacity: 1; }
+}
+
+.inteligencia-artificial__conversa-menu-btn:hover {
+  background: rgba(0, 0, 0, 0.06);
+}
+
+.inteligencia-artificial__conversa-menu-btn svg {
+  width: 20px;
+  height: 20px;
+}
+
+.inteligencia-artificial__menu {
+  position: absolute;
+  top: calc(100% - 4px);
+  right: 8px;
+  z-index: 20;
+  min-width: 170px;
+  padding: 6px;
+  border: 1px solid var(--content-border);
+  border-radius: 10px;
+  background: #fff;
+  box-shadow: 0 10px 28px rgba(20, 20, 20, 0.14);
+}
+
+.inteligencia-artificial__menu[hidden] {
+  display: none;
+}
+
+.inteligencia-artificial__menu-item {
+  display: block;
+  width: 100%;
+  min-height: 40px;
+  padding: 0 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--intelbras-preto);
+  font-size: 14px;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inteligencia-artificial__menu-item:hover,
+.inteligencia-artificial__menu-item:focus-visible {
+  background: #F3F4F6;
+}
+
+.inteligencia-artificial__menu-item--perigo {
+  color: var(--ia-erro);
+}
+
+.inteligencia-artificial__ver-todas {
+  display: inline-block;
+  margin-top: 14px;
+  padding: 10px 0;
+  border: 0;
+  background: transparent;
+  color: var(--ia-verde-texto);
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inteligencia-artificial__ver-todas:hover {
+  text-decoration: underline;
+}
+
+/* Estado vazio / erro */
+.inteligencia-artificial__estado {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 0;
+  color: #6B6B6B;
+  font-size: 13.5px;
+}
+
+.inteligencia-artificial__estado svg {
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  color: #A0A0A0;
+}
+
+.inteligencia-artificial__estado--erro {
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.inteligencia-artificial__tentar {
+  min-height: 40px;
+  padding: 0 16px;
+  border: 1px solid var(--intelbras-verde);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--ia-verde-texto);
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.inteligencia-artificial__aviso-lista {
+  margin-bottom: 12px;
+  font-size: 13px;
+  color: var(--ia-erro);
+}
+
+/* Skeleton de carregamento */
+.inteligencia-artificial__skeleton {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.inteligencia-artificial__skeleton span {
+  display: block;
+  height: 16px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #EEF0F2 25%, #F7F8F9 50%, #EEF0F2 75%);
+  background-size: 200% 100%;
+  animation: ia-brilho 1.4s infinite linear;
+}
+
+.inteligencia-artificial__skeleton span:nth-child(odd)  { width: 92%; }
+.inteligencia-artificial__skeleton span:nth-child(even) { width: 78%; }
+
+@keyframes ia-brilho {
+  from { background-position: 200% 0; }
+  to   { background-position: -200% 0; }
+}
+
+/* ===================== DIÁLOGO DE CONFIRMAÇÃO ===================== */
+.inteligencia-artificial__dialogo {
+  width: min(400px, calc(100vw - 32px));
+  padding: 24px;
+  border: 0;
+  border-radius: 14px;
+  box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  color: var(--intelbras-preto);
+}
+
+.inteligencia-artificial__dialogo::backdrop {
+  background: rgba(20, 20, 20, 0.45);
+}
+
+.inteligencia-artificial__dialogo-titulo {
+  margin: 0 0 8px;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 18px;
+}
+
+.inteligencia-artificial__dialogo-texto {
+  margin: 0 0 20px;
+  font-size: 14px;
+  color: var(--intelbras-cinza);
+  overflow-wrap: anywhere;
+}
+
+.inteligencia-artificial__dialogo-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 10px;
+}
+
+.inteligencia-artificial__dialogo-btn {
+  min-height: 40px;
+  padding: 0 18px;
+  border: 1px solid var(--intelbras-cinza-claro);
+  border-radius: 8px;
+  background: #fff;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+/* O <dialog> fica fora do bloco .inteligencia-artificial, onde --ia-erro é
+   definido; sem o valor de reserva o botão ficava transparente (texto branco
+   sobre fundo branco = "Excluir" invisível). */
+.inteligencia-artificial__dialogo-btn--perigo {
+  border-color: var(--ia-erro, #B42318);
+  background: var(--ia-erro, #B42318);
+  color: #fff;
+}
+
+.inteligencia-artificial__dialogo :focus-visible {
+  outline: 2px solid var(--intelbras-verde);
+  outline-offset: 2px;
+}
+
+/* ===================== MOVIMENTO REDUZIDO ===================== */
+@keyframes ia-respirar {
+  0%, 100% { opacity: 0.3; }
+  50% { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inteligencia-artificial__skeleton span {
+    animation: none;
+  }
+  /* Sem movimento: os pontos só "respiram" (opacidade), sem pular */
+  .inteligencia-artificial__digitando span[aria-hidden] {
+    animation: ia-respirar 1.4s infinite ease-in-out;
+  }
+  .inteligencia-artificial__texto--digitando::after { animation: none; }
+  .inteligencia-artificial__mensagens { scroll-behavior: auto; }
+  .inteligencia-artificial__sugestao { transition: none; }
+  .inteligencia-artificial__sugestao:hover { transform: none; }
+}
+
+/* ===================== ANEXOS (arquivo enviado com a mensagem) ===================== */
+
+/* Prévia acima do campo: chip do arquivo escolhido e/ou aviso de erro */
+.inteligencia-artificial__anexo-previa {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 10px;
+}
+
+.inteligencia-artificial__anexo-aviso {
+  flex-basis: 100%;
+  margin: 0;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--ia-erro);
+}
+
+/* Anexo (prévia e dentro do balão): cartão com tipo em cima e nome embaixo,
+   ou a própria imagem. */
+.inteligencia-artificial__anexo-chip {
+  position: relative;
+  display: inline-flex;
+  max-width: 100%;
+  color: var(--intelbras-preto);
+  text-decoration: none;
+}
+
+.inteligencia-artificial__anexo-chip--doc {
+  flex-direction: column;
+  justify-content: space-between;
+  box-sizing: border-box;
+  width: 124px;
+  height: 96px;
+  padding: 12px 14px;
+  border: 1px solid #E3E5E8;
+  border-radius: 14px;
+  background: #F4F5F7;
+  box-shadow: 0 1px 2px rgba(20, 20, 20, 0.05);
+  transition: border-color 0.15s;
+}
+
+a.inteligencia-artificial__anexo-chip--doc:hover {
+  border-color: var(--intelbras-verde);
+}
+
+.inteligencia-artificial__anexo-tipo {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--intelbras-cinza);
+}
+
+.inteligencia-artificial__anexo-nome {
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1.25;
+}
+
+.inteligencia-artificial__anexo-img {
+  display: block;
+  max-width: 100%;
+  border-radius: 14px;
+  background: #F4F5F7;
+}
+
+/* Prévia acima do campo: miniatura quadrada, do mesmo tamanho do cartão */
+.inteligencia-artificial__anexo-previa .inteligencia-artificial__anexo-img {
+  width: 96px;
+  height: 96px;
+  object-fit: cover;
+}
+
+/* Na mensagem: os anexos ficam FORA do balão, numa fileira acima dele, alinhados
+   à direita como a mensagem (quebram para a linha de baixo se não couberem).
+   Um anexo só: a imagem aparece inteira (sem cortar). */
+.inteligencia-artificial__anexos {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-bottom: 4px;
+}
+
+.inteligencia-artificial__anexos .inteligencia-artificial__anexo-img {
+  width: auto;
+  height: auto;
+  max-width: 320px; /* em px: com % o balão esticaria até a largura real da imagem */
+  max-height: 320px;
+  object-fit: contain;
+}
+
+/* Vários anexos na mesma mensagem: todos do mesmo tamanho, numa fileira
+   organizada (cartões de arquivo e imagens em quadrado). Clicar abre o original. */
+.inteligencia-artificial__anexos--varios .inteligencia-artificial__anexo-chip--doc {
+  width: 116px;
+  height: 112px;
+}
+
+.inteligencia-artificial__anexos--varios .inteligencia-artificial__anexo-nome {
+  -webkit-line-clamp: 3;
+  line-clamp: 3;
+}
+
+.inteligencia-artificial__anexos--varios .inteligencia-artificial__anexo-img {
+  width: 112px;
+  height: 112px;
+  max-width: none;
+  max-height: none;
+  object-fit: cover;
+}
+
+@media (max-width: 480px) {
+  .inteligencia-artificial__anexos:not(.inteligencia-artificial__anexos--varios) .inteligencia-artificial__anexo-img {
+    max-width: 220px;
+  }
+}
+
+/* Botão de remover (X) no canto do cartão/miniatura */
+.inteligencia-artificial__anexo-remover {
+  position: absolute;
+  top: 6px;
+  right: 6px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(26, 26, 26, 0.72);
+  color: #fff;
+  cursor: pointer;
+}
+
+.inteligencia-artificial__anexo-remover:hover {
+  background: rgba(26, 26, 26, 0.9);
+}
+
+.inteligencia-artificial__anexo-remover svg {
+  width: 12px;
+  height: 12px;
+}
+
+
+/* ===================== ARRASTAR E SOLTAR ARQUIVOS ===================== */
+/* Cobre o card do chat enquanto um arquivo é arrastado sobre ele.
+   pointer-events: none -> os eventos de arrastar continuam chegando no card. */
+.inteligencia-artificial__soltar {
+  position: absolute;
+  inset: 0;
+  z-index: 20;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  background: rgba(231, 247, 238, 0.92);
+  border: 2px dashed var(--intelbras-verde);
+  border-radius: 16px;
+  pointer-events: none;
+  animation: ia-soltar-entrada 0.14s ease-out;
+}
+
+.inteligencia-artificial__soltar[hidden] {
+  display: none;
+}
+
+.inteligencia-artificial__soltar-caixa {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  max-width: 360px;
+  text-align: center;
+  color: var(--ia-verde-texto);
+}
+
+.inteligencia-artificial__soltar-caixa svg {
+  width: 44px;
+  height: 44px;
+  padding: 10px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: var(--ia-sombra-card);
+}
+
+.inteligencia-artificial__soltar-titulo {
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.inteligencia-artificial__soltar-dica {
+  font-size: 13px;
+  line-height: 1.4;
+  color: #4b5b52;
+}
+
+@keyframes ia-soltar-entrada {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inteligencia-artificial__soltar { animation: none; }
+}

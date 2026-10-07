@@ -1,0 +1,474 @@
+<?php
+// ============================================================
+// CONTEÚDO — Usuários (área CADASTRADO, ADMIN)
+// Componente incluído dentro de <main> no index.php quando o
+// usuário está logado. Não contém <html>/<head>/<body> — só o
+// conteúdo em si.
+//
+// Acesso restrito ao usuário id 1 (Administrador). O item de
+// menu correspondente já só aparece pra ele (ver o bloco
+// "<?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1)" no
+// <nav> de cada página), mas a rota é checada de novo aqui —
+// entrar direto por index.php?pagina=usuarios sem ser o admin
+// não deve funcionar.
+//
+// Gerencia tb_usuarios (Unidade/Equipe/status) e
+// tb_solicitacoes_acesso (aceitar/recusar pedidos vindos do
+// formulário "Cadastre-se" do cabeçalho). Ver
+// database/usuarios_admin.sql e api/usuarios/*.php.
+// ============================================================
+require_once __DIR__ . '/../../../../api/conexao.php';
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+
+$usrEhAdmin = ((int)($_SESSION['usuario_id'] ?? 0) === 1);
+
+if ($usrEhAdmin) {
+    if (empty($_SESSION['csrf_usuarios'])) {
+        $_SESSION['csrf_usuarios'] = bin2hex(random_bytes(32));
+    }
+    $usrCsrf = (string)$_SESSION['csrf_usuarios'];
+} else {
+    $usrCsrf = '';
+}
+?>
+<link rel="stylesheet" href="conteudo/cadastrado/usuarios/css/usuarios.css?v=3">
+<link rel="stylesheet" href="conteudo/cadastrado/usuarios/responsivo/usuarios.responsivo.css?v=2">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
+
+<div class="usuarios">
+
+  <aside class="inicio__sidebar" id="sidebar">
+    <nav class="inicio__nav">
+      <a href="index.php?pagina=inicio" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-5a1 1 0 011-1h2a1 1 0 011 1v5h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Início</span>
+      </a>
+      <a href="index.php?pagina=servicos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Serviços</span>
+      </a>
+      <a href="index.php?pagina=inteligencia-artificial" class="inicio__nav-item">
+        <svg class="inicio__icon inicio__icon--ia" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.6 4.6H6.5A3.9 3.9 0 0 0 2.6 8.5V17.5A3.9 3.9 0 0 0 6.5 21.4H14.5A3.9 3.9 0 0 0 18.4 17.5V9.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <text x="10.4" y="17.5" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="10.8" fill="currentColor" text-anchor="middle">IA</text>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(17.4 3.6) scale(0.34) translate(-12 -12)"/>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(21 6.6) scale(0.16) translate(-12 -12)"/>
+        </svg>
+        <span>Inteligência Artificial</span>
+      </a>
+      <a href="index.php?pagina=documentos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Documentos</span>
+      </a>
+      <a href="index.php?pagina=unidade" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 20.5V6l7-2.5 7 2.5v14.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 20.5v-5h6v5M9 9.5h.01M12 9.5h.01M15 9.5h.01M9 13h.01M12 13h.01M15 13h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Unidade</span>
+      </a>
+      <a href="index.php?pagina=chamadas" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chamadas</span>
+      </a>
+      <a href="index.php?pagina=cursos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L12 4l9.5 4.5L12 13 2.5 8.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 10.7v4.3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>Cursos</span>
+      </a>
+      <a href="index.php?pagina=loja" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/><path d="M3 4h2l2.2 11.2a1.5 1.5 0 001.5 1.3h7.6a1.5 1.5 0 001.47-1.2L19.5 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Loja</span>
+      </a>
+      <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
+      <a href="index.php?pagina=usuarios" class="inicio__nav-item inicio__nav-item--active">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Usuários</span>
+      </a>
+      <?php endif; ?>
+    </nav>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">EQUIPES</span>
+      <div class="inicio__channel-list">
+        <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
+          <span class="inicio__channel-dot" style="background:#00A859"></span>
+          <span>Geral</span>
+          <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
+          <span class="inicio__channel-dot" style="background:#3B82F6"></span>
+          <span>Projetos</span>
+          <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
+          <span class="inicio__channel-dot" style="background:#F59E0B"></span>
+          <span>Marketing</span>
+          <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
+          <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
+          <span>RH</span>
+          <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
+          <span class="inicio__channel-dot" style="background:#EC4899"></span>
+          <span>Financeiro</span>
+          <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
+          <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
+          <span>TI</span>
+          <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
+          <span class="inicio__channel-dot" style="background:#EF4444"></span>
+          <span>SAC / Ouvidoria</span>
+          <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
+        </a>
+      </div>
+      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
+    </div>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">ATALHOS</span>
+      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Nova conversa</span>
+      </a>
+      <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>Agendar reunião</span>
+      </a>
+    </div>
+
+    <button class="inicio__collapse" id="btnRecolher" aria-label="Fechar menu">
+      <span>«</span> Recolher
+    </button>
+  </aside>
+
+  <main class="usuarios__main">
+    <?php if (!$usrEhAdmin): ?>
+      <div class="usuarios__empty">
+        <span class="usuarios__empty-icon" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </span>
+        <h1 class="usuarios__empty-title">Acesso restrito</h1>
+        <p class="usuarios__empty-text">Esta área é exclusiva do administrador do portal.</p>
+        <a href="index.php?pagina=inicio" class="usuarios__empty-back">Voltar para o Início</a>
+      </div>
+    <?php else: ?>
+
+    <div class="usuarios__raiz" id="usuariosRaiz" data-csrf="<?php echo htmlspecialchars($usrCsrf, ENT_QUOTES, 'UTF-8'); ?>">
+
+      <!-- ===================== VISÃO 1: PAINEL (visão inicial) ===================== -->
+      <section class="usuarios__view" id="viewPainel" data-view="painel">
+        <div class="usuarios__topo">
+          <div>
+            <h1 class="usuarios__titulo">Usuários</h1>
+            <p class="usuarios__subtitulo">Gerencie os usuários cadastrados e as solicitações de acesso.</p>
+          </div>
+          <button type="button" class="usuarios__btn-primario" data-ir-para="solicitacoes">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+            Novo usuário
+          </button>
+        </div>
+
+        <div class="usuarios__card">
+          <div class="usuarios__card-topo">
+            <h2 class="usuarios__card-titulo">Gerenciamento de usuários</h2>
+            <div class="usuarios__card-acoes">
+              <div class="usuarios__busca">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                <input type="search" id="buscaUsuario" placeholder="Pesquisar usuário..." aria-label="Pesquisar usuário" autocomplete="off" autocapitalize="off" spellcheck="false">
+              </div>
+              <select class="usuarios__filtro" id="filtroStatus" data-icone="usuario" aria-label="Filtrar por status">
+                <option value="">Todos os usuários</option>
+                <option value="ativo">Somente ativos</option>
+                <option value="inativo">Somente inativos</option>
+              </select>
+            </div>
+          </div>
+
+          <div class="usuarios__tiles">
+            <button type="button" class="usuarios__tile" data-ir-para="solicitacoes">
+              <span class="usuarios__tile-icone usuarios__tile-icone--verde">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c.5-3.2 2.8-5 6-5s5.5 1.8 6 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 8.5h5M18.5 6v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </span>
+              <span class="usuarios__tile-corpo">
+                <span class="usuarios__tile-titulo">Solicitações de Usuário</span>
+                <span class="usuarios__tile-desc">Visualize e aprove novas solicitações de acesso</span>
+                <span class="usuarios__tile-contagem"><span class="usuarios__dot"></span><span id="contagemPendentes">0 pendentes</span></span>
+              </span>
+            </button>
+            <button type="button" class="usuarios__tile" data-ir-para="cadastrados">
+              <span class="usuarios__tile-icone usuarios__tile-icone--verde">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8.5" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M2.8 19.5c.5-3.3 3-5.2 6.2-5.2s5.7 1.9 6.2 5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="9.5" r="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M17.2 14.4c2.4.2 4 1.8 4.4 4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              </span>
+              <span class="usuarios__tile-corpo">
+                <span class="usuarios__tile-titulo">Usuários Cadastrados</span>
+                <span class="usuarios__tile-desc">Consulte, edite ou remova usuários cadastrados</span>
+                <span class="usuarios__tile-contagem"><span class="usuarios__dot"></span><span id="contagemCadastrados">0 usuário cadastrado</span></span>
+              </span>
+            </button>
+          </div>
+
+          <div class="usuarios__tabela-bloco">
+            <h3 class="usuarios__tabela-titulo">Usuários recentes</h3>
+            <div class="usuarios__tabela-wrap">
+              <table class="usuarios__tabela">
+                <thead>
+                  <tr><th>Usuário</th><th>E-mail</th><th>Equipe</th><th>Cargo</th><th>Status</th><th>Ações</th></tr>
+                </thead>
+                <tbody id="corpoRecentes">
+                  <tr class="usuarios__tabela-vazio"><td colspan="6">Carregando…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== VISÃO 2: GERENCIAMENTO (Solicitações / Cadastrados) ===================== -->
+      <section class="usuarios__view" id="viewGerenciar" data-view="gerenciar" hidden>
+        <nav class="usuarios__migalha" aria-label="breadcrumb">
+          <a href="#" data-ir-para="painel">Usuários</a>
+        </nav>
+
+        <div class="usuarios__topo">
+          <div>
+            <h1 class="usuarios__titulo">Usuários</h1>
+            <p class="usuarios__subtitulo">Gerencie os usuários cadastrados e as solicitações de acesso.</p>
+          </div>
+        </div>
+
+        <div class="usuarios__card">
+          <div class="usuarios__tabs">
+            <button type="button" class="usuarios__tab" data-tab="solicitacoes">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 19c.5-3.2 2.8-5 6-5s5.5 1.8 6 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><path d="M16 8.5h5M18.5 6v5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Solicitação de Usuários
+            </button>
+            <button type="button" class="usuarios__tab" data-tab="cadastrados">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8.5" r="3.2" stroke="currentColor" stroke-width="1.8"/><path d="M2.8 19.5c.5-3.3 3-5.2 6.2-5.2s5.7 1.9 6.2 5.2" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/><circle cx="17" cy="9.5" r="2.5" stroke="currentColor" stroke-width="1.8"/><path d="M17.2 14.4c2.4.2 4 1.8 4.4 4.6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Usuários Cadastrados
+            </button>
+          </div>
+
+          <!-- Sub-visão: Solicitações -->
+          <div class="usuarios__subview" id="subSolicitacoes">
+            <div class="usuarios__card-topo">
+              <div>
+                <h2 class="usuarios__card-titulo">Solicitações de Acesso</h2>
+                <p class="usuarios__card-desc">Aprove ou recuse as solicitações de novos usuários para o portal.</p>
+              </div>
+              <div class="usuarios__card-acoes">
+                <div class="usuarios__busca">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <input type="search" id="buscaSolicitacao" placeholder="Pesquisar solicitação..." aria-label="Pesquisar solicitação" autocomplete="off" autocapitalize="off" spellcheck="false">
+                </div>
+                <select class="usuarios__filtro" id="filtroSolicitacao" data-icone="solicitacao" aria-label="Filtrar solicitações">
+                  <option value="pendente">Pendentes</option>
+                  <option value="todas">Todas as solicitações</option>
+                  <option value="aceita">Aceitas</option>
+                  <option value="recusada">Recusadas</option>
+                </select>
+              </div>
+            </div>
+            <div class="usuarios__tabela-wrap">
+              <table class="usuarios__tabela">
+                <thead>
+                  <tr><th>Nome</th><th>E-mail</th><th>Equipe solicitada</th><th>Data da solicitação</th><th>Status</th><th>Ações</th></tr>
+                </thead>
+                <tbody id="corpoSolicitacoes">
+                  <tr class="usuarios__tabela-vazio"><td colspan="6">Carregando…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          <!-- Sub-visão: Cadastrados -->
+          <div class="usuarios__subview" id="subCadastrados" hidden>
+            <div class="usuarios__card-topo">
+              <div>
+                <h2 class="usuarios__card-titulo">Usuários Cadastrados</h2>
+                <p class="usuarios__card-desc">Consulte e edite os dados dos usuários do portal.</p>
+              </div>
+              <div class="usuarios__card-acoes">
+                <div class="usuarios__busca">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="2"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+                  <input type="search" id="buscaCadastrado" placeholder="Pesquisar usuário..." aria-label="Pesquisar usuário" autocomplete="off" autocapitalize="off" spellcheck="false">
+                </div>
+                <select class="usuarios__filtro" id="filtroEquipeCadastrado" data-icone="equipe" aria-label="Filtrar por equipe">
+                  <option value="">Todas as equipes</option>
+                  <option value="geral" data-cor="#00A859">Geral</option>
+                  <option value="projetos" data-cor="#3B82F6">Projetos</option>
+                  <option value="marketing" data-cor="#F59E0B">Marketing</option>
+                  <option value="rh" data-cor="#8B5CF6">RH</option>
+                  <option value="financeiro" data-cor="#EC4899">Financeiro</option>
+                  <option value="ti" data-cor="#0EA5E9">TI</option>
+                  <option value="sac" data-cor="#EF4444">SAC / Ouvidoria</option>
+                </select>
+              </div>
+            </div>
+            <div class="usuarios__tabela-wrap">
+              <table class="usuarios__tabela">
+                <thead>
+                  <tr><th>Usuário</th><th>E-mail</th><th>Equipe</th><th>Cargo</th><th>Unidade</th><th>Status</th><th>Ações</th></tr>
+                </thead>
+                <tbody id="corpoCadastrados">
+                  <tr class="usuarios__tabela-vazio"><td colspan="7">Carregando…</td></tr>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- ===================== VISÃO 3: EDITAR USUÁRIO ===================== -->
+      <section class="usuarios__view" id="viewEditar" data-view="editar" hidden>
+        <nav class="usuarios__migalha" aria-label="breadcrumb">
+          <a href="#" data-ir-para="painel">Usuários</a> &gt;
+          <a href="#" data-ir-para="cadastrados">Usuários Cadastrados</a> &gt;
+          <span>Editar usuário</span>
+        </nav>
+
+        <button type="button" class="usuarios__btn-voltar" data-ir-para="cadastrados">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          Voltar para a lista
+        </button>
+
+        <h1 class="usuarios__titulo">Editar usuário</h1>
+        <p class="usuarios__subtitulo">Atualize as informações do usuário abaixo.</p>
+
+        <form class="usuarios__editar-grid" id="formEditarUsuario" novalidate>
+          <input type="hidden" id="editarId" value="">
+
+          <div class="usuarios__card usuarios__form-card">
+            <div class="usuarios__card-topo usuarios__card-topo--simples">
+              <h2 class="usuarios__card-titulo">Dados pessoais</h2>
+              <span class="usuarios__aviso"><svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>Apenas os campos Unidade, Equipe e Cargo são obrigatórios.</span>
+            </div>
+
+            <div class="usuarios__form-grid">
+              <div class="usuarios__field">
+                <label for="editarNome">Nome</label>
+                <input type="text" id="editarNome" autocomplete="name">
+              </div>
+              <div class="usuarios__field">
+                <label for="editarSenha">Senha</label>
+                <input type="password" id="editarSenha" autocomplete="new-password">
+                <span class="usuarios__dica">Deixe em branco para não alterar a senha atual</span>
+              </div>
+
+              <div class="usuarios__field">
+                <label for="editarEmail">E-mail</label>
+                <input type="email" id="editarEmail" autocomplete="email">
+              </div>
+              <div class="usuarios__field">
+                <label for="editarRepetirSenha">Repetir Senha</label>
+                <input type="password" id="editarRepetirSenha" autocomplete="new-password">
+                <span class="usuarios__dica">Deixe em branco para não alterar a senha atual</span>
+              </div>
+
+              <div class="usuarios__field">
+                <label for="editarTelefone">Telefone</label>
+                <input type="tel" id="editarTelefone" inputmode="numeric" maxlength="15">
+              </div>
+              <div class="usuarios__field">
+                <label for="editarGenero">Gênero</label>
+                <select id="editarGenero">
+                  <option value="masculino">Masculino</option>
+                  <option value="feminino">Feminino</option>
+                  <option value="outro">Outro</option>
+                  <option value="prefiro_nao_informar">Prefiro não informar</option>
+                </select>
+              </div>
+
+              <div class="usuarios__field">
+                <label for="editarCpf">CPF</label>
+                <input type="text" id="editarCpf" inputmode="numeric" maxlength="14">
+              </div>
+              <div class="usuarios__field" id="editarGeneroOutroWrap" hidden>
+                <label for="editarGeneroOutro">Qual o gênero?</label>
+                <input type="text" id="editarGeneroOutro">
+              </div>
+
+              <div class="usuarios__field">
+                <label for="editarDataNascimento">Data de Nascimento</label>
+                <input type="text" id="editarDataNascimento" placeholder="dd/mm/aaaa" inputmode="numeric" maxlength="10">
+              </div>
+
+              <div class="usuarios__field">
+                <label for="editarUnidade">Unidade <span class="usuarios__obrigatorio">*</span></label>
+                <select id="editarUnidade" required></select>
+              </div>
+
+              <div class="usuarios__field">
+                <label for="editarEquipe">Equipe <span class="usuarios__obrigatorio">*</span></label>
+                <select id="editarEquipe" required>
+                  <option value="geral" data-cor="#00A859">Geral</option>
+                  <option value="projetos" data-cor="#3B82F6">Projetos</option>
+                  <option value="marketing" data-cor="#F59E0B">Marketing</option>
+                  <option value="rh" data-cor="#8B5CF6">RH</option>
+                  <option value="financeiro" data-cor="#EC4899">Financeiro</option>
+                  <option value="ti" data-cor="#0EA5E9">TI</option>
+                  <option value="sac" data-cor="#EF4444">SAC / Ouvidoria</option>
+                </select>
+              </div>
+
+              <div class="usuarios__field">
+                <label for="editarCargo">Cargo <span class="usuarios__obrigatorio">*</span></label>
+                <select id="editarCargo" required>
+                  <option value="estagiario">Estagiário</option>
+                  <option value="funcionario">Funcionário</option>
+                  <option value="supervisor">Supervisor</option>
+                  <option value="coordenador">Coordenador</option>
+                  <option value="gerente">Gerente</option>
+                  <option value="diretor">Diretor</option>
+                  <option value="ceo">CEO</option>
+                </select>
+              </div>
+            </div>
+
+            <span class="usuarios__erro" id="erroEditarGeral" aria-live="polite"></span>
+
+            <div class="usuarios__form-acoes">
+              <button type="button" class="usuarios__btn-secundario" data-ir-para="cadastrados">Cancelar</button>
+              <button type="submit" class="usuarios__btn-primario">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 13l4 4L19 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+                Salvar alterações
+              </button>
+            </div>
+          </div>
+
+          <aside class="usuarios__card usuarios__info-card">
+            <h2 class="usuarios__card-titulo usuarios__card-titulo--icone">
+              <svg width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="3.6" stroke="currentColor" stroke-width="1.8"/><path d="M4.5 20c.6-3.8 3.6-6 7.5-6s6.9 2.2 7.5 6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              Informações do usuário
+            </h2>
+            <div class="usuarios__info-avatar" id="infoAvatar">?</div>
+            <p class="usuarios__info-nome" id="infoNome">—</p>
+            <span class="usuarios__status usuarios__status--ativo" id="infoStatus">Ativo</span>
+
+            <ul class="usuarios__info-lista">
+              <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="5.5" width="17" height="13" rx="2" stroke="currentColor" stroke-width="1.6"/><path d="M4 7l8 6 8-6" stroke="currentColor" stroke-width="1.6"/></svg><span id="infoEmail">—</span></li>
+              <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.6"/></svg><span id="infoTelefone">—</span></li>
+              <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6"/></svg><span id="infoNascimento">—</span></li>
+              <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8.5" r="3.2" stroke="currentColor" stroke-width="1.6"/><path d="M2.8 19.5c.5-3.3 3-5.2 6.2-5.2s5.7 1.9 6.2 5.2" stroke="currentColor" stroke-width="1.6"/></svg><span id="infoEquipe">—</span></li>
+              <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M20 7h-3V5.5A2.5 2.5 0 0 0 14.5 3h-5A2.5 2.5 0 0 0 7 5.5V7H4a1 1 0 0 0-1 1v11a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1V8a1 1 0 0 0-1-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 7V5.5a.5.5 0 0 1 .5-.5h5a.5.5 0 0 1 .5.5V7" stroke="currentColor" stroke-width="1.6"/></svg><span id="infoCargo">—</span></li>
+              <li><svg width="15" height="15" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 21s7-6.2 7-11.5A7 7 0 0 0 5 9.5C5 14.8 12 21 12 21z" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="9.5" r="2.5" stroke="currentColor" stroke-width="1.6"/></svg><span id="infoUnidade">—</span></li>
+            </ul>
+
+            <p class="usuarios__info-nota">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.8"/><path d="M12 8v5M12 16h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+              As informações serão atualizadas após salvar as alterações.
+            </p>
+          </aside>
+        </form>
+      </section>
+
+    </div>
+    <?php endif; ?>
+  </main>
+</div>
+
+<script src="conteudo/cadastrado/usuarios/js/usuarios.js?v=2"></script>

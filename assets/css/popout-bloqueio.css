@@ -1,0 +1,166 @@
+/* ============================================================
+   POPOUT "ACESSO NEGADO" — Intelbras
+   Componente global (assets/): aparece ao clicar em qualquer
+   interação bloqueada (itens do menu lateral, canais, atalhos,
+   cards de conteúdo bloqueado, etc.) enquanto o usuário não
+   estiver logado. Fica ancorado perto do elemento clicado,
+   com uma "setinha" apontando pra ele — mesma linguagem visual
+   do dropdown de login do cabeçalho (blobs verdes + cantos
+   arredondados + botão em pílula).
+============================================================= */
+
+:root {
+  --intelbras-verde: #00A859;
+  --intelbras-preto: #1A1A1A;
+  --intelbras-cinza-claro: #E8E8E8;
+  --intelbras-branco: #FFFFFF;
+  --intelbras-erro: #E5484D;
+}
+
+.acesso-negado {
+  position: fixed;
+  top: 20px;
+  left: 50%;
+  z-index: 300;
+  width: 300px;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  opacity: 0;
+  transform: translate(-50%, -16px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+
+.acesso-negado.is-open {
+  opacity: 1;
+  transform: translate(-50%, 0);
+  pointer-events: auto;
+}
+
+.acesso-negado__card {
+  position: relative;
+  z-index: 2;
+  background: var(--intelbras-branco);
+  border-radius: 18px;
+  padding: 18px 20px 20px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  animation: acessoNegadoPop 0.18s ease;
+}
+
+@keyframes acessoNegadoPop {
+  from { opacity: 0; transform: scale(0.97); }
+  to { opacity: 1; transform: scale(1); }
+}
+
+.acesso-negado__blob {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(0, 168, 89, 0.16), rgba(0, 168, 89, 0) 70%);
+  pointer-events: none;
+}
+
+.acesso-negado__blob--tl {
+  width: 100px;
+  height: 100px;
+  top: -40px;
+  left: -40px;
+}
+
+.acesso-negado__blob--br {
+  width: 90px;
+  height: 90px;
+  bottom: -40px;
+  right: -35px;
+}
+
+.acesso-negado__topo {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.acesso-negado__titulo {
+  display: block;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+  text-align: left;
+}
+
+.acesso-negado__btn {
+  position: relative;
+  width: 100%;
+  display: block;
+  padding: 13px 16px;
+  border: 1px solid var(--intelbras-cinza-claro);
+  border-radius: 999px;
+  background: var(--intelbras-branco);
+  color: var(--intelbras-preto);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  text-align: center;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.acesso-negado__btn:hover {
+  border-color: var(--intelbras-verde);
+  color: var(--intelbras-verde);
+}
+
+@media (max-width: 420px) {
+  .acesso-negado {
+    width: calc(100vw - 24px);
+  }
+}
+
+/* Variante usada só pelo popout "Cadastrado concluído ✅" — mesmo
+   estilo do "Acesso negado" (mesma largura, mesmo título), só com
+   o texto do botão um pouco menor pra caber numa linha só, já que
+   é mais longo que o texto original. */
+.acesso-negado--cadastro .acesso-negado__btn {
+  font-size: 13px;
+  padding: 13px 8px;
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .acesso-negado--cadastro .acesso-negado__btn {
+    white-space: normal;
+  }
+}
+
+/* Texto usado pelo popout "... já cadastrado ⚠️" — sem caixa/pílula
+   ao redor (era o "círculo" em volta do texto que não queríamos):
+   só o parágrafo corrido, alinhado com o título, igual ao mockup
+   do Figma. */
+.acesso-negado__msg {
+  display: block;
+  color: #5C5C5C;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.45;
+  text-align: left;
+}
+
+/* Variante usada pelo popout "... já cadastrado ⚠️" — a largura vira
+   automática (em vez do 300px fixo) pra mensagem sempre caber numa
+   linha só, mesmo nos combos mais longos (ex.: "E-mail, Telefone e
+   CPF já cadastrados. Utilize outros."). max-width evita que ela
+   estoure a tela em telas bem estreitas. */
+.acesso-negado--duplicado {
+  width: auto;
+  max-width: calc(100vw - 24px);
+}
+
+.acesso-negado--duplicado .acesso-negado__msg {
+  white-space: nowrap;
+}
+
+@media (max-width: 420px) {
+  .acesso-negado--duplicado .acesso-negado__msg {
+    white-space: normal;
+  }
+}

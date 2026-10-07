@@ -1,0 +1,647 @@
+/* ============================================================
+   CABEÇALHO — Intelbras
+   Cores baseadas na identidade visual Intelbras (verde principal)
+============================================================= */
+
+:root {
+  --intelbras-verde: #00A859;
+  --intelbras-verde-escuro: #007A40;
+  --intelbras-preto: #1A1A1A;
+  --intelbras-cinza: #6B6B6B;
+  --intelbras-cinza-claro: #E8E8E8;
+  --intelbras-branco: #FFFFFF;
+  --intelbras-erro: #E5484D;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+.header {
+  background: var(--intelbras-branco);
+  border-bottom: 1px solid #EDEDED;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  position: sticky;
+  top: 0;
+  z-index: 100;
+}
+
+.header__container {
+  width: 100%;
+  margin: 0 auto;
+  padding: 16px 24px;
+  display: flex;
+  align-items: center;
+  gap: 28px;
+}
+
+/* Logo — troque a img por sua foto; se quiser texto puro, use este font-family */
+.header__logo {
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 24px;
+  color: var(--intelbras-verde);
+  text-decoration: none;
+  letter-spacing: -0.5px;
+}
+
+.header__logo img {
+  height: 40px;
+  display: block;
+}
+
+/* Busca */
+.header__search {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  max-width: 560px;
+  border: 1px solid var(--intelbras-cinza-claro);
+  border-radius: 6px;
+  background: var(--intelbras-branco);
+}
+
+.header__search-input {
+  flex: 1;
+  border: none;
+  outline: none;
+  padding: 10px 14px;
+  font-size: 14px;
+  font-family: inherit;
+  color: var(--intelbras-preto);
+  background: transparent;
+}
+
+.header__search-input::placeholder {
+  color: #9B9B9B;
+}
+
+.header__search-btn {
+  border: none;
+  background: transparent;
+  color: var(--intelbras-cinza);
+  padding: 0 14px;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: color 0.2s;
+}
+
+.header__search-btn:hover {
+  color: var(--intelbras-verde);
+}
+
+/* X de limpar dos campos de busca (input type="search").
+   Substitui o X azul nativo do navegador; vale para TODAS as barras de
+   pesquisa do site (cabeçalho, Documentos, Usuários…), já que este CSS é
+   carregado em todas as páginas. X simples cinza; verde ao passar o
+   mouse, igual aos outros ícones clicáveis. */
+input[type="search"]::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
+  width: 16px;
+  height: 16px;
+  margin: 0 0 0 6px;
+  cursor: pointer;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236B6B6B' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E") center / 100% 100% no-repeat;
+}
+
+input[type="search"]::-webkit-search-cancel-button:hover {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A859' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E");
+}
+
+/* Fecha a busca (X) — só existe/aparece no layout mobile */
+.header__search-close {
+  display: none;
+  border: none;
+  background: transparent;
+  color: var(--intelbras-cinza);
+  padding: 0 12px;
+  cursor: pointer;
+  align-items: center;
+}
+
+.header__search-close:hover {
+  color: var(--intelbras-verde);
+}
+
+/* Botão de lupa que abre a busca — só existe/aparece no layout mobile */
+.header__search-toggle {
+  display: none;
+  border: none;
+  background: transparent;
+  color: var(--intelbras-verde);
+  padding: 0;
+  cursor: pointer;
+  align-items: center;
+  justify-content: center;
+}
+
+/* Categorias */
+.header__categories {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: none;
+  border: none;
+  color: var(--intelbras-preto);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  padding: 0;
+}
+
+.header__categories:hover {
+  color: var(--intelbras-verde);
+}
+
+/* ============================================================
+   ÍCONES RÁPIDOS (notificações e chat) — área logada
+============================================================= */
+.header__quick-icons {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-left: auto;
+}
+
+.header__icon-btn {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 38px;
+  height: 38px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--intelbras-preto);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+
+.header__icon-btn:hover {
+  background: #F5F5F5;
+  color: var(--intelbras-verde);
+}
+
+.header__icon-badge {
+  position: absolute;
+  top: 3px;
+  right: 3px;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: var(--intelbras-verde);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 16px;
+  text-align: center;
+}
+
+/* Usuário */
+.header__user {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--intelbras-preto);
+  white-space: nowrap;
+  margin-left: auto;
+  position: relative;
+}
+
+/* Quando o usuário está logado, os ícones rápidos já recebem o
+   margin-left:auto e empurram o bloco todo para a direita. Sem esta
+   regra, a área do usuário teria um segundo "auto" e o espaço livre
+   seria dividido entre os dois, abrindo aquele vão no meio do header.
+   Assim sino + chat ficam colados à área do usuário, na ponta direita. */
+.header__quick-icons + .header__user {
+  margin-left: 0;
+}
+
+.header__user-icon {
+  color: var(--intelbras-verde);
+  flex-shrink: 0;
+}
+
+.header__user-text {
+  display: flex;
+  flex-direction: column;
+  line-height: 1.3;
+  font-size: 12px;
+}
+
+.header__user-greeting {
+  color: var(--intelbras-cinza);
+  font-weight: 400;
+}
+
+.header__user-login {
+  color: var(--intelbras-preto);
+  font-weight: 700;
+  font-size: 13px;
+  text-decoration: none;
+}
+
+.header__user-login:hover {
+  color: var(--intelbras-verde);
+}
+
+.header__user-login,
+.header__user-icon {
+  cursor: pointer;
+}
+
+/* Avatar (iniciais) — usuário logado */
+.header__avatar {
+  flex-shrink: 0;
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  background: var(--intelbras-verde-100, #E7F7EE);
+  color: var(--intelbras-verde-escuro);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-weight: 700;
+  font-size: 13px;
+}
+
+.header__user-menu-trigger {
+  border: none;
+  background: transparent;
+  padding: 0;
+  cursor: pointer;
+  font-family: inherit;
+  text-align: left;
+}
+
+.header__user-caret {
+  color: var(--intelbras-cinza);
+  margin-left: 2px;
+  vertical-align: -1px;
+}
+
+/* ============================================================
+   DROPDOWN DO MENU DO USUÁRIO — área logada
+============================================================= */
+.user-menu {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 200;
+  display: none;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+}
+
+.user-menu.is-open {
+  display: block;
+}
+
+.user-menu__arrow {
+  position: absolute;
+  top: -2px;
+  right: 26px;
+  width: 14px;
+  height: 14px;
+  background: var(--intelbras-branco);
+  transform: rotate(45deg);
+  border-radius: 3px 0 0 0;
+  box-shadow: -3px -3px 8px rgba(0, 0, 0, 0.12);
+  z-index: 1;
+}
+
+.user-menu__card {
+  position: relative;
+  z-index: 2;
+  width: 190px;
+  background: var(--intelbras-branco);
+  border-radius: 14px;
+  padding: 8px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  display: flex;
+  flex-direction: column;
+  animation: loginModalPop 0.18s ease;
+}
+
+.user-menu__item {
+  display: block;
+  padding: 10px 12px;
+  border-radius: 8px;
+  color: var(--intelbras-preto);
+  font-size: 13.5px;
+  font-weight: 600;
+  text-decoration: none;
+}
+
+.user-menu__item:hover {
+  background: #F5F5F5;
+  color: var(--intelbras-verde);
+}
+
+.user-menu__item--sair {
+  color: var(--intelbras-erro);
+}
+
+.user-menu__item--sair:hover {
+  background: #FDEEEE;
+  color: var(--intelbras-erro);
+}
+
+/* ============================================================
+   DROPDOWN DE LOGIN — popout com 2 etapas (escolha e formulário),
+   ancorado logo abaixo da área do usuário no cabeçalho
+============================================================= */
+
+.login-modal {
+  position: absolute;
+  top: calc(100% + 14px);
+  right: 0;
+  z-index: 200;
+  display: none;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+}
+
+.login-modal.is-open {
+  display: block;
+}
+
+/* Setinha que aponta pro ícone/"Entrar" que abriu o dropdown.
+   É um quadrado rotacionado 45°, com a metade de baixo escondida
+   atrás do card (mesma cor de fundo), pra parecer uma continuação
+   dele — técnica clássica de "seta de tooltip". */
+.login-modal__arrow {
+  position: absolute;
+  top: -2px;
+  right: 26px;
+  width: 16px;
+  height: 16px;
+  background: var(--intelbras-branco);
+  transform: rotate(45deg);
+  border-radius: 3px 0 0 0;
+  box-shadow: -3px -3px 8px rgba(0, 0, 0, 0.12);
+  z-index: 1;
+}
+
+.login-modal__card {
+  position: relative;
+  z-index: 2;
+  width: 340px;
+  background: var(--intelbras-branco);
+  border-radius: 20px;
+  padding: 28px 24px 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  animation: loginModalPop 0.18s ease;
+}
+
+@keyframes loginModalPop {
+  from { opacity: 0; transform: translateY(-6px); }
+  to { opacity: 1; transform: translateY(0); }
+}
+
+/* Manchas decorativas nos cantos superiores, atrás do conteúdo */
+.login-modal__blob {
+  position: absolute;
+  border-radius: 50%;
+  background: radial-gradient(circle at 30% 30%, rgba(0, 168, 89, 0.16), rgba(0, 168, 89, 0) 70%);
+  pointer-events: none;
+}
+
+.login-modal__blob--tl {
+  width: 120px;
+  height: 120px;
+  top: -50px;
+  left: -50px;
+}
+
+.login-modal__blob--tr {
+  width: 100px;
+  height: 100px;
+  top: -35px;
+  right: -45px;
+}
+
+.login-modal__title {
+  position: relative;
+  margin: 0 0 20px;
+  text-align: left;
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 17px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.login-modal__step {
+  position: relative;
+}
+
+.login-modal__step[hidden] {
+  display: none;
+}
+
+/* Etapa 1 — escolha do método */
+.login-modal__step--choice {
+  display: flex;
+  flex-direction: column;
+}
+
+.login-modal__option {
+  width: 100%;
+  display: block;
+  padding: 14px 18px;
+  border: 1px solid var(--intelbras-cinza-claro);
+  border-radius: 999px;
+  background: var(--intelbras-branco);
+  color: var(--intelbras-preto);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: border-color 0.2s, color 0.2s;
+}
+
+.login-modal__option:hover {
+  border-color: var(--intelbras-verde);
+  color: var(--intelbras-verde);
+}
+
+.login-modal__option + .login-modal__option {
+  margin-top: 12px;
+}
+
+/* Etapa 2 — formulário */
+.login-modal__field {
+  position: relative;
+  margin-bottom: 14px;
+}
+
+.login-modal__label {
+  display: block;
+  margin-bottom: 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--intelbras-cinza);
+}
+
+.login-modal__input {
+  width: 100%;
+  padding: 14px 16px;
+  border: 1px solid var(--intelbras-cinza-claro);
+  border-radius: 12px;
+  font-family: inherit;
+  font-size: 13.5px;
+  color: var(--intelbras-preto);
+  background: var(--intelbras-branco);
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+.login-modal__input::placeholder {
+  color: #9B9B9B;
+}
+
+.login-modal__input:focus {
+  border-color: var(--intelbras-verde);
+}
+
+/* Estado de campo inválido — some assim que a pessoa corrige o valor */
+.login-modal__input.is-invalid {
+  border-color: var(--intelbras-erro);
+}
+
+.login-modal__input.is-invalid:focus {
+  border-color: var(--intelbras-erro);
+}
+
+.login-modal__field-error {
+  display: block;
+  min-height: 0;
+  margin-top: 6px;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--intelbras-erro);
+}
+
+.login-modal__field-error:empty {
+  display: none;
+}
+
+.login-modal__field--senha .login-modal__input {
+  padding-right: 46px;
+}
+
+.login-modal__input-wrap {
+  position: relative;
+}
+
+.login-modal__toggle-senha {
+  position: absolute;
+  top: 50%;
+  right: 14px;
+  transform: translateY(-50%);
+  border: none;
+  background: transparent;
+  color: var(--intelbras-cinza);
+  padding: 4px;
+  display: flex;
+  cursor: pointer;
+}
+
+/* Select de gênero — reaproveita o visual dos inputs, com seta customizada */
+.login-modal__select {
+  appearance: none;
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  padding-right: 40px;
+  cursor: pointer;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none'%3E%3Cpath d='M6 9L12 15L18 9' stroke='%236B6B6B' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E");
+  background-repeat: no-repeat;
+  background-position: right 16px center;
+}
+
+.login-modal__select:invalid {
+  color: #9B9B9B;
+}
+
+/* Etapa de cadastro — mais campos, então o card ganha rolagem própria
+   em vez de estourar a altura da tela */
+.login-modal__step--cadastro {
+  max-height: 70vh;
+  overflow-y: auto;
+  padding-right: 24px;
+  margin-right: -24px;
+}
+
+.login-modal__toggle-senha:hover,
+.login-modal__toggle-senha[aria-pressed="true"] {
+  color: var(--intelbras-verde);
+}
+
+.login-modal__forgot {
+  display: block;
+  text-align: center;
+  margin: 4px 0 20px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--intelbras-verde);
+  text-decoration: none;
+}
+
+.login-modal__forgot:hover {
+  text-decoration: underline;
+}
+
+.login-modal__actions {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.login-modal__back {
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  gap: 4px;
+  border: none;
+  background: transparent;
+  color: var(--intelbras-cinza);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 8px 0;
+  white-space: nowrap;
+}
+
+.login-modal__back:hover {
+  color: var(--intelbras-preto);
+}
+
+.login-modal__submit {
+  flex-shrink: 0;
+  padding: 12px 32px;
+  border: none;
+  border-radius: 999px;
+  background: var(--intelbras-verde);
+  color: var(--intelbras-branco);
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background 0.2s;
+}
+
+.login-modal__submit:hover {
+  background: var(--intelbras-verde-escuro);
+}

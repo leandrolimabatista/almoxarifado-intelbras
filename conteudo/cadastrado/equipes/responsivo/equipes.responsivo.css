@@ -1,0 +1,146 @@
+/* ============================================================
+   CONTEÚDO — Equipes — Estilos responsivos
+
+   ≥1280   : 3 colunas completas (sidebar + chat + painel)
+   1024–1279: painel direito recolhido por padrão, abre como drawer
+   768–1023 : painel direito como drawer
+   <768     : uma coluna — lista de equipes OU chat em tela cheia
+============================================================= */
+
+/* ----- 1024–1279: painel direito vira drawer ----- */
+@media (max-width: 1279px) {
+  .equipes__painel {
+    position: fixed;
+    top: 73px;
+    right: 0;
+    bottom: 0;
+    width: 320px;
+    max-width: 88vw;
+    z-index: 50;
+    box-shadow: var(--eq-sombra-2);
+    transform: translateX(100%);
+    transition: transform .2s ease;
+  }
+
+  .equipes__painel.equipes__painel--aberto {
+    transform: translateX(0);
+  }
+
+  .equipes__painel-fechar {
+    display: block;
+  }
+}
+
+@media (max-width: 860px) {
+  .equipes__chat-header {
+    padding: 14px 16px;
+  }
+
+  .equipes__canal-titulo {
+    font-size: 18px;
+  }
+
+  .equipes__tabs {
+    padding: 0 16px;
+  }
+
+  .equipes__messages {
+    padding: 16px 16px 8px;
+  }
+
+  .equipes__composer-wrap {
+    padding: 10px 16px 14px;
+  }
+
+  .equipes__ir-fim {
+    right: 20px;
+  }
+}
+
+/* ----- <768: uma coluna (lista de equipes OU chat em tela cheia) ----- */
+@media (max-width: 767px) {
+  .equipes {
+    min-height: calc(100vh - 60px);
+  }
+
+  .equipes__canal-icone {
+    width: 42px;
+    height: 42px;
+    border-radius: 10px;
+  }
+
+  .equipes__canal-icone svg {
+    width: 20px;
+    height: 20px;
+  }
+
+  .equipes__canal-titulo {
+    font-size: 16.5px;
+  }
+
+  .equipes__canal-subtitulo {
+    display: none;
+  }
+
+  .equipes__icone-btn--membros span {
+    display: none;
+  }
+
+  .equipes__icone-btn--membros {
+    width: 38px;
+    padding: 0;
+  }
+
+  .equipes__grupo-corpo {
+    max-width: calc(100vw - 100px);
+  }
+
+  .equipes__popover--emoji {
+    width: calc(100vw - 24px);
+    max-width: 320px;
+    right: -16px;
+  }
+
+  .equipes__emoji-grade {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+@media (max-width: 420px) {
+  .equipes__toolbar {
+    top: -34px;
+  }
+}
+
+
+/* ----- Campo de mensagem em telas bem estreitas: botões um pouco menores
+   para sobrar espaço para digitar ----- */
+@media (max-width: 480px) {
+  .equipes__composer-wrap {
+    padding: 10px 10px 12px;
+  }
+
+  .equipes__composer-linha {
+    padding: 6px;
+  }
+
+  .equipes__composer-btn,
+  .equipes__enviar {
+    height: 34px;
+  }
+
+  .equipes__composer-btn,
+  .equipes__enviar {
+    width: 34px;
+  }
+
+  .equipes__composer-icones {
+    height: 34px;
+  }
+
+  .equipes__campo {
+    min-height: 34px;
+    padding: 7px 6px;
+    font-size: 14px;
+  }
+}

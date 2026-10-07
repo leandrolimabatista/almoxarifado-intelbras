@@ -1,0 +1,428 @@
+<?php
+/**
+ * CONTEÚDO — Chamadas (área CADASTRADO)
+ * Componente incluído dentro de <main> no index.php (usuário logado).
+ * Voz e vídeo 100% dentro da plataforma (WebRTC + sinalização em
+ * api/chamadas/*). Sem discagem externa, sem telefone, sem operadora.
+ */
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+if (empty($_SESSION['csrf_chamadas'])) {
+    $_SESSION['csrf_chamadas'] = bin2hex(random_bytes(32));
+}
+$csrfChamadas = (string)$_SESSION['csrf_chamadas'];
+?>
+<link rel="stylesheet" href="conteudo/cadastrado/chamadas/css/chamadas.css?v=2">
+<link rel="stylesheet" href="conteudo/cadastrado/chamadas/responsivo/chamadas.responsivo.css?v=2">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
+
+<div class="chamadas" id="chRaiz" data-csrf="<?php echo htmlspecialchars($csrfChamadas, ENT_QUOTES, 'UTF-8'); ?>">
+
+  <aside class="inicio__sidebar" id="sidebar">
+    <nav class="inicio__nav">
+      <a href="index.php?pagina=inicio" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-5a1 1 0 011-1h2a1 1 0 011 1v5h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Início</span>
+      </a>
+      <a href="index.php?pagina=servicos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Serviços</span>
+      </a>
+      <a href="index.php?pagina=inteligencia-artificial" class="inicio__nav-item">
+        <svg class="inicio__icon inicio__icon--ia" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M13.6 4.6H6.5A3.9 3.9 0 0 0 2.6 8.5V17.5A3.9 3.9 0 0 0 6.5 21.4H14.5A3.9 3.9 0 0 0 18.4 17.5V9.8" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/>
+          <text x="10.4" y="17.5" font-family="Arial, Helvetica, sans-serif" font-weight="bold" font-size="10.8" fill="currentColor" text-anchor="middle">IA</text>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(17.4 3.6) scale(0.34) translate(-12 -12)"/>
+          <path d="M12 3 13.9 8.8 A2 2 0 0 0 15.2 10.1 L21 12 15.2 13.9 A2 2 0 0 0 13.9 15.2 L12 21 10.1 15.2 A2 2 0 0 0 8.8 13.9 L3 12 8.8 10.1 A2 2 0 0 0 10.1 8.8 Z" fill="currentColor" transform="translate(21 6.6) scale(0.16) translate(-12 -12)"/>
+        </svg>
+        <span>Inteligência Artificial</span>
+      </a>
+      <a href="index.php?pagina=documentos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Documentos</span>
+      </a>
+      <a href="index.php?pagina=unidade" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 20.5V6l7-2.5 7 2.5v14.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 20.5v-5h6v5M9 9.5h.01M12 9.5h.01M15 9.5h.01M9 13h.01M12 13h.01M15 13h.01" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Unidade</span>
+      </a>
+      <a href="index.php?pagina=chamadas" class="inicio__nav-item inicio__nav-item--active">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chamadas</span>
+      </a>
+      <a href="index.php?pagina=cursos" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L12 4l9.5 4.5L12 13 2.5 8.5z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M6 10.7v4.3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+        <span>Cursos</span>
+      </a>
+      <a href="index.php?pagina=loja" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="20" r="1.4" fill="currentColor"/><circle cx="17" cy="20" r="1.4" fill="currentColor"/><path d="M3 4h2l2.2 11.2a1.5 1.5 0 001.5 1.3h7.6a1.5 1.5 0 001.47-1.2L19.5 8H6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Loja</span>
+      </a>
+      <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
+      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <span>Usuários</span>
+      </a>
+      <?php endif; ?>
+    </nav>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">EQUIPES</span>
+      <div class="inicio__channel-list">
+        <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
+          <span class="inicio__channel-dot" style="background:#00A859"></span>
+          <span>Geral</span>
+          <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
+          <span class="inicio__channel-dot" style="background:#3B82F6"></span>
+          <span>Projetos</span>
+          <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
+          <span class="inicio__channel-dot" style="background:#F59E0B"></span>
+          <span>Marketing</span>
+          <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
+          <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
+          <span>RH</span>
+          <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
+          <span class="inicio__channel-dot" style="background:#EC4899"></span>
+          <span>Financeiro</span>
+          <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
+          <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
+          <span>TI</span>
+          <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
+        </a>
+        <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
+          <span class="inicio__channel-dot" style="background:#EF4444"></span>
+          <span>SAC / Ouvidoria</span>
+          <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
+        </a>
+      </div>
+      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
+    </div>
+
+    <div class="inicio__sidebar-section">
+      <span class="inicio__sidebar-label">ATALHOS</span>
+      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
+        <span>Nova conversa</span>
+      </a>
+      <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+        <span>Agendar reunião</span>
+      </a>
+    </div>
+
+    <button class="inicio__collapse" id="btnRecolher" aria-label="Fechar menu">
+      <span>«</span> Recolher
+    </button>
+  </aside>
+
+  <main class="chamadas__main">
+
+    <div class="chamadas__erro-conexao" id="chErroConexao" role="alert" hidden>
+      <span data-ic="wifi-off"></span>
+      <span class="chamadas__erro-texto">Falha de conexão com a plataforma. Verifique sua internet.</span>
+      <button type="button" class="chamadas__link-btn" id="chErroTentar">Tentar novamente</button>
+    </div>
+
+    <nav class="chamadas__breadcrumb" aria-label="Você está em"><span>Chamadas</span></nav>
+    <h1 class="chamadas__title">Chamadas</h1>
+    <p class="chamadas__subtitle">Conecte-se com sua equipe de forma rápida e segura, tudo dentro da plataforma Intelbras.</p>
+
+    <!-- ===== 3 CARDS DE AÇÃO ===== -->
+    <section class="chamadas__acoes" aria-label="Ações de chamada">
+      <article class="chamadas__acao" id="cardNova">
+        <span class="chamadas__acao-icone"><span data-ic="video"></span></span>
+        <div class="chamadas__acao-corpo">
+          <h2 class="chamadas__acao-titulo">Nova chamada</h2>
+          <p class="chamadas__acao-texto">Iniciar uma chamada instantânea com alguém da sua equipe</p>
+          <button type="button" class="chamadas__btn chamadas__btn--primario" id="btnNovaChamada">Iniciar chamada <span data-ic="video"></span></button>
+        </div>
+      </article>
+
+      <article class="chamadas__acao" id="cardEquipe" tabindex="-1">
+        <span class="chamadas__acao-icone"><span data-ic="users" id="icoEquipe"></span></span>
+        <div class="chamadas__acao-corpo">
+          <h2 class="chamadas__acao-titulo">Chamada com a equipe</h2>
+          <p class="chamadas__acao-texto">Iniciar uma chamada com toda a sua equipe</p>
+          <button type="button" class="chamadas__btn chamadas__btn--primario" id="btnChamarEquipe"><span data-ic="users"></span> Chamar equipe</button>
+        </div>
+        <div class="chamadas__tooltip" id="tipEquipe" role="tooltip" hidden>Apenas Diretores, Gerentes e CEO podem chamar a equipe toda.</div>
+      </article>
+
+      <article class="chamadas__acao" id="cardAgendar">
+        <span class="chamadas__acao-icone"><span data-ic="calendar"></span></span>
+        <div class="chamadas__acao-corpo">
+          <h2 class="chamadas__acao-titulo">Agendar chamada</h2>
+          <p class="chamadas__acao-texto">Planeje e convide sua equipe para uma chamada</p>
+          <button type="button" class="chamadas__btn chamadas__btn--primario" id="btnAgendar"><span data-ic="calendar"></span> Agendar reunião</button>
+        </div>
+      </article>
+    </section>
+
+    <div class="chamadas__colunas">
+      <!-- ===== CONTATOS ===== -->
+      <section class="chamadas__contatos" aria-labelledby="chContatosTitulo">
+        <h2 class="chamadas__secao-titulo" id="chContatosTitulo">Contatos da equipe</h2>
+
+        <div class="chamadas__equipes" id="chEquipes" role="group" aria-label="Equipe ativa"></div>
+
+        <div class="chamadas__filtros">
+          <label class="chamadas__busca">
+            <input type="search" id="chBusca" placeholder="Buscar por nome" aria-label="Buscar contato por nome" autocomplete="off">
+            <span data-ic="search"></span>
+          </label>
+          <select id="chFiltroStatus" class="chamadas__select" data-seletor aria-label="Filtrar por status">
+            <option value="todos">Todos os status</option>
+            <option value="online">Online</option>
+            <option value="ausente">Ausente</option>
+            <option value="em_chamada">Em chamada</option>
+            <option value="nao_perturbe">Não perturbe</option>
+            <option value="offline">Offline</option>
+          </select>
+          <button type="button" class="chamadas__link-btn chamadas__link-btn--direita" id="btnVerMembros"><span data-ic="users"></span> Ver membros da equipe</button>
+        </div>
+
+        <div class="chamadas__lista" id="chLista" aria-live="polite">
+          <div class="chamadas__vazio chamadas__vazio--carregando"><span class="chamadas__spinner"></span> Carregando contatos…</div>
+        </div>
+      </section>
+
+      <!-- ===== PRÓXIMAS CHAMADAS ===== -->
+      <aside class="chamadas__proximas" aria-labelledby="chProxTitulo">
+        <h2 class="chamadas__proximas-titulo" id="chProxTitulo"><span data-ic="calendar"></span> Próximas chamadas</h2>
+        <div id="chProximas"></div>
+        <button type="button" class="chamadas__ver-todas" id="btnVerTodas">Ver todas as reuniões agendadas</button>
+      </aside>
+    </div>
+
+    <div class="chamadas__seguranca" role="note">
+      <span data-ic="shield-check"></span>
+      <span>Todas as chamadas são realizadas com criptografia de ponta a ponta, garantindo a segurança das suas conversas.</span>
+    </div>
+  </main>
+
+  <!-- ===================== MODAIS ===================== -->
+
+  <!-- Nova chamada -->
+  <div class="chamadas__modal" id="mdNova" hidden>
+    <div class="chamadas__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="mdNovaTitulo">
+      <header class="chamadas__modal-topo">
+        <h2 id="mdNovaTitulo">Nova chamada</h2>
+        <button type="button" class="chamadas__modal-fechar" data-fechar aria-label="Fechar"><span data-ic="x"></span></button>
+      </header>
+      <div class="chamadas__modal-corpo">
+        <p class="chamadas__modal-ajuda">Somente membros da sua equipe (<strong id="mdNovaEquipe">—</strong>).</p>
+        <label class="chamadas__busca chamadas__busca--cheia">
+          <input type="search" id="mdNovaBusca" placeholder="Buscar membro da equipe" aria-label="Buscar membro da equipe" autocomplete="off">
+          <span data-ic="search"></span>
+        </label>
+        <div class="chamadas__modal-lista" id="mdNovaLista" role="radiogroup" aria-label="Membros da equipe"></div>
+        <div class="chamadas__segmento" role="radiogroup" aria-label="Tipo de chamada">
+          <button type="button" class="chamadas__segmento-op" data-midia="voz" role="radio" aria-checked="false"><span data-ic="phone"></span> Voz</button>
+          <button type="button" class="chamadas__segmento-op chamadas__segmento-op--ativo" data-midia="video" role="radio" aria-checked="true"><span data-ic="video"></span> Vídeo</button>
+        </div>
+      </div>
+      <footer class="chamadas__modal-rodape">
+        <button type="button" class="chamadas__btn chamadas__btn--secundario" data-fechar>Cancelar</button>
+        <button type="button" class="chamadas__btn chamadas__btn--primario" id="mdNovaIniciar" disabled>Iniciar chamada</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Chamar equipe -->
+  <div class="chamadas__modal" id="mdEquipe" hidden>
+    <div class="chamadas__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="mdEquipeTitulo">
+      <header class="chamadas__modal-topo">
+        <h2 id="mdEquipeTitulo">Chamar equipe</h2>
+        <button type="button" class="chamadas__modal-fechar" data-fechar aria-label="Fechar"><span data-ic="x"></span></button>
+      </header>
+      <div class="chamadas__modal-corpo">
+        <div class="chamadas__avatares" id="mdEquipeAvatares"></div>
+        <label class="chamadas__toggle"><input type="checkbox" id="mdEquipeMic" checked><span class="chamadas__toggle-trilho"></span><span>Entrar com microfone ligado</span></label>
+        <label class="chamadas__toggle"><input type="checkbox" id="mdEquipeCam" checked><span class="chamadas__toggle-trilho"></span><span>Entrar com câmera ligada</span></label>
+        <p class="chamadas__aviso"><span data-ic="bell"></span> Todos os membros online serão notificados.</p>
+      </div>
+      <footer class="chamadas__modal-rodape">
+        <button type="button" class="chamadas__btn chamadas__btn--secundario" data-fechar>Cancelar</button>
+        <button type="button" class="chamadas__btn chamadas__btn--primario" id="mdEquipeIniciar">Iniciar chamada com a equipe</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Agendar chamada -->
+  <div class="chamadas__modal" id="mdAgendar" hidden>
+    <div class="chamadas__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="mdAgendarTitulo">
+      <header class="chamadas__modal-topo">
+        <h2 id="mdAgendarTitulo">Agendar chamada</h2>
+        <button type="button" class="chamadas__modal-fechar" data-fechar aria-label="Fechar"><span data-ic="x"></span></button>
+      </header>
+      <div class="chamadas__modal-corpo">
+        <label class="chamadas__campo"><span>Título</span><input type="text" id="agTitulo" maxlength="120" placeholder="Ex.: Alinhamento de Projeto"></label>
+        <div class="chamadas__campo-linha">
+          <label class="chamadas__campo"><span>Data</span><input type="date" id="agData"></label>
+          <label class="chamadas__campo"><span>Horário</span><input type="time" id="agHora"></label>
+          <label class="chamadas__campo"><span>Duração</span>
+            <select id="agDuracao" data-seletor>
+              <option value="15">15 min</option><option value="30" selected>30 min</option><option value="45">45 min</option>
+              <option value="60">1 hora</option><option value="90">1h30</option><option value="120">2 horas</option>
+            </select>
+          </label>
+        </div>
+        <label class="chamadas__campo"><span>Descrição</span><textarea id="agDescricao" rows="2" maxlength="500" placeholder="Pauta ou observações (opcional)"></textarea></label>
+
+        <div class="chamadas__campo">
+          <span>Participantes (apenas da sua equipe)</span>
+          <label class="chamadas__toggle chamadas__toggle--linha" id="agTodaWrap"><input type="checkbox" id="agToda"><span class="chamadas__toggle-trilho"></span><span>Toda a equipe <span class="chamadas__cadeado" id="agTodaCadeado" hidden data-ic="lock"></span></span></label>
+          <div class="chamadas__modal-lista chamadas__modal-lista--multi" id="agLista"></div>
+        </div>
+        <p class="chamadas__form-erro" id="agErro" role="alert" hidden></p>
+      </div>
+      <footer class="chamadas__modal-rodape">
+        <button type="button" class="chamadas__btn chamadas__btn--secundario" data-fechar>Cancelar</button>
+        <button type="button" class="chamadas__btn chamadas__btn--primario" id="agSalvar">Agendar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Todas as reuniões agendadas -->
+  <div class="chamadas__modal" id="mdTodas" hidden>
+    <div class="chamadas__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="mdTodasTitulo">
+      <header class="chamadas__modal-topo">
+        <h2 id="mdTodasTitulo">Reuniões agendadas</h2>
+        <button type="button" class="chamadas__modal-fechar" data-fechar aria-label="Fechar"><span data-ic="x"></span></button>
+      </header>
+      <div class="chamadas__modal-corpo" id="mdTodasLista"></div>
+      <footer class="chamadas__modal-rodape">
+        <button type="button" class="chamadas__btn chamadas__btn--secundario" data-fechar>Fechar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Membros da equipe -->
+  <div class="chamadas__modal" id="mdMembros" hidden>
+    <div class="chamadas__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="mdMembrosTitulo">
+      <header class="chamadas__modal-topo">
+        <h2 id="mdMembrosTitulo">Membros da equipe</h2>
+        <button type="button" class="chamadas__modal-fechar" data-fechar aria-label="Fechar"><span data-ic="x"></span></button>
+      </header>
+      <div class="chamadas__modal-corpo"><div class="chamadas__modal-lista" id="mdMembrosLista"></div></div>
+      <footer class="chamadas__modal-rodape">
+        <button type="button" class="chamadas__btn chamadas__btn--secundario" data-fechar>Fechar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Aviso / erro genérico (usuário indisponível, permissão negada, regra de negócio…) -->
+  <div class="chamadas__modal chamadas__modal--alto" id="mdAviso" hidden>
+    <div class="chamadas__modal-caixa chamadas__modal-caixa--estreita" role="alertdialog" aria-modal="true" aria-labelledby="mdAvisoTitulo" aria-describedby="mdAvisoTexto">
+      <div class="chamadas__aviso-corpo">
+        <span class="chamadas__aviso-icone" id="mdAvisoIcone"></span>
+        <h2 id="mdAvisoTitulo"></h2>
+        <p id="mdAvisoTexto"></p>
+      </div>
+      <footer class="chamadas__modal-rodape chamadas__modal-rodape--centro" id="mdAvisoBotoes"></footer>
+    </div>
+  </div>
+
+  <!-- ===================== CHAMADA EM ANDAMENTO ===================== -->
+  <section class="chamadas__sala" id="chSala" hidden aria-label="Chamada em andamento">
+    <header class="sala__topo">
+      <div class="sala__topo-esq"><span class="sala__cripto" title="Chamada com criptografia de ponta a ponta"><span data-ic="lock"></span> Criptografada</span></div>
+      <div class="sala__topo-centro">
+        <span class="sala__titulo" id="salaTitulo">Chamada</span>
+        <span class="sala__timer" id="salaTimer" aria-live="off">00:00</span>
+      </div>
+      <div class="sala__topo-dir"><button type="button" class="sala__icone-btn" id="salaMinTopo" aria-label="Minimizar chamada"><span data-ic="minimize"></span></button></div>
+    </header>
+
+    <div class="sala__estado" id="salaEstado" role="status" hidden></div>
+
+    <div class="sala__corpo">
+      <div class="sala__palco">
+        <div class="sala__grade" id="salaGrade"></div>
+        <div class="sala__pager" id="salaPager" hidden>
+          <button type="button" class="sala__icone-btn" id="salaPagAnt" aria-label="Página anterior"><span data-ic="chevron-left"></span></button>
+          <span id="salaPagInfo">1 / 2</span>
+          <button type="button" class="sala__icone-btn" id="salaPagProx" aria-label="Próxima página"><span data-ic="chevron-right"></span></button>
+        </div>
+      </div>
+
+      <aside class="sala__painel" id="salaPainel" hidden aria-label="Painel da chamada">
+        <div class="sala__abas" role="tablist">
+          <button type="button" role="tab" class="sala__aba" id="abaChat" data-aba="chat">Chat</button>
+          <button type="button" role="tab" class="sala__aba" id="abaPart" data-aba="part">Participantes <span class="sala__aba-n" id="abaPartN">0</span></button>
+          <button type="button" class="sala__icone-btn sala__painel-fechar" id="salaPainelFechar" aria-label="Recolher painel"><span data-ic="x"></span></button>
+        </div>
+        <div class="sala__aba-corpo" id="painelChat" hidden>
+          <div class="sala__msgs" id="salaMsgs" aria-live="polite"></div>
+          <form class="sala__msg-form" id="salaMsgForm" autocomplete="off">
+            <input type="text" id="salaMsgInput" maxlength="1000" placeholder="Escreva uma mensagem" aria-label="Mensagem do chat da chamada">
+            <button type="submit" class="chamadas__btn chamadas__btn--primario chamadas__btn--icone" aria-label="Enviar mensagem"><span data-ic="send"></span></button>
+          </form>
+        </div>
+        <div class="sala__aba-corpo" id="painelPart" hidden><ul class="sala__parts" id="salaParts"></ul></div>
+      </aside>
+    </div>
+
+    <div class="sala__audios" id="salaAudios" aria-hidden="true"></div>
+
+    <footer class="sala__barra" role="toolbar" aria-label="Controles da chamada">
+      <button type="button" class="sala__ctl" id="ctlMic" aria-pressed="true"><span data-ic="mic"></span><span class="sala__ctl-rot">Microfone</span></button>
+      <button type="button" class="sala__ctl" id="ctlCam" aria-pressed="true"><span data-ic="video"></span><span class="sala__ctl-rot">Câmera</span></button>
+      <button type="button" class="sala__ctl" id="ctlTela" aria-pressed="false"><span data-ic="monitor"></span><span class="sala__ctl-rot">Compartilhar</span></button>
+      <button type="button" class="sala__ctl" id="ctlMao" aria-pressed="false"><span data-ic="hand"></span><span class="sala__ctl-rot">Levantar a mão</span></button>
+      <button type="button" class="sala__ctl" id="ctlChat" aria-pressed="false"><span data-ic="message"></span><span class="sala__ctl-rot">Chat</span><span class="sala__ctl-badge" id="ctlChatBadge" hidden>0</span></button>
+      <button type="button" class="sala__ctl" id="ctlPart" aria-pressed="false"><span data-ic="users"></span><span class="sala__ctl-rot">Participantes</span></button>
+      <div class="sala__mais-wrap">
+        <button type="button" class="sala__ctl" id="ctlMais" aria-haspopup="true" aria-expanded="false"><span data-ic="more"></span><span class="sala__ctl-rot">Mais</span></button>
+        <div class="sala__menu" id="salaMenu" hidden>
+          <button type="button" id="menuMin"><span data-ic="minimize"></span> Minimizar chamada</button>
+          <button type="button" id="menuTelaCheia"><span data-ic="maximize"></span> Tela cheia</button>
+        </div>
+      </div>
+      <button type="button" class="sala__ctl sala__ctl--encerrar" id="ctlEncerrar"><span data-ic="phone" class="rot-desligar"></span><span class="sala__ctl-rot">Encerrar</span></button>
+    </footer>
+  </section>
+
+  <!-- Mini-janela flutuante (chamada minimizada) -->
+  <div class="chamadas__mini" id="chMini" hidden role="region" aria-label="Chamada minimizada">
+    <div class="chamadas__mini-info"><span class="chamadas__mini-ponto"></span><div><strong id="miniTitulo">Chamada</strong><span id="miniTimer">00:00</span></div></div>
+    <div class="chamadas__mini-acoes">
+      <button type="button" class="sala__icone-btn" id="miniMic" aria-label="Silenciar microfone" aria-pressed="false"><span data-ic="mic"></span></button>
+      <button type="button" class="sala__icone-btn" id="miniVoltar" aria-label="Voltar à chamada"><span data-ic="maximize"></span></button>
+      <button type="button" class="sala__icone-btn sala__icone-btn--perigo" id="miniEncerrar" aria-label="Encerrar chamada"><span data-ic="phone" class="rot-desligar"></span></button>
+    </div>
+  </div>
+
+  <!-- Pós-chamada -->
+  <div class="chamadas__modal chamadas__modal--alto" id="chPos" hidden>
+    <div class="chamadas__modal-caixa chamadas__modal-caixa--estreita" role="dialog" aria-modal="true" aria-labelledby="posTitulo">
+      <div class="chamadas__aviso-corpo">
+        <span class="chamadas__aviso-icone chamadas__aviso-icone--ok"><span data-ic="check"></span></span>
+        <h2 id="posTitulo">Chamada encerrada</h2>
+        <dl class="chamadas__resumo">
+          <div><dt>Duração</dt><dd id="posDuracao">00:00</dd></div>
+          <div><dt>Participantes</dt><dd id="posPartes">—</dd></div>
+        </dl>
+      </div>
+      <footer class="chamadas__modal-rodape chamadas__modal-rodape--centro">
+        <button type="button" class="chamadas__btn chamadas__btn--primario" id="posVoltar">Voltar para Chamadas</button>
+      </footer>
+    </div>
+  </div>
+
+  <div class="chamadas__avisos" id="chAvisos" aria-live="polite"></div>
+</div>
+
+<script src="conteudo/cadastrado/chamadas/js/chamadas.js?v=2"></script>
+<script src="conteudo/cadastrado/chamadas/js/chamadas-sala.js?v=2"></script>

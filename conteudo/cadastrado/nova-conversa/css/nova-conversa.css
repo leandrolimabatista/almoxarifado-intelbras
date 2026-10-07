@@ -1,0 +1,860 @@
+/* ============================================================
+   CONTEÚDO — Nova conversa (área CADASTRADO)
+   Reaproveita o menu lateral do Início (inicio.css) e os
+   tokens de cor da identidade Intelbras já usados nele —
+   acrescenta as variáveis de escala do prompt do Figma
+   (brand/accent) só dentro do escopo .nova-conversa.
+============================================================= */
+
+.nova-conversa {
+  --nc-primary: #00A335;
+  --nc-primary-escuro: #00822A;
+  --nc-primary-soft: #DDF3E6;
+  --nc-primary-disabled: #7FCB9A;
+  --nc-bg-app: #F5F6F7;
+  --nc-surface: #FFFFFF;
+  --nc-border: #E5E7EB;
+  --nc-text-primary: #1F2937;
+  --nc-text-secondary: #6B7280;
+  --nc-text-muted: #9CA3AF;
+  --nc-blue: #3B82F6;
+  --nc-orange: #F59E0B;
+  --nc-purple: #8B5CF6;
+  --nc-pink: #EC4899;
+  --nc-cyan: #06B6D4;
+  --nc-red: #EF4444;
+  --nc-hover: #F3F4F6;
+
+  display: flex;
+  align-items: stretch;
+  font-family: 'Inter', 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  background: var(--nc-bg-app);
+  min-height: calc(100vh - 73px);
+  color: var(--nc-text-primary);
+}
+
+/* Trava de segurança para todo elemento que o JS esconde com o atributo
+   `hidden` (modal, botão de limpar busca, painel de seleção, cópia mobile
+   do botão "Iniciar conversa" etc.).
+   `[hidden]` sozinho (0-1-0) empata em especificidade com qualquer regra
+   `.classe { display: ... }` (também 0-1-0) definida mais abaixo neste
+   arquivo — e como esta folha carrega depois da folha padrão do navegador,
+   o empate é vencido pela ordem de código, ou seja, pela MINHA regra, não
+   pelo `hidden`. Resultado: o elemento aparece sempre, mesmo com o
+   atributo presente (foi o caso do modal "Descartar seleção?", que surgia
+   já no carregamento da página, e do "×" de limpar busca, sempre visível).
+   `.nova-conversa [hidden]` tem especificidade maior (0-1-1) e sempre
+   vence, então o `hidden` volta a funcionar como esperado em qualquer
+   elemento, atual ou futuro. */
+.nova-conversa [hidden] {
+  display: none !important;
+}
+
+.nova-conversa__main {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: flex-start;
+  gap: 20px;
+  padding: 24px 32px 40px;
+}
+
+/* ===================== PAINEL CENTRAL ===================== */
+.nova-conversa__painel {
+  width: 510px;
+  max-width: 100%;
+  flex-shrink: 0;
+  background: var(--nc-surface);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  max-height: calc(100vh - 73px - 48px);
+}
+
+.nova-conversa__cabecalho {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+
+.nova-conversa__voltar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  flex-shrink: 0;
+  margin-top: 2px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--nc-text-primary);
+  cursor: pointer;
+}
+
+.nova-conversa__voltar svg {
+  width: 20px;
+  height: 20px;
+}
+
+.nova-conversa__voltar:hover {
+  background: var(--nc-hover);
+}
+
+.nova-conversa__voltar:focus-visible,
+.nova-conversa__busca-input:focus-visible,
+.nova-conversa__filtro:focus-visible,
+.nova-conversa__busca-limpar:focus-visible {
+  outline: 2px solid var(--nc-primary);
+  outline-offset: 2px;
+}
+
+.nova-conversa__titulo {
+  margin: 0 0 4px;
+  font-size: 24px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.nova-conversa__subtitulo {
+  margin: 0;
+  font-size: 12px;
+  color: var(--nc-text-secondary);
+}
+
+/* ---------- Busca ---------- */
+.nova-conversa__busca {
+  position: relative;
+  display: flex;
+  align-items: center;
+  height: 40px;
+  border: 1px solid var(--nc-border);
+  border-radius: 12px;
+  background: var(--nc-surface);
+  margin-bottom: 12px;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
+}
+
+.nova-conversa__busca:focus-within {
+  border-color: var(--nc-primary);
+  box-shadow: 0 0 0 3px rgba(0, 163, 53, 0.12);
+}
+
+.nova-conversa__busca-icone {
+  display: inline-flex;
+  padding-left: 12px;
+  color: var(--nc-text-muted);
+  flex-shrink: 0;
+}
+
+.nova-conversa__busca-icone svg {
+  width: 17px;
+  height: 17px;
+}
+
+.nova-conversa__busca-input {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: none;
+  background: transparent;
+  padding: 0 10px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--nc-text-primary);
+}
+
+.nova-conversa__busca-input::placeholder {
+  color: var(--nc-text-muted);
+}
+
+.nova-conversa__busca-input:focus {
+  outline: none;
+}
+
+.nova-conversa__busca-limpar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-right: 6px;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--nc-text-muted);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.nova-conversa__busca-limpar svg {
+  width: 14px;
+  height: 14px;
+}
+
+.nova-conversa__busca-limpar:hover {
+  background: var(--nc-hover);
+  color: var(--nc-text-primary);
+}
+
+/* ---------- Filtros (chips) ---------- */
+.nova-conversa__filtros {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 16px;
+}
+
+.nova-conversa__filtro {
+  border: none;
+  border-radius: 999px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--nc-text-secondary);
+  background: var(--nc-hover);
+  cursor: pointer;
+}
+
+.nova-conversa__filtro:hover {
+  background: #E9EAEC;
+}
+
+.nova-conversa__filtro--ativo,
+.nova-conversa__filtro--ativo:hover {
+  background: var(--nc-primary-soft);
+  color: var(--nc-primary-escuro);
+  font-weight: 600;
+}
+
+/* ---------- Lista ---------- */
+.nova-conversa__lista {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  margin: 0 -8px;
+  padding: 0 8px;
+}
+
+.nova-conversa__secao-titulo {
+  margin: 12px 0 4px;
+  padding: 0 4px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--nc-text-primary);
+}
+
+.nova-conversa__secao-titulo:first-child {
+  margin-top: 0;
+}
+
+.nova-conversa__divisor {
+  height: 1px;
+  background: var(--nc-border);
+  margin: 12px 4px;
+  border: none;
+}
+
+.nova-conversa__linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 41px;
+  padding: 6px 8px;
+  border: none;
+  background: transparent;
+  border-radius: 10px;
+  text-align: left;
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.nova-conversa__linha:hover {
+  background: var(--nc-hover);
+}
+
+.nova-conversa__linha--selecionada,
+.nova-conversa__linha--selecionada:hover {
+  background: var(--nc-primary-soft);
+}
+
+.nova-conversa__linha:focus-visible {
+  outline: 2px solid var(--nc-primary);
+  outline-offset: -2px;
+}
+
+.nova-conversa__avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 600;
+  color: #fff;
+  background-size: cover;
+  background-position: center;
+}
+
+.nova-conversa__avatar svg {
+  width: 17px;
+  height: 17px;
+}
+
+.nova-conversa__linha-texto {
+  flex: 1;
+  min-width: 0;
+}
+
+.nova-conversa__linha-nome {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--nc-text-primary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nova-conversa__linha-nome mark {
+  background: var(--nc-primary-soft);
+  color: var(--nc-primary-escuro);
+  border-radius: 3px;
+  padding: 0 1px;
+}
+
+.nova-conversa__linha-detalhe {
+  margin: 1px 0 0;
+  font-size: 12px;
+  color: var(--nc-text-secondary);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nova-conversa__checkbox {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 4px;
+  border: 1.5px solid var(--nc-border);
+  background: #fff;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+}
+
+.nova-conversa__checkbox svg {
+  width: 11px;
+  height: 11px;
+  opacity: 0;
+}
+
+.nova-conversa__linha:hover .nova-conversa__checkbox {
+  border-color: var(--nc-text-muted);
+}
+
+.nova-conversa__linha--selecionada .nova-conversa__checkbox {
+  background: var(--nc-primary);
+  border-color: var(--nc-primary);
+}
+
+.nova-conversa__linha--selecionada .nova-conversa__checkbox svg {
+  opacity: 1;
+}
+
+/* ---------- Estados de lista (vazio / sem resultado / erro) ---------- */
+.nova-conversa__lista-msg {
+  padding: 32px 8px;
+  text-align: center;
+  color: var(--nc-text-secondary);
+  font-size: 13px;
+}
+
+.nova-conversa__lista-msg strong {
+  display: block;
+  margin-bottom: 4px;
+  color: var(--nc-text-primary);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.nova-conversa__lista-msg button {
+  margin-top: 10px;
+  border: none;
+  background: none;
+  color: var(--nc-primary);
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  cursor: pointer;
+  padding: 0;
+}
+
+.nova-conversa__lista-msg button:hover {
+  text-decoration: underline;
+}
+
+.nova-conversa__skeleton {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 8px;
+  height: 41px;
+}
+
+.nova-conversa__skeleton span {
+  border-radius: 8px;
+  background: linear-gradient(90deg, #F1F2F4 25%, #E9EAEC 37%, #F1F2F4 63%);
+  background-size: 400% 100%;
+  animation: nc-shimmer 1.4s ease infinite;
+}
+
+.nova-conversa__skeleton span:first-child {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.nova-conversa__skeleton span:last-child {
+  flex: 1;
+  height: 12px;
+}
+
+@keyframes nc-shimmer {
+  0% { background-position: 100% 0; }
+  100% { background-position: -100% 0; }
+}
+
+/* ===================== PAINEL DIREITO ===================== */
+.nova-conversa__preview {
+  flex: 1;
+  min-width: 0;
+  background: var(--nc-surface);
+  border-radius: 16px;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.04);
+  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  min-height: calc(100vh - 73px - 48px);
+}
+
+.nova-conversa__preview-corpo {
+  flex: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 0;
+}
+
+/* ---------- Estado vazio ---------- */
+.nova-conversa__vazio {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  max-width: 320px;
+  padding: 24px 0;
+}
+
+.nova-conversa__vazio-icone {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: var(--nc-primary-soft);
+  color: var(--nc-primary);
+  margin-bottom: 16px;
+}
+
+.nova-conversa__vazio-icone svg {
+  width: 22px;
+  height: 22px;
+}
+
+.nova-conversa__vazio-titulo {
+  margin: 0 0 6px;
+  font-size: 14px;
+  font-weight: 600;
+  color: var(--nc-text-primary);
+}
+
+.nova-conversa__vazio-texto {
+  margin: 0;
+  max-width: 240px;
+  font-size: 12px;
+  line-height: 1.5;
+  color: var(--nc-text-secondary);
+}
+
+.nova-conversa__ilustracao {
+  width: 130px;
+  height: auto;
+  margin: 22px 0;
+}
+
+.nova-conversa__dica {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  text-align: left;
+  width: 100%;
+  background: var(--nc-primary-soft);
+  border-radius: 12px;
+  padding: 16px;
+  margin-top: 4px;
+}
+
+.nova-conversa__dica-icone {
+  display: inline-flex;
+  color: var(--nc-primary);
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.nova-conversa__dica-icone svg {
+  width: 18px;
+  height: 18px;
+}
+
+.nova-conversa__dica-titulo {
+  display: block;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--nc-primary-escuro);
+  margin-bottom: 2px;
+}
+
+.nova-conversa__dica-texto {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.5;
+  color: #1F5D38;
+}
+
+/* ---------- Estado com seleção ---------- */
+.nova-conversa__selecao {
+  width: 100%;
+  max-width: 340px;
+  text-align: left;
+}
+
+.nova-conversa__selecao-titulo {
+  margin: 0 0 14px;
+  font-size: 16px;
+  font-weight: 600;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nova-conversa__chips {
+  list-style: none;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin: 0 0 16px;
+  padding: 0;
+  max-height: 168px;
+  overflow-y: auto;
+}
+
+.nova-conversa__chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: var(--nc-hover);
+  border-radius: 999px;
+  padding: 4px 8px 4px 4px;
+  font-size: 12.5px;
+  font-weight: 500;
+  color: var(--nc-text-primary);
+  max-width: 100%;
+}
+
+.nova-conversa__chip-avatar {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 9px;
+  font-weight: 700;
+  color: #fff;
+}
+
+.nova-conversa__chip-nome {
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 140px;
+}
+
+.nova-conversa__chip-remover {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border: none;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--nc-text-muted);
+  cursor: pointer;
+}
+
+.nova-conversa__chip-remover svg {
+  width: 10px;
+  height: 10px;
+}
+
+.nova-conversa__chip-remover:hover {
+  background: #E2E3E6;
+  color: var(--nc-text-primary);
+}
+
+.nova-conversa__campo {
+  margin-bottom: 16px;
+}
+
+.nova-conversa__campo-rotulo {
+  display: block;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--nc-text-primary);
+  margin-bottom: 6px;
+}
+
+.nova-conversa__campo-rotulo span {
+  font-weight: 400;
+  color: var(--nc-text-muted);
+}
+
+.nova-conversa__campo-input {
+  width: 100%;
+  height: 40px;
+  border: 1px solid var(--nc-border);
+  border-radius: 12px;
+  padding: 0 12px;
+  font-family: inherit;
+  font-size: 14px;
+  color: var(--nc-text-primary);
+  box-sizing: border-box;
+}
+
+.nova-conversa__campo-input:focus {
+  outline: none;
+  border-color: var(--nc-primary);
+  box-shadow: 0 0 0 3px rgba(0, 163, 53, 0.12);
+}
+
+.nova-conversa__campo-ajuda {
+  margin: 6px 0 0;
+  font-size: 11.5px;
+  color: var(--nc-text-muted);
+}
+
+.nova-conversa__contador {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin: 0;
+  font-size: 12px;
+  color: var(--nc-text-secondary);
+}
+
+.nova-conversa__contador-icone {
+  display: inline-flex;
+}
+
+.nova-conversa__contador-icone svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* ---------- Erro ---------- */
+.nova-conversa__erro {
+  margin: 0 0 12px;
+  font-size: 12.5px;
+  color: var(--nc-red);
+  text-align: center;
+}
+
+/* ---------- Botão principal ---------- */
+.nova-conversa__iniciar {
+  position: relative;
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+  background: var(--nc-primary-disabled);
+  cursor: not-allowed;
+  transition: background 0.15s ease;
+}
+
+.nova-conversa__iniciar-icone svg {
+  width: 16px;
+  height: 16px;
+}
+
+.nova-conversa__iniciar:not(:disabled) {
+  background: var(--nc-primary);
+  cursor: pointer;
+}
+
+.nova-conversa__iniciar:not(:disabled):hover {
+  background: var(--nc-primary-escuro);
+}
+
+.nova-conversa__iniciar:not(:disabled):active {
+  background: #006B24;
+}
+
+.nova-conversa__iniciar:focus-visible {
+  outline: 2px solid var(--nc-primary-escuro);
+  outline-offset: 2px;
+}
+
+/* Cópia do botão "Iniciar conversa" só pra telas < 1180px (ver
+   nova-conversa.responsivo.css). Some no desktop por padrão aqui;
+   o media query reaparece ela mais abaixo, na folha responsiva. */
+.nova-conversa__iniciar--mobile {
+  display: none;
+}
+
+.nova-conversa__iniciar-spinner {
+  display: none;
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  border: 2px solid rgba(255, 255, 255, 0.5);
+  border-top-color: #fff;
+  animation: nc-spin 0.7s linear infinite;
+}
+
+.nova-conversa__iniciar--carregando .nova-conversa__iniciar-icone {
+  display: none;
+}
+
+.nova-conversa__iniciar--carregando .nova-conversa__iniciar-spinner {
+  display: inline-block;
+}
+
+@keyframes nc-spin {
+  to { transform: rotate(360deg); }
+}
+
+/* ---------- Modal "Descartar seleção?" ---------- */
+.nova-conversa__modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(17, 24, 39, 0.4);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  /* Precisa ficar acima do cabeçalho (sticky, z-index: 100) e do dropdown
+     "Todas categorias" (z-index: 1000) pra realmente bloquear a página —
+     senão o cabeçalho fica visível e clicável por cima do backdrop.
+     Fica abaixo do alerta global de chamada recebida (z-index: 3000):
+     uma chamada entrando pode interromper esta confirmação. */
+  z-index: 2000;
+  padding: 16px;
+}
+
+.nova-conversa__modal-caixa {
+  width: 100%;
+  max-width: 360px;
+  background: #fff;
+  border-radius: 16px;
+  padding: 24px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14);
+}
+
+.nova-conversa__modal-titulo {
+  margin: 0 0 8px;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.nova-conversa__modal-texto {
+  margin: 0 0 20px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: var(--nc-text-secondary);
+}
+
+.nova-conversa__modal-acoes {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.nova-conversa__modal-btn {
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 999px;
+  border: 1px solid var(--nc-border);
+  background: #fff;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  color: var(--nc-text-primary);
+}
+
+.nova-conversa__modal-btn:hover {
+  background: var(--nc-hover);
+}
+
+.nova-conversa__modal-btn--perigo {
+  border-color: transparent;
+  background: var(--nc-red);
+  color: #fff;
+}
+
+.nova-conversa__modal-btn--perigo:hover {
+  background: #DC2626;
+}
+
+/* Estado ativo do atalho "Nova conversa" no menu lateral (sidebar
+   compartilhada com o Início) enquanto esta página está aberta. */
+.inicio__shortcut--active {
+  background: var(--intelbras-verde-100, #DDF3E6);
+  color: var(--intelbras-verde, #00A335);
+}
+
+.inicio__shortcut--active .inicio__icon {
+  color: var(--intelbras-verde, #00A335);
+}
+
+/* ---------- Utilidade visualmente-oculta ---------- */
+.nova-conversa__sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+}
