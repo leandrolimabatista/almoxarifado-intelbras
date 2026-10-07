@@ -872,7 +872,10 @@
     btn.textContent = 'Em processamento...';
 
     try {
-      const data = await API.criarPagamento(montarItens());
+      const data = await API.criarPagamento(
+  montarItens(),
+  $('ckEmail').value.trim()
+);
       if (data && data.init_point) {
         window.location.href = data.init_point;   // Mercado Pago
         return;

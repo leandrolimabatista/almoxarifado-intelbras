@@ -21,14 +21,17 @@
    * para o chamador tratar no catch.
    * @param {{id:string,title:string,quantity:number,unit_price:number}[]} items
    */
-  async function criarPagamento(items) {
-    const resp = await fetch(API_BASE_URL + PATH_CRIAR_PAGAMENTO, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
-    });
-    return resp.json();
-  }
+  async function criarPagamento(items, emailComprovante) {
+  const resp = await fetch(API_BASE_URL + PATH_CRIAR_PAGAMENTO, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      items,
+      email_comprovante: emailComprovante
+    }),
+  });
+  return resp.json();
+}
 
   /**
    * Consulta de CEP (ViaCEP, serviço público). Devolve
