@@ -1,0 +1,17 @@
+{
+  "name": "backend-mp",
+  "version": "1.0.0",
+  "description": "Backend para integração com Mercado Pago Checkout Pro",
+  "main": "index.js",
+  "scripts": {
+    "start": "node index.js"
+  },
+  "dependencies": {
+    "@getbrevo/brevo": "^6.0.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "mercadopago": "^2.0.15",
+    "pg": "^8.23.0"
+  }
+}

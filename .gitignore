@@ -1,3 +1,8 @@
 # Segredos locais
 api/config.local.php
 api/conexao.php
+
+# Backend Node.js
+backend-node/.env
+backend-node/node_modules/
+backend-node/*.backup*
