@@ -56,6 +56,14 @@
   overflow: hidden;
   white-space: nowrap;
   transition: width 0.25s ease, padding 0.25s ease, border-color 0.25s ease;
+  /* Tipografia própria do menu: não herda a fonte/cor/tamanho do wrapper
+     de cada aba (.nova-conversa, .documentos, etc.), então fica igual em todas. */
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 16px;
+  font-weight: 400;
+  line-height: normal;
+  letter-spacing: normal;
+  color: #000;
 }
 
 body.sidebar-open .inicio__sidebar {
@@ -505,7 +513,7 @@ body.sidebar-open .inicio__sidebar {
 .inicio__type-icon--video   { background: #E8F0FE; color: #3B82F6; }
 .inicio__type-icon--doc     { background: #F1ECFB; color: #8B5CF6; }
 .inicio__type-icon--sheet   { background: #E7F7EE; color: #00A859; }
-.inicio__type-icon--pdf     { background: #FDEDED; color: #EF4444; }
+.inicio__type-icon--pdf     { background: #FDEDED; color: #E5484D; }
 .inicio__type-icon--comment { background: #E8F0FE; color: #3B82F6; }
 .inicio__type-icon--share   { background: #E5F8F6; color: #0D9488; }
 .inicio__type-icon--mention { background: #F1ECFB; color: #8B5CF6; }
@@ -822,4 +830,414 @@ body.sidebar-open .inicio__chip {
 
 .inicio__notice-row .inicio__row-time {
   margin-top: 2px;
+}
+
+/* ============================================================
+   Início — cards clicáveis, estados vazios e ícones novos
+   (regras só de acréscimo: nada acima foi alterado, porque outras
+   páginas reaproveitam este arquivo)
+============================================================= */
+
+/* Linhas dos cards agora são links */
+a.inicio__channel-row,
+a.inicio__activity-row,
+a.inicio__notice-row {
+  color: inherit;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+a.inicio__channel-row:focus-visible,
+a.inicio__activity-row:focus-visible,
+a.inicio__notice-row:focus-visible,
+.inicio__chip:focus-visible,
+.inicio__shortcut-tile:focus-visible {
+  outline: 2px solid var(--intelbras-verde);
+  outline-offset: 2px;
+}
+
+/* Ícones de tipo novos (curso concluído / favorito) */
+.inicio__type-icon--course { background: #E7F7EE; color: #00A859; }
+.inicio__type-icon--star   { background: #FEF5E7; color: #F59E0B; }
+
+/* Atividades: o texto do destaque (documento, canal, curso) corta com "…" */
+.inicio__activity-row .inicio__row-title strong {
+  display: inline-block;
+  max-width: 100%;
+  vertical-align: bottom;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+/* Espaço do ponto verde mantém o horário alinhado mesmo sem ponto */
+.inicio__status-dot--vazio {
+  background: transparent;
+}
+
+/* Avisos: descrição em até 2 linhas */
+.inicio__notice-row .inicio__row-desc {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+/* Estados vazio / carregando */
+.inicio__vazio {
+  list-style: none;
+  margin: 0;
+  padding: 14px 4px;
+  font-size: 12.5px;
+  color: var(--intelbras-cinza);
+  text-align: center;
+}
+
+.inicio__vazio--solto {
+  padding: 4px 0 0;
+  text-align: left;
+}
+
+.inicio__vazio-link {
+  color: var(--intelbras-verde-escuro);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.inicio__vazio-link:hover {
+  text-decoration: underline;
+}
+
+/* Selo "Exemplo" (só aparece se as APIs não responderem) */
+.inicio__demo-tag {
+  display: inline-block;
+  margin-left: 8px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: #FEF5E7;
+  color: #B45309;
+  font-size: 10.5px;
+  font-weight: 700;
+  vertical-align: middle;
+}
+
+/* [hidden] precisa vencer o display definido nas classes */
+.inicio__card[hidden],
+.inicio__card-footnote[hidden] {
+  display: none;
+}
+
+/* Botão "Entrar" desabilitado (sala ainda não abriu) */
+.inicio__agenda-entrar:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Estudos (módulos da equipe) */
+.inicio__estudo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.inicio__estudo-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--content-border);
+  border-radius: 12px;
+  background: #fff;
+  color: inherit;
+  text-decoration: none;
+  transition: border-color 0.18s ease, background 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease;
+}
+
+.inicio__estudo-item:hover {
+  border-color: var(--intelbras-verde);
+  background: var(--intelbras-verde-100);
+  box-shadow: 0 4px 14px rgba(0, 168, 89, 0.12);
+  transform: translateY(-1px);
+}
+
+.inicio__estudo-icone {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #E7F7EE;
+  color: var(--intelbras-verde);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.inicio__estudo-icone svg {
+  width: 20px;
+  height: 20px;
+}
+
+.inicio__estudo-item:hover .inicio__estudo-icone {
+  background: var(--intelbras-verde);
+  color: #fff;
+}
+
+.inicio__estudo-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.inicio__estudo-titulo {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+  line-height: 1.3;
+}
+
+.inicio__estudo-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+}
+
+.inicio__estudo-sep {
+  opacity: 0.6;
+}
+
+.inicio__estudo-tag {
+  padding: 1px 8px;
+  border-radius: 999px;
+  background: #E7F7EE;
+  color: var(--intelbras-verde-escuro);
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.inicio__estudo-seta {
+  flex-shrink: 0;
+  width: 16px;
+  height: 16px;
+  color: #B5B5BA;
+  transition: color 0.18s ease, transform 0.18s ease;
+}
+
+.inicio__estudo-item:hover .inicio__estudo-seta {
+  color: var(--intelbras-verde);
+  transform: translateX(3px);
+}
+
+.inicio__estudo-mais {
+  display: block;
+  margin: 12px auto 0;
+  width: fit-content;
+  padding: 6px 16px;
+  border-radius: 999px;
+  background: #F4F4F5;
+  color: var(--intelbras-cinza);
+  font-size: 12px;
+  font-weight: 700;
+  text-decoration: none;
+  transition: background 0.18s ease, color 0.18s ease;
+}
+
+.inicio__estudo-mais:hover {
+  background: var(--intelbras-verde-100);
+  color: var(--intelbras-verde-escuro);
+}
+
+.inicio__estudo-item:focus-visible,
+.inicio__estudo-mais:focus-visible {
+  outline: 2px solid var(--intelbras-verde);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .inicio__estudo-item,
+  .inicio__estudo-seta,
+  .inicio__estudo-icone {
+    transition: none;
+    transform: none;
+  }
+}
+
+/* Reuniões semanais (popout abaixo de Estudos) */
+.inicio__semana {
+  padding: 0;
+}
+
+.inicio__semana-toggle {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 16px 20px;
+  border: none;
+  background: transparent;
+  border-radius: 14px;
+  font-family: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.inicio__semana-icone {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 10px;
+  background: #E7F7EE;
+  color: var(--intelbras-verde);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inicio__semana-icone svg {
+  width: 20px;
+  height: 20px;
+}
+
+.inicio__semana-rotulo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.inicio__semana-titulo {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.inicio__semana-resumo {
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+}
+
+.inicio__semana-seta {
+  flex-shrink: 0;
+  width: 18px;
+  height: 18px;
+  color: var(--intelbras-cinza);
+  transition: transform 0.25s ease;
+}
+
+.inicio__semana-toggle[aria-expanded="true"] .inicio__semana-seta {
+  transform: rotate(180deg);
+}
+
+.inicio__semana-painel {
+  display: grid;
+  grid-template-rows: 0fr;
+  transition: grid-template-rows 0.28s ease;
+}
+
+.inicio__semana-painel--aberto {
+  grid-template-rows: 1fr;
+}
+
+.inicio__semana-interno {
+  min-height: 0;
+  overflow: hidden;
+  padding: 0 20px;
+  visibility: hidden;
+  transition: visibility 0s linear 0.28s;
+}
+
+.inicio__semana-painel--aberto .inicio__semana-interno {
+  padding-bottom: 18px;
+  visibility: visible;
+  transition-delay: 0s;
+}
+
+.inicio__semana-dia {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 8px;
+  margin: 10px 0 6px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.inicio__semana-dia--hoje {
+  color: var(--intelbras-verde);
+}
+
+.inicio__semana-data {
+  font-weight: 400;
+  color: var(--intelbras-cinza);
+}
+
+.inicio__semana-itens {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.inicio__semana-item {
+  display: flex;
+  align-items: center;
+  padding: 10px 12px;
+  border-radius: 10px;
+  border: 1px solid var(--content-border);
+  color: inherit;
+  text-decoration: none;
+  transition: background 0.15s ease, border-color 0.15s ease;
+}
+
+.inicio__semana-item:hover {
+  border-color: var(--intelbras-verde);
+  background: var(--intelbras-verde-100);
+}
+
+.inicio__semana-item--passada {
+  opacity: 0.55;
+}
+
+.inicio__semana-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.inicio__semana-reuniao {
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.inicio__semana-hora {
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+  white-space: pre-wrap;
+}
+
+.inicio__semana-ver {
+  display: inline-block;
+  margin-top: 12px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--intelbras-verde);
+  text-decoration: none;
+}
+
+.inicio__semana-ver:hover {
+  text-decoration: underline;
 }
