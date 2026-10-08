@@ -1,3 +1,227 @@
+<?php
+// ============================================================
+// Dados do Início que vêm direto do banco (somente leitura):
+//   - Equipes favoritas  -> tb_equipes_membros.favorita = 1
+//   - Estudo             -> cursos da equipe do usuário (tb_usuarios.equipe_slug)
+// Se o banco estiver fora do ar ou o SQL ainda não tiver sido importado,
+// as listas ficam vazias e o Início continua abrindo normalmente.
+// Os demais cards (documentos, reuniões, atividades) são carregados pelo
+// inicio.js a partir das APIs que já existem em api/.
+// ============================================================
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+$inicioUid = (int)($_SESSION['usuario_id'] ?? 0);
+$inicioEquipesFav = [];
+$inicioEquipeSlug = '';
+$inicioReunioesCanais = [];
+$inicioAtividadesEquipes = [];
+
+try {
+    require_once __DIR__ . '/../../../../api/conexao.php';
+    $pdoInicio = conectar();
+
+    try {
+        $st = $pdoInicio->prepare(
+            'SELECT e.slug, e.nome
+               FROM tb_equipes_membros m
+               JOIN tb_equipes e ON e.slug = m.equipe_slug
+              WHERE m.usuario_id = :u AND m.favorita = 1
+              ORDER BY e.ordem, e.nome
+              LIMIT 5'
+        );
+        $st->execute([':u' => $inicioUid]);
+        $inicioEquipesFav = $st->fetchAll();
+    } catch (Throwable $e) {
+        error_log('[inicio] equipes favoritas: ' . $e->getMessage());
+    }
+
+    try {
+        $st = $pdoInicio->prepare('SELECT equipe_slug FROM tb_usuarios WHERE id = :u LIMIT 1');
+        $st->execute([':u' => $inicioUid]);
+        $inicioEquipeSlug = (string)($st->fetchColumn() ?: '');
+    } catch (Throwable $e) {
+        error_log('[inicio] equipe do usuário: ' . $e->getMessage());
+    }
+
+    // Reuniões marcadas em "Agendar reunião" (tb_reunioes): organizadas por mim,
+    // com eu como participante, ou da minha equipe. Alimentam o card
+    // "Canais em destaque" (a API de Chamadas lê outra tabela e não as enxerga).
+    try {
+        $st = $pdoInicio->prepare(
+            'SELECT r.titulo, r.data_reuniao, r.hora_inicio, r.hora_fim, r.equipe_slug
+               FROM tb_reunioes r
+              WHERE r.status = \'agendada\'
+                AND r.data_reuniao >= (CURDATE() - INTERVAL 7 DAY)
+                AND (r.organizador_id = :u1
+                     OR EXISTS (SELECT 1 FROM tb_reunioes_participantes p
+                                 WHERE p.reuniao_id = r.id AND p.usuario_id = :u2)
+                     OR r.equipe_slug = :eq)
+              ORDER BY r.data_reuniao ASC, r.hora_inicio ASC
+              LIMIT 20'
+        );
+        $st->execute([':u1' => $inicioUid, ':u2' => $inicioUid, ':eq' => $inicioEquipeSlug]);
+        foreach ($st->fetchAll() as $r) {
+            $ini = new DateTimeImmutable($r['data_reuniao'] . ' ' . $r['hora_inicio']);
+            $fim = new DateTimeImmutable($r['data_reuniao'] . ' ' . $r['hora_fim']);
+            $inicioReunioesCanais[] = [
+                'titulo'      => (string)$r['titulo'],
+                'equipe'      => (string)$r['equipe_slug'],
+                'data_hora'   => $ini->format('c'),
+                'duracao_min' => max(0, (int)(($fim->getTimestamp() - $ini->getTimestamp()) / 60)),
+            ];
+        }
+    } catch (Throwable $e) {
+        error_log('[inicio] reuniões agendadas: ' . $e->getMessage());
+    }
+    // Atividades recentes das equipes que o usuário acessa (equipe principal +
+    // acessos concedidos; o administrador id 1 vê todas): mensagens nos canais,
+    // chamadas iniciadas e reuniões agendadas. Somente leitura.
+    try {
+        $slugsAcesso = [];
+        if ($inicioUid === 1) {
+            $slugsAcesso = $pdoInicio->query('SELECT slug FROM tb_equipes')->fetchAll(PDO::FETCH_COLUMN);
+        } else {
+            if ($inicioEquipeSlug !== '') {
+                $slugsAcesso[] = $inicioEquipeSlug;
+            }
+            $st = $pdoInicio->prepare(
+                'SELECT equipe_slug FROM tb_equipes_membros WHERE usuario_id = :u AND origem = \'solicitacao\''
+            );
+            $st->execute([':u' => $inicioUid]);
+            $slugsAcesso = array_values(array_unique(array_merge($slugsAcesso, $st->fetchAll(PDO::FETCH_COLUMN))));
+        }
+
+        if ($slugsAcesso) {
+            $ph = implode(',', array_fill(0, count($slugsAcesso), '?'));
+            $nomesEq = [];
+            foreach ($pdoInicio->query('SELECT slug, nome FROM tb_equipes')->fetchAll() as $eq) {
+                $nomesEq[$eq['slug']] = (string)$eq['nome'];
+            }
+            $primeiroNome = static function ($n): string {
+                $p = explode(' ', trim((string)$n));
+                return $p[0] !== '' ? $p[0] : 'Alguém';
+            };
+            $nomeCurto = static function ($n): string {
+                $p = preg_split('/\s+/', trim((string)$n));
+                return count($p) > 1 ? $p[0] . ' ' . end($p) : ($p[0] ?: 'Alguém');
+            };
+
+            // 1) Mensagens nos canais ("X comentou em Marketing")
+            try {
+                $st = $pdoInicio->prepare(
+                    "SELECT m.equipe_slug, m.usuario_id, m.criada_em, u.nome
+                       FROM tb_equipes_mensagens m
+                       JOIN tb_usuarios u ON u.id = m.usuario_id
+                      WHERE m.excluida_em IS NULL AND m.equipe_slug IN ($ph)
+                      ORDER BY m.criada_em DESC
+                      LIMIT 12"
+                );
+                $st->execute($slugsAcesso);
+                foreach ($st->fetchAll() as $r) {
+                    $eu = (int)$r['usuario_id'] === $inicioUid;
+                    $inicioAtividadesEquipes[] = [
+                        'quando' => (new DateTimeImmutable($r['criada_em']))->format('c'),
+                        'icone'  => 'comment',
+                        'texto'  => ($eu ? 'Você' : $nomeCurto($r['nome'])) . ' comentou em',
+                        'alvo'   => $nomesEq[$r['equipe_slug']] ?? (string)$r['equipe_slug'],
+                        'href'   => 'index.php?pagina=equipes&equipe=' . urlencode((string)$r['equipe_slug']),
+                        'ponto'  => !$eu,
+                    ];
+                }
+            } catch (Throwable $e) {
+                error_log('[inicio] atividades/mensagens: ' . $e->getMessage());
+            }
+
+            // 2) Chamadas iniciadas ("X iniciou uma reunião em Geral")
+            try {
+                $st = $pdoInicio->prepare(
+                    "SELECT c.equipe_slug, c.iniciador_id, c.midia, c.iniciada_em, u.nome
+                       FROM tb_chamadas c
+                       JOIN tb_usuarios u ON u.id = c.iniciador_id
+                      WHERE c.tipo = 'equipe' AND c.equipe_slug IN ($ph)
+                      ORDER BY c.iniciada_em DESC
+                      LIMIT 6"
+                );
+                $st->execute($slugsAcesso);
+                foreach ($st->fetchAll() as $r) {
+                    $eu = (int)$r['iniciador_id'] === $inicioUid;
+                    $inicioAtividadesEquipes[] = [
+                        'quando' => (new DateTimeImmutable($r['iniciada_em']))->format('c'),
+                        'icone'  => 'video',
+                        'texto'  => ($eu ? 'Você' : $nomeCurto($r['nome'])) . ' iniciou uma ' . ($r['midia'] === 'voz' ? 'chamada' : 'reunião') . ' em',
+                        'alvo'   => $nomesEq[$r['equipe_slug']] ?? (string)$r['equipe_slug'],
+                        'href'   => 'index.php?pagina=chamadas',
+                        'ponto'  => !$eu,
+                    ];
+                }
+            } catch (Throwable $e) {
+                error_log('[inicio] atividades/chamadas: ' . $e->getMessage());
+            }
+
+            // 3) Reuniões agendadas ("X agendou uma reunião: Daily")
+            try {
+                $st = $pdoInicio->prepare(
+                    "SELECT r.titulo, r.equipe_slug, r.organizador_id, r.criado_em, u.nome
+                       FROM tb_reunioes r
+                       JOIN tb_usuarios u ON u.id = r.organizador_id
+                      WHERE r.status = 'agendada' AND r.equipe_slug IN ($ph)
+                      ORDER BY r.criado_em DESC
+                      LIMIT 6"
+                );
+                $st->execute($slugsAcesso);
+                foreach ($st->fetchAll() as $r) {
+                    $eu = (int)$r['organizador_id'] === $inicioUid;
+                    $inicioAtividadesEquipes[] = [
+                        'quando' => (new DateTimeImmutable($r['criado_em']))->format('c'),
+                        'icone'  => 'video',
+                        'texto'  => ($eu ? 'Você' : $nomeCurto($r['nome'])) . ' agendou uma reunião em',
+                        'alvo'   => (string)$r['titulo'],
+                        'href'   => 'index.php?pagina=chamadas',
+                        'ponto'  => !$eu,
+                    ];
+                }
+            } catch (Throwable $e) {
+                error_log('[inicio] atividades/reuniões: ' . $e->getMessage());
+            }
+        }
+    } catch (Throwable $e) {
+        error_log('[inicio] atividades das equipes: ' . $e->getMessage());
+    }
+} catch (Throwable $e) {
+    error_log('[inicio] sem conexão com o banco: ' . $e->getMessage());
+}
+
+$inicioH = static fn($v): string => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+// Cursos (módulos de estudo) por equipe — mesmo catálogo da página Cursos: [título, minutos]
+$inicioEstudoCatalogo = [
+    'ti' => [['Fundamentos de Redes e Infraestrutura', 65], ['Segurança da Informação', 50], ['Cloud Computing', 60], ['Suporte Técnico e Help Desk', 50]],
+    'rh' => [['Gestão de Pessoas', 65], ['Onboarding e Integração', 50], ['Clima Organizacional', 55], ['Legislação Trabalhista Básica', 55]],
+    'marketing' => [['Comunicação e Marca', 60], ['Marketing de Conteúdo', 60], ['Redes Sociais e Comunidade', 55], ['Análise de Dados de Marketing', 60]],
+    'financeiro' => [['Noções de Finanças Corporativas', 55], ['Contas a Pagar e a Receber', 50], ['Planejamento Orçamentário', 60], ['Impostos e Conformidade Fiscal', 60]],
+    'projetos' => [['Gestão de Projetos', 65], ['Metodologias Ágeis', 60], ['Gestão de Riscos', 55], ['Comunicação com Stakeholders', 50]],
+    'sac' => [['Atendimento de Excelência', 60], ['Gestão de Reclamações e Ouvidoria', 50], ['Pós-venda e Fidelização', 60], ['LGPD no Atendimento', 55]],
+];
+$inicioEstudo = $inicioEstudoCatalogo[$inicioEquipeSlug] ?? [];
+$inicioEstudoNomes = ['ti' => 'T.I', 'rh' => 'RH', 'marketing' => 'Marketing', 'financeiro' => 'Financeiro', 'projetos' => 'Projetos', 'sac' => 'SAC / Ouvidoria'];
+$inicioEstudoTodas = false;
+// Administrador (id 1) sem equipe com cursos: vê os de todas as equipes (igual à página Cursos)
+if (!$inicioEstudo && $inicioUid === 1) {
+    $inicioEstudoTodas = true;
+    foreach ($inicioEstudoCatalogo as $eqSlug => $eqCursos) {
+        foreach ($eqCursos as $eqCurso) {
+            $inicioEstudo[] = [$eqCurso[0], $eqCurso[1], $inicioEstudoNomes[$eqSlug] ?? $eqSlug];
+        }
+    }
+}
+$inicioEstudoSlug = static function (string $t): string {
+    $t = strtr($t, ['á'=>'a','à'=>'a','â'=>'a','ã'=>'a','é'=>'e','ê'=>'e','í'=>'i','ó'=>'o','ô'=>'o','õ'=>'o','ú'=>'u','ç'=>'c','Á'=>'A','É'=>'E','Í'=>'I','Ó'=>'O','Ú'=>'U','Ç'=>'C']);
+    return trim((string)preg_replace('/[^a-z0-9]+/', '-', strtolower($t)), '-');
+};
+// Mais de 4 módulos: mostra os 3 primeiros + "+ Mais X módulo(s)"
+$inicioEstudoVisiveis = count($inicioEstudo) > 4 ? array_slice($inicioEstudo, 0, 3) : $inicioEstudo;
+$inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
+?>
 <!-- ============================================================
      CONTEÚDO — Início (área CADASTRADO)
      Componente incluído dentro de <main> no index.php quando o
@@ -7,13 +231,13 @@
      Layout fiel ao Figma: menu lateral + banner (mesmo componente
      de carrossel da área não-cadastrada) + grade 3 colunas com
      Canais em destaque / Atividades recentes / Agenda do dia
-     (linha 1) e Equipes favoritas / Atalhos rápidos / Avisos
-     importantes (linha 2).
+     (linha 1) e Equipes favoritas / Atalhos rápidos / Estudo
+     (linha 2).
 ============================================================= -->
-<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261009">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
 
-<div class="inicio">
+<div class="inicio" id="inicioRaiz" data-usuario-id="<?php echo $inicioUid; ?>">
 
   <!-- ===================== MENU LATERAL (largura 0 por padrão; abre ao clicar em "Todas categorias" no cabeçalho, empurrando o conteúdo) ===================== -->
   <aside class="inicio__sidebar" id="sidebar">
@@ -102,14 +326,13 @@
           <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
         </a>
       </div>
-      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
     </div>
 
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">ATALHOS</span>
-      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        <span>Nova conversa</span>
+      <a href="index.php?pagina=chat" class="inicio__shortcut" id="atalhoChatSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chat</span>
       </a>
       <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
         <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -177,268 +400,136 @@
       </div>
     </section>
 
-    <!-- ===================== GRADE 3 COLUNAS (fiel ao Figma: cada coluna e independente e empilha seus 2 cards sem se prender a altura das colunas vizinhas) ===================== -->
+    <!-- ===================== GRADE 3 COLUNAS (cada coluna é independente e empilha seus 2 cards) =====================
+         Todos os cards são clicáveis e levam para a página correspondente.
+         Canais em destaque / Atividades recentes / Agenda do dia são preenchidos pelo inicio.js
+         com os dados reais das APIs; Equipes favoritas e Estudo vêm do PHP no topo deste arquivo. -->
     <div class="inicio__grid">
 
       <!-- Coluna 1 -->
       <div class="inicio__grid-col">
-        <!-- Canais em destaque -->
-              <div class="inicio__card">
-                <h3 class="inicio__card-title">Canais em destaque</h3>
-                <ul class="inicio__list">
-                  <li class="inicio__channel-row">
-                    <span class="inicio__type-icon inicio__type-icon--video">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 10.5l5-3v9l-5-3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="3" y="6" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Projeto Nova Sede</span>
-                      <span class="inicio__row-meta">Reunião • Marketing</span>
-                    </span>
-                    <span class="inicio__row-time">10:30</span>
-                    <button class="inicio__row-menu" aria-label="Mais opções">⋮</button>
-                  </li>
-                  <li class="inicio__channel-row">
-                    <span class="inicio__type-icon inicio__type-icon--doc">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Apresentação de Resultados</span>
-                      <span class="inicio__row-meta">Documento • Diretoria</span>
-                    </span>
-                    <span class="inicio__row-time">Ontem</span>
-                    <button class="inicio__row-menu" aria-label="Mais opções">⋮</button>
-                  </li>
-                  <li class="inicio__channel-row">
-                    <span class="inicio__type-icon inicio__type-icon--sheet">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="3.5" width="16" height="17" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M9.5 9.5V20.5" stroke="currentColor" stroke-width="1.6"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Plano de Ação Q2</span>
-                      <span class="inicio__row-meta">Planilha • Financeiro</span>
-                    </span>
-                    <span class="inicio__row-time">2 dias atrás</span>
-                    <button class="inicio__row-menu" aria-label="Mais opções">⋮</button>
-                  </li>
-                  <li class="inicio__channel-row">
-                    <span class="inicio__type-icon inicio__type-icon--pdf">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 13.5h.01M12 13.5h.01M15 13.5h.01" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Política de Segurança da Informação</span>
-                      <span class="inicio__row-meta">PDF • TI</span>
-                    </span>
-                    <span class="inicio__row-time">3 dias atrás</span>
-                    <button class="inicio__row-menu" aria-label="Mais opções">⋮</button>
-                  </li>
-                </ul>
-              </div>
-        
-              
+        <!-- Canais em destaque: último PDF, documento, planilha e reunião dos canais -->
+        <div class="inicio__card" id="cardCanais" data-reunioes="<?php echo $inicioH(json_encode($inicioReunioesCanais, JSON_UNESCAPED_UNICODE)); ?>">
+          <h3 class="inicio__card-title">Canais em destaque</h3>
+          <ul class="inicio__list" id="canaisLista" aria-live="polite">
+            <li class="inicio__vazio">Carregando…</li>
+          </ul>
+        </div>
 
-        <!-- Equipes favoritas -->
-              <div class="inicio__card inicio__card--compact">
-                <h3 class="inicio__card-title">Equipes favoritas</h3>
-                <div class="inicio__chip-row">
-                  <a href="#" class="inicio__chip"># Geral</a>
-                  <a href="#" class="inicio__chip"># Projetos</a>
-                  <a href="#" class="inicio__chip"># Marketing</a>
-                  <a href="#" class="inicio__chip"># TI</a>
-                  <a href="#" class="inicio__chip"># RH</a>
-                </div>
-              </div>
-        
-              
+        <!-- Equipes favoritas: cada uma abre o canal da equipe -->
+        <div class="inicio__card inicio__card--compact">
+          <h3 class="inicio__card-title">Equipes favoritas</h3>
+<?php if ($inicioEquipesFav): ?>
+          <div class="inicio__chip-row">
+<?php foreach ($inicioEquipesFav as $eqFav): ?>
+            <a href="index.php?pagina=equipes&amp;equipe=<?php echo urlencode((string)$eqFav['slug']); ?>" class="inicio__chip"># <?php echo $inicioH($eqFav['nome']); ?></a>
+<?php endforeach; ?>
+          </div>
+<?php else: ?>
+          <p class="inicio__vazio inicio__vazio--solto">Você ainda não favoritou nenhuma equipe. <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__vazio-link">Abrir equipes</a></p>
+<?php endif; ?>
+        </div>
       </div>
 
       <!-- Coluna 2 -->
       <div class="inicio__grid-col">
-        <!-- Atividades recentes -->
-              <div class="inicio__card">
-                <h3 class="inicio__card-title">Atividades recentes</h3>
-                <ul class="inicio__list">
-                  <li class="inicio__activity-row">
-                    <span class="inicio__type-icon inicio__type-icon--comment">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span class="inicio__row-avatar" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 20C4 16.6863 7.13401 14 11 14H13C16.866 14 20 16.6863 20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Mariana Souza comentou em<br><strong>Projeto Nova Sede</strong></span>
-                    </span>
-                    <span class="inicio__row-time">5 min atrás</span>
-                    <span class="inicio__status-dot" aria-hidden="true"></span>
-                  </li>
-                  <li class="inicio__activity-row">
-                    <span class="inicio__type-icon inicio__type-icon--share">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="6" cy="12" r="2.4" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="6" r="2.4" stroke="currentColor" stroke-width="1.6"/><circle cx="18" cy="18" r="2.4" stroke="currentColor" stroke-width="1.6"/><path d="M8.2 10.8L15.8 7.2M8.2 13.2l7.6 3.6" stroke="currentColor" stroke-width="1.6"/></svg>
-                    </span>
-                    <span class="inicio__row-avatar" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 20C4 16.6863 7.13401 14 11 14H13C16.866 14 20 16.6863 20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Carlos Lima compartilhou um documento em <strong>Financeiro</strong></span>
-                    </span>
-                    <span class="inicio__row-time">1 h atrás</span>
-                    <span class="inicio__status-dot" aria-hidden="true"></span>
-                  </li>
-                  <li class="inicio__activity-row">
-                    <span class="inicio__type-icon inicio__type-icon--mention">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><circle cx="12" cy="12" r="3.4" stroke="currentColor" stroke-width="1.6"/><path d="M15.4 12v1.6a2 2 0 004 0V12a7.4 7.4 0 10-3 5.95" stroke="currentColor" stroke-width="1.4"/></svg>
-                    </span>
-                    <span class="inicio__row-avatar" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 20C4 16.6863 7.13401 14 11 14H13C16.866 14 20 16.6863 20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Você foi mencionado em<br><strong>Marketing</strong></span>
-                    </span>
-                    <span class="inicio__row-time">2 h atrás</span>
-                    <span class="inicio__status-dot" aria-hidden="true"></span>
-                  </li>
-                  <li class="inicio__activity-row">
-                    <span class="inicio__type-icon inicio__type-icon--video">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 10.5l5-3v9l-5-3" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><rect x="3" y="6" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.8"/></svg>
-                    </span>
-                    <span class="inicio__row-avatar" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 20C4 16.6863 7.13401 14 11 14H13C16.866 14 20 16.6863 20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Juliana Martins iniciou uma reunião <span class="inicio__row-em-geral">em <br class="inicio__row-break"><strong>Geral</strong></span></span>
-                    </span>
-                    <span class="inicio__row-time">3 h atrás</span>
-                    <span class="inicio__status-dot" aria-hidden="true"></span>
-                  </li>
-                  <li class="inicio__activity-row">
-                    <span class="inicio__type-icon inicio__type-icon--channel">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l7 7-7 7 3-7-3-7z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M12 4l7 7-7 7" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span class="inicio__row-avatar" aria-hidden="true">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="8" r="4" stroke="currentColor" stroke-width="1.6"/><path d="M4 20C4 16.6863 7.13401 14 11 14H13C16.866 14 20 16.6863 20 20" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">TI criou um novo canal<br><strong>Suporte Interno</strong></span>
-                    </span>
-                    <span class="inicio__row-time">5 h atrás</span>
-                    <span class="inicio__status-dot" aria-hidden="true"></span>
-                  </li>
-                </ul>
-              </div>
-        
-              
+        <!-- Atividades recentes: documentos, mensagens, cursos concluídos etc. -->
+        <div class="inicio__card" id="cardAtividades" data-atividades="<?php echo $inicioH(json_encode($inicioAtividadesEquipes, JSON_UNESCAPED_UNICODE)); ?>">
+          <h3 class="inicio__card-title">Atividades recentes</h3>
+          <ul class="inicio__list" id="atividadesLista" aria-live="polite">
+            <li class="inicio__vazio">Carregando…</li>
+          </ul>
+        </div>
 
         <!-- Atalhos rápidos -->
-              <div class="inicio__card inicio__card--compact">
-                <h3 class="inicio__card-title">Atalhos rápidos</h3>
-                <div class="inicio__shortcut-grid">
-                  <a href="index.php?pagina=nova-conversa" class="inicio__shortcut-tile" id="atalhoNovaConversaGrid">
-                    <span class="inicio__shortcut-icon">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span>Nova conversa</span>
-                  </a>
-                  <a href="#" class="inicio__shortcut-tile">
-                    <span class="inicio__shortcut-icon">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
-                    </span>
-                    <span>Compartilhar arquivo</span>
-                  </a>
-                  <a href="#" class="inicio__shortcut-tile">
-                    <span class="inicio__shortcut-icon">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/><path d="M12 7v5l3.2 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span>Criar tarefa</span>
-                  </a>
-                  <a href="#" class="inicio__shortcut-tile">
-                    <span class="inicio__shortcut-icon">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg>
-                    </span>
-                    <span>Mais apps</span>
-                  </a>
-                </div>
-              </div>
-        
-              
+        <div class="inicio__card inicio__card--compact">
+          <h3 class="inicio__card-title">Atalhos rápidos</h3>
+          <div class="inicio__shortcut-grid">
+            <a href="index.php?pagina=chat" class="inicio__shortcut-tile">
+              <span class="inicio__shortcut-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg></span>
+              <span>Nova conversa</span>
+            </a>
+            <a href="index.php?pagina=documentos" class="inicio__shortcut-tile">
+              <span class="inicio__shortcut-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+              <span>Compartilhar arquivo</span>
+            </a>
+            <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut-tile">
+              <span class="inicio__shortcut-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></span>
+              <span>Agendar reunião</span>
+            </a>
+            <a href="index.php?pagina=servicos" class="inicio__shortcut-tile">
+              <span class="inicio__shortcut-icon"><svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="3.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="3.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/><rect x="13.5" y="13.5" width="7" height="7" rx="1.5" stroke="currentColor" stroke-width="1.6"/></svg></span>
+              <span>Mais apps</span>
+            </a>
+          </div>
+        </div>
       </div>
 
       <!-- Coluna 3 -->
       <div class="inicio__grid-col">
-        <!-- Agenda do dia -->
-              <div class="inicio__card" id="agendaDoDia">
-                <div class="inicio__card-head">
-                  <h3 class="inicio__card-title">Agenda do dia</h3>
-                  <a href="#" class="inicio__see-all inicio__see-all--inline">Ver agenda</a>
-                </div>
-                <p class="inicio__agenda-data" id="agendaData">Hoje</p>
-        
-                <ul class="inicio__agenda-list" id="agendaLista">
-                  <li class="inicio__agenda-item inicio__agenda-item--current" data-agenda-item tabindex="0" role="button">
-                    <div class="inicio__agenda-info">
-                      <span class="inicio__agenda-title">Reunião de alinhamento</span>
-                      <span class="inicio__agenda-hora">09:00 – 10:00</span>
-                    </div>
-                    <button class="inicio__agenda-entrar">Entrar</button>
-                  </li>
-                  <li class="inicio__agenda-item" data-agenda-item tabindex="0" role="button">
-                    <div class="inicio__agenda-info">
-                      <span class="inicio__agenda-title">Daily Marketing</span>
-                      <span class="inicio__agenda-hora">10:30 – 11:00</span>
-                    </div>
-                    <button class="inicio__agenda-entrar">Entrar</button>
-                  </li>
-                  <li class="inicio__agenda-item" data-agenda-item tabindex="0" role="button">
-                    <div class="inicio__agenda-info">
-                      <span class="inicio__agenda-title">Apresentação do projeto</span>
-                      <span class="inicio__agenda-hora">14:00 – 15:30</span>
-                    </div>
-                    <button class="inicio__agenda-entrar">Entrar</button>
-                  </li>
-                  <li class="inicio__agenda-item inicio__agenda-item--extra" data-agenda-item tabindex="0" role="button" hidden>
-                    <div class="inicio__agenda-info">
-                      <span class="inicio__agenda-title">Reunião com Cliente X</span>
-                      <span class="inicio__agenda-hora">16:00 – 17:00</span>
-                    </div>
-                    <button class="inicio__agenda-entrar">Entrar</button>
-                  </li>
-                  <li class="inicio__agenda-item inicio__agenda-item--extra" data-agenda-item tabindex="0" role="button" hidden>
-                    <div class="inicio__agenda-info">
-                      <span class="inicio__agenda-title">Alinhamento de Sprint</span>
-                      <span class="inicio__agenda-hora">17:30 – 18:00</span>
-                    </div>
-                    <button class="inicio__agenda-entrar">Entrar</button>
-                  </li>
-                </ul>
-        
-                <button type="button" class="inicio__card-footnote inicio__card-footnote--toggle" id="agendaVerMais" aria-expanded="false">+ 2 eventos para hoje</button>
-              </div>
-        
-              
+        <!-- Agenda do dia: só aparece se houver reunião hoje (o inicio.js remove o "hidden") -->
+        <div class="inicio__card" id="agendaDoDia" hidden>
+          <div class="inicio__card-head">
+            <h3 class="inicio__card-title">Agenda do dia</h3>
+            <a href="index.php?pagina=chamadas" class="inicio__see-all inicio__see-all--inline">Ver agenda</a>
+          </div>
+          <p class="inicio__agenda-data" id="agendaData">Hoje</p>
+          <ul class="inicio__agenda-list" id="agendaLista"></ul>
+          <button type="button" class="inicio__card-footnote inicio__card-footnote--toggle" id="agendaVerMais" aria-expanded="false" hidden></button>
+        </div>
 
-        <!-- Avisos importantes -->
-              <div class="inicio__card">
-                <h3 class="inicio__card-title">Avisos importantes</h3>
-                <ul class="inicio__list">
-                  <li class="inicio__notice-row">
-                    <span class="inicio__type-icon inicio__type-icon--home">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 11.5L12 4l8 7.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/><path d="M6 10v9a1 1 0 001 1h3v-5a1 1 0 011-1h2a1 1 0 011 1v5h3a1 1 0 001-1v-9" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Nova política de trabalho híbrido</span>
-                      <span class="inicio__row-desc">Confira as atualizações da nossa política de trabalho híbrido.</span>
-                      <span class="inicio__row-time">2 dias atrás</span>
-                    </span>
-                  </li>
-                  <li class="inicio__notice-row">
-                    <span class="inicio__type-icon inicio__type-icon--survey">
-                      <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                    </span>
-                    <span class="inicio__row-main">
-                      <span class="inicio__row-title">Pesquisa de clima</span>
-                      <span class="inicio__row-desc">Sua opinião é muito importante para nós. Participe!</span>
-                      <span class="inicio__row-time">5 dias atrás</span>
-                    </span>
-                  </li>
-                </ul>
-              </div>
+        <!-- Estudos: módulos (cursos) da equipe do usuário -->
+        <div class="inicio__card" id="cardEstudo">
+          <h3 class="inicio__card-title">Estudos</h3>
+<?php if ($inicioEstudoVisiveis): ?>
+          <ul class="inicio__estudo-list">
+<?php foreach ($inicioEstudoVisiveis as $est): ?>
+            <li>
+              <a href="index.php?pagina=cursos&amp;curso=<?php echo $inicioH($inicioEstudoSlug($est[0])); ?>" class="inicio__estudo-item">
+                <span class="inicio__estudo-icone" aria-hidden="true">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L12 4l9.5 4.5L12 13 2.5 8.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 10.7v4.3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.3" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
+                </span>
+                <span class="inicio__estudo-info">
+                  <span class="inicio__estudo-titulo"><?php echo $inicioH($est[0]); ?></span>
+                  <span class="inicio__estudo-meta">
+<?php if ($inicioEstudoTodas): ?>
+                    <span class="inicio__estudo-tag"><?php echo $inicioH($est[2]); ?></span>
+<?php endif; ?>
+                    <span>3 módulos</span><span class="inicio__estudo-sep">•</span><span><?php echo (int)$est[1]; ?> min</span>
+                  </span>
+                </span>
+                <svg class="inicio__estudo-seta" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 5l7 7-7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </a>
+            </li>
+<?php endforeach; ?>
+          </ul>
+<?php if ($inicioEstudoExtras > 0): ?>
+          <a href="index.php?pagina=cursos" class="inicio__estudo-mais">+ Mais <?php echo $inicioEstudoExtras; ?> módulo<?php echo $inicioEstudoExtras === 1 ? '' : 's'; ?></a>
+<?php endif; ?>
+<?php else: ?>
+          <p class="inicio__vazio inicio__vazio--solto">Nenhum módulo de estudo para a sua equipe no momento.</p>
+<?php endif; ?>
+        </div>
+
+        <!-- Reuniões semanais: popout logo abaixo de Estudos (preenchido pelo inicio.js) -->
+        <div class="inicio__card inicio__semana" id="cardSemana" data-equipe="<?php echo $inicioH($inicioEquipeSlug); ?>" data-todas="<?php echo $inicioUid === 1 ? '1' : '0'; ?>">
+          <button type="button" class="inicio__semana-toggle" id="semanaToggle" aria-expanded="false" aria-controls="semanaPainel">
+            <span class="inicio__semana-icone" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="5" width="17" height="15.5" rx="2.5" stroke="currentColor" stroke-width="1.7"/><path d="M3.5 10h17M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+            </span>
+            <span class="inicio__semana-rotulo">
+              <span class="inicio__semana-titulo">Reuniões semanais</span>
+              <span class="inicio__semana-resumo" id="semanaResumo">Carregando…</span>
+            </span>
+            <svg class="inicio__semana-seta" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M6 9l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <div class="inicio__semana-painel" id="semanaPainel" aria-hidden="true">
+            <div class="inicio__semana-interno">
+              <div id="semanaLista"></div>
+              <a href="index.php?pagina=chamadas" class="inicio__semana-ver">Ver agenda completa</a>
+            </div>
+          </div>
+        </div>
       </div>
 
     </div>
@@ -446,4 +537,4 @@
   </main>
 </div>
 
-<script src="conteudo/cadastrado/inicio/js/inicio.js?v=1"></script>
+<script src="conteudo/cadastrado/inicio/js/inicio.js?v=5"></script>
