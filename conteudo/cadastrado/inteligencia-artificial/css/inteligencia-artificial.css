@@ -553,7 +553,7 @@
 }
 
 .inteligencia-artificial__acao:disabled {
-  cursor: not-allowed;
+  cursor: default;
   opacity: 0.65;
 }
 
@@ -583,7 +583,7 @@
 
 .inteligencia-artificial__enviar:disabled {
   background: #B9E5CE;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .inteligencia-artificial__enviar svg {
@@ -1217,4 +1217,43 @@ a.inteligencia-artificial__anexo-chip--doc:hover {
 
 @media (prefers-reduced-motion: reduce) {
   .inteligencia-artificial__soltar { animation: none; }
+}
+
+
+/* ============================================================
+   TELA CHEIA, SEM RODAPÉ — mesmo funcionamento do Chat
+   A página não rola mais: o card do chat tem a altura da tela e só
+   a lista de mensagens rola, deixando o campo de envio sempre
+   visível na base. O painel direito (Recursos / Conversas recentes)
+   rola por dentro quando for mais alto que a tela. O rodapé é
+   incluído pelo index.php em todas as páginas; aqui ele some só
+   quando a IA está aberta (este CSS só é carregado nesta página).
+============================================================= */
+body:has(#iaRaiz) .footer {
+  display: none;
+}
+
+/* O menu lateral tem a altura da tela e, se a janela for baixa, rola
+   por dentro (não empurra mais a altura da página). */
+.inteligencia-artificial .inicio__sidebar {
+  height: calc(100vh - var(--ia-topo));
+  height: calc(100dvh - var(--ia-topo));
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Área principal com a altura exata da tela (só rola se a janela for
+   mais baixa que o card do chat, que tem altura mínima) */
+.inteligencia-artificial__main {
+  height: calc(100vh - var(--ia-topo));
+  height: calc(100dvh - var(--ia-topo));
+  overflow-y: auto;
+}
+
+/* Painel direito: do tamanho do card do chat, rolando por dentro */
+.inteligencia-artificial__painel {
+  max-height: calc(100vh - var(--ia-topo) - var(--ia-respiro) * 2);
+  max-height: calc(100dvh - var(--ia-topo) - var(--ia-respiro) * 2);
+  overflow-y: auto;
 }

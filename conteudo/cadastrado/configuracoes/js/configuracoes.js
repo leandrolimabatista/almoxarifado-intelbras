@@ -26,7 +26,7 @@
   // Estado local (preenchido pelo carregamento ou pelo modo demonstração)
   const estado = {
     perfil: {
-      nome: '', email: '', telefone: '', cargo: '', idioma: 'pt-BR', fuso: 'America/Sao_Paulo', temFoto: false,
+      nome: '', email: '', telefone: '', cargo: '', temFoto: false,
     },
     preferencias: {
       notificacoes: {
@@ -127,8 +127,6 @@
     $('cfgEmail').value = p.email || '';
     $('cfgCargo').value = p.cargo || '';
     $('cfgTelefone').value = p.telefone || '';
-    $('cfgIdioma').value = p.idioma || 'pt-BR';
-    $('cfgFuso').value = p.fuso || 'America/Sao_Paulo';
     $('cfgContaNome').textContent = p.nome || '—';
     $('cfgContaEmail').textContent = p.email || '—';
     $('cfgContaCargo').textContent = p.cargo || '—';
@@ -143,6 +141,36 @@
     }
     $('cfgBtnSalvarPerfil').disabled = true;
   }
+
+  // ------------------------------------------------------------
+  // Aparência (tema / densidade / fonte): aplica na página de Configurações.
+  // Automático segue o tema do sistema operacional e reage se ele mudar.
+  // ------------------------------------------------------------
+  const mqEscuro = window.matchMedia('(prefers-color-scheme: dark)');
+  let aparenciaAtual = { tema: 'claro', densidade: 'confortavel', fonte: 'm' };
+
+  function aplicarAparencia(ap) {
+    aparenciaAtual = Object.assign({}, aparenciaAtual, ap || {});
+    const tema = ['claro', 'escuro', 'automatico'].includes(aparenciaAtual.tema) ? aparenciaAtual.tema : 'claro';
+    const densidade = 'confortavel'; // opção de densidade removida da tela
+    const fonte = ['p', 'm', 'g'].includes(aparenciaAtual.fonte) ? aparenciaAtual.fonte : 'm';
+    const efetivo = tema === 'automatico' ? (mqEscuro.matches ? 'escuro' : 'claro') : tema;
+
+    raiz.dataset.temaEfetivo = efetivo;
+    // o tema vale para o site inteiro (assets/js/tema.js)
+    if (window.IBTema) window.IBTema.definir(tema);
+    raiz.dataset.densidade = densidade;
+    raiz.dataset.fonte = fonte;
+    // modal e aviso ficam fora de #cfgRaiz
+    [$('cfgModalFoto'), $('cfgToast')].forEach((el) => {
+      if (!el) return;
+      el.dataset.temaEfetivo = efetivo;
+      el.dataset.fonte = fonte;
+    });
+  }
+  const aoMudarTemaDoSistema = () => { if (aparenciaAtual.tema === 'automatico') aplicarAparencia(); };
+  if (mqEscuro.addEventListener) mqEscuro.addEventListener('change', aoMudarTemaDoSistema);
+  else if (mqEscuro.addListener) mqEscuro.addListener(aoMudarTemaDoSistema);
 
   function preencherPreferencias(prefs) {
     estado.preferencias = prefs;
@@ -165,6 +193,7 @@
         botao.classList.toggle('configuracoes__pill--ativo', ativo && botao.classList.contains('configuracoes__pill'));
       });
     });
+    aplicarAparencia(prefs.aparencia);
     // Integrações: status
     document.querySelectorAll('[data-status]').forEach((span) => {
       const chave = span.dataset.status;
@@ -182,7 +211,7 @@
       const dados = await api('perfil.php');
       estado.perfil = {
         nome: dados.perfil.nome, email: dados.perfil.email, telefone: dados.perfil.telefone,
-        cargo: dados.perfil.cargo, idioma: dados.perfil.idioma, fuso: dados.perfil.fuso, temFoto: dados.perfil.tem_foto,
+        cargo: dados.perfil.cargo, temFoto: dados.perfil.tem_foto,
       };
       preencherPerfil(estado.perfil);
       preencherPreferencias(dados.preferencias);
@@ -193,7 +222,7 @@
       avisoDemo(true);
       preencherPerfil({
         nome: (raiz.dataset.nomeDemo || 'Administrador'), email: 'administrador@intelbras.com.br',
-        cargo: 'Administrador de Sistema', telefone: '', idioma: 'pt-BR', fuso: 'America/Sao_Paulo', temFoto: false,
+        cargo: 'Administrador de Sistema', telefone: '', temFoto: false,
       });
       preencherPreferencias(estado.preferencias);
     }
@@ -205,7 +234,7 @@
   // ------------------------------------------------------------
   const formPerfil = $('cfgFormPerfil');
   const valoresIniciais = () => JSON.stringify({
-    nome: $('cfgNome').value, telefone: $('cfgTelefone').value, idioma: $('cfgIdioma').value, fuso: $('cfgFuso').value,
+    nome: $('cfgNome').value, telefone: $('cfgTelefone').value,
   });
   let snapshotPerfil = null;
 
@@ -257,8 +286,6 @@
     const corpo = {
       nome: $('cfgNome').value.trim(),
       telefone: $('cfgTelefone').value,
-      idioma: $('cfgIdioma').value,
-      fuso: $('cfgFuso').value,
     };
 
     try {
@@ -303,6 +330,7 @@
       const grupo = btn.dataset.salvarGrupo;
       const valores = {};
       document.querySelectorAll('[data-grupo="' + grupo + '"] [data-pref], [data-pref][data-grupo="' + grupo + '"]').forEach((el) => {
+        if (el.type === 'time' && !el.value) return; // horário vazio: mantém o valor salvo
         valores[el.dataset.pref] = valorAtualPref(el);
       });
       try {
@@ -319,20 +347,31 @@
     $('cfgNaoPerturbeHorario').style.opacity = ev.target.checked ? '1' : '.45';
   });
 
-  // Aparência: clique nos cards/pills salva na hora
+  // Aparência: clique nos cards/pills aplica na hora e salva
+  function marcarOpcaoAtiva(wrap, valor) {
+    wrap.querySelectorAll('[data-valor]').forEach((b) => {
+      const ativo = b.dataset.valor === valor;
+      b.classList.toggle('configuracoes__opcao-card--ativo', ativo && b.classList.contains('configuracoes__opcao-card'));
+      b.classList.toggle('configuracoes__pill--ativo', ativo && b.classList.contains('configuracoes__pill'));
+    });
+  }
+
   document.querySelectorAll('[data-grupo="aparencia"][data-pref]').forEach((wrap) => {
     wrap.addEventListener('click', async (ev) => {
       const botao = ev.target.closest('[data-valor]');
       if (!botao) return;
       const chave = wrap.dataset.pref;
-      wrap.querySelectorAll('[data-valor]').forEach((b) => {
-        b.classList.remove('configuracoes__opcao-card--ativo', 'configuracoes__pill--ativo');
-      });
-      botao.classList.add(botao.classList.contains('configuracoes__opcao-card') ? 'configuracoes__opcao-card--ativo' : 'configuracoes__pill--ativo');
+      const anterior = aparenciaAtual[chave];
+      if (botao.dataset.valor === anterior) return;
+      marcarOpcaoAtiva(wrap, botao.dataset.valor);
+      aplicarAparencia({ [chave]: botao.dataset.valor });
       try {
         await salvarGrupo('aparencia', { [chave]: botao.dataset.valor });
+        if (estado.preferencias && estado.preferencias.aparencia) estado.preferencias.aparencia[chave] = botao.dataset.valor;
         toast('Alterações salvas com sucesso');
       } catch (e) {
+        marcarOpcaoAtiva(wrap, anterior);
+        aplicarAparencia({ [chave]: anterior });
         toast(e.message || 'Não foi possível salvar.');
       }
     });
@@ -431,7 +470,7 @@
     $('cfgModalErro').textContent = '';
     $('cfgModalSalvar').disabled = true;
     $('cfgModalRemover').hidden = !estado.perfil.temFoto;
-    $('cfgModalPreview').hidden = true;
+    $('cfgModalEditor').hidden = true;
     $('cfgModalDropTexto').hidden = false;
     arquivoSelecionado = null;
     modal.setAttribute('aria-hidden', 'false');
@@ -446,6 +485,7 @@
   modal.querySelectorAll('[data-fechar-modal]').forEach((el) => el.addEventListener('click', fecharModalFoto));
 
   $('cfgModalEscolher').addEventListener('click', () => fotoInput.click());
+  $('cfgModalTrocar').addEventListener('click', () => { fotoInput.value = ''; fotoInput.click(); });
   $('cfgModalDrop').addEventListener('dragover', (ev) => ev.preventDefault());
   $('cfgModalDrop').addEventListener('drop', (ev) => {
     ev.preventDefault();
@@ -469,24 +509,118 @@
     arquivoSelecionado = arquivo;
     const leitor = new FileReader();
     leitor.onload = () => {
-      $('cfgModalPreview').src = leitor.result;
-      $('cfgModalPreview').hidden = false;
-      $('cfgModalDropTexto').hidden = true;
+      const img = $('cfgModalPreview');
+      img.onload = () => {
+        $('cfgModalDropTexto').hidden = true;
+        $('cfgModalEditor').hidden = false;
+        iniciarEnquadramento(img);
+        $('cfgModalSalvar').disabled = false;
+      };
+      img.src = leitor.result;
     };
     leitor.readAsDataURL(arquivo);
-    $('cfgModalSalvar').disabled = false;
+  }
+
+  // ------------------------------------------------------------
+  // Enquadramento da foto: arrastar + zoom, vista circular
+  // ------------------------------------------------------------
+  const vista = $('cfgModalVista');
+  const zoomInput = $('cfgModalZoom');
+  const crop = { escalaMin: 1, escala: 1, x: 0, y: 0 };
+
+  function limitarCrop() {
+    const img = $('cfgModalPreview');
+    const V = vista.clientWidth;
+    const larg = img.naturalWidth * crop.escala;
+    const alt = img.naturalHeight * crop.escala;
+    crop.x = Math.min(0, Math.max(V - larg, crop.x));
+    crop.y = Math.min(0, Math.max(V - alt, crop.y));
+  }
+
+  function aplicarCrop() {
+    const img = $('cfgModalPreview');
+    limitarCrop();
+    img.style.width = (img.naturalWidth * crop.escala) + 'px';
+    img.style.height = (img.naturalHeight * crop.escala) + 'px';
+    img.style.left = crop.x + 'px';
+    img.style.top = crop.y + 'px';
+  }
+
+  function iniciarEnquadramento(img) {
+    const V = vista.clientWidth;
+    crop.escalaMin = V / Math.min(img.naturalWidth, img.naturalHeight);
+    crop.escala = crop.escalaMin;
+    crop.x = (V - img.naturalWidth * crop.escala) / 2;
+    crop.y = (V - img.naturalHeight * crop.escala) / 2;
+    zoomInput.value = 1;
+    aplicarCrop();
+  }
+
+  function definirZoom(mult) {
+    const V = vista.clientWidth;
+    const antiga = crop.escala;
+    crop.escala = crop.escalaMin * Math.min(3, Math.max(1, mult));
+    // mantém o centro da vista no mesmo ponto da imagem
+    const cx = (V / 2 - crop.x) / antiga;
+    const cy = (V / 2 - crop.y) / antiga;
+    crop.x = V / 2 - cx * crop.escala;
+    crop.y = V / 2 - cy * crop.escala;
+    zoomInput.value = crop.escala / crop.escalaMin;
+    aplicarCrop();
+  }
+
+  zoomInput.addEventListener('input', () => definirZoom(parseFloat(zoomInput.value)));
+  vista.addEventListener('wheel', (ev) => {
+    ev.preventDefault();
+    definirZoom((crop.escala / crop.escalaMin) * (ev.deltaY < 0 ? 1.08 : 1 / 1.08));
+  }, { passive: false });
+
+  let arrasto = null;
+  vista.addEventListener('pointerdown', (ev) => {
+    arrasto = { px: ev.clientX, py: ev.clientY, x: crop.x, y: crop.y };
+    vista.setPointerCapture(ev.pointerId);
+    vista.classList.add('configuracoes__crop-vista--arrastando');
+  });
+  vista.addEventListener('pointermove', (ev) => {
+    if (!arrasto) return;
+    crop.x = arrasto.x + (ev.clientX - arrasto.px);
+    crop.y = arrasto.y + (ev.clientY - arrasto.py);
+    aplicarCrop();
+  });
+  const soltar = () => { arrasto = null; vista.classList.remove('configuracoes__crop-vista--arrastando'); };
+  vista.addEventListener('pointerup', soltar);
+  vista.addEventListener('pointercancel', soltar);
+
+  // Gera o recorte quadrado (exatamente o que aparece na vista) em 512x512
+  function gerarRecorte() {
+    return new Promise((resolve, reject) => {
+      const img = $('cfgModalPreview');
+      const V = vista.clientWidth;
+      const canvas = document.createElement('canvas');
+      canvas.width = 512;
+      canvas.height = 512;
+      const ctx = canvas.getContext('2d');
+      ctx.imageSmoothingQuality = 'high';
+      const lado = V / crop.escala;
+      ctx.drawImage(img, -crop.x / crop.escala, -crop.y / crop.escala, lado, lado, 0, 0, 512, 512);
+      canvas.toBlob((blob) => {
+        if (!blob) { reject(new Error('Não foi possível processar a imagem.')); return; }
+        resolve({ blob, dataUrl: canvas.toDataURL('image/png') });
+      }, 'image/png');
+    });
   }
 
   $('cfgModalSalvar').addEventListener('click', async () => {
     if (!arquivoSelecionado) return;
     try {
+      const recorte = await gerarRecorte();
       if (!demo) {
         const fd = new FormData();
-        fd.append('foto', arquivoSelecionado);
+        fd.append('foto', new File([recorte.blob], 'foto.png', { type: 'image/png' }));
         await api('foto.php', { metodo: 'POST', formData: fd });
       }
       estado.perfil.temFoto = true;
-      $('cfgAvatarImg').src = demo ? $('cfgModalPreview').src : ('api/configuracoes/foto.php?_=' + Date.now());
+      $('cfgAvatarImg').src = demo ? recorte.dataUrl : ('api/configuracoes/foto.php?_=' + Date.now());
       $('cfgAvatarImg').hidden = false;
       $('cfgAvatarLetra').hidden = true;
       fecharModalFoto();
@@ -572,14 +706,103 @@
     }
   });
 
+  // Botão direito num dispositivo conectado (menu padronizado do site, assets/js/menu-contexto.js)
+  document.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    const li = e.target.closest('.configuracoes__dispositivo');
+    if (!M || !li || e.shiftKey || M.temSelecao()) return;
+    const nomeEl = li.querySelector('.configuracoes__dispositivo-nome');
+    if (!nomeEl) return;
+    const nome = nomeEl.textContent.replace('Este dispositivo', '').replace(/\s+/g, ' ').trim();
+    const detalheEl = li.querySelector('.configuracoes__dispositivo-detalhe');
+    const ip = detalheEl ? detalheEl.textContent.split('·')[0].trim() : '';
+    const btn = li.querySelector('[data-desconectar]');
+    const opcoes = [];
+    if (btn) opcoes.push({ rotulo: 'Desconectar este dispositivo', icone: 'sair', perigo: true, acao: () => btn.click() });
+    else opcoes.push({ rotulo: 'Este é o dispositivo atual', icone: 'pagina', desabilitado: true, acao: () => {} });
+    if (ip) opcoes.push({ rotulo: 'Copiar endereço IP', icone: 'copiar', acao: () => M.copiar(ip, 'IP copiado') });
+    e.preventDefault();
+    const pos = M.posicao(e, li);
+    M.mostrar({ x: pos.x, y: pos.y, alvo: null, aria: 'Opções de ' + nome, cabeca: M.cabeca('pagina', nome), opcoes: opcoes });
+  });
+
   // ------------------------------------------------------------
   // Aviso de alterações não salvas ao trocar de aba (perfil)
   // ------------------------------------------------------------
-  window.addEventListener('beforeunload', (ev) => {
-    if (!$('cfgBtnSalvarPerfil').disabled) {
-      ev.preventDefault();
-      ev.returnValue = '';
+  // Saída/recarregar com alterações não salvas: popout padrão do site
+  // (assets/js/dialogo.js). Só o que o site não intercepta (botão recarregar
+  // da barra, fechar a aba, voltar) ainda mostra o aviso do navegador.
+  if (window.IBDialogo) {
+    window.IBDialogo.protegerSaida(() => !$('cfgBtnSalvarPerfil').disabled, {
+      titulo: 'Sair sem salvar?',
+      texto: 'Você editou seu perfil e ainda não salvou. Se sair agora, as alterações serão perdidas.',
+      confirmar: 'Sair sem salvar',
+      cancelar: 'Continuar editando',
+      tituloRecarregar: 'Recarregar sem salvar?',
+      textoRecarregar: 'Você editou seu perfil e ainda não salvou. Se recarregar agora, as alterações serão perdidas.',
+      confirmarRecarregar: 'Recarregar',
+    });
+  }
+
+  // ------------------------------------------------------------
+  // Dropdowns (Privacidade, etc.): o menu do seletor padrão é um
+  // único elemento fixo no <body> e, com textos longos (ex.: opções longas), ficava mais largo que o campo e vazava para fora
+  // do cartão. Aqui, só nesta página, ele passa a acompanhar o campo:
+  // no celular tem a mesma largura e alinhamento do campo (texto longo quebra
+  // linha em vez de vazar); no desktop alinha pela borda direita do campo.
+  // ------------------------------------------------------------
+  const mqCelular = window.matchMedia('(max-width: 767px)');
+
+  function limparMenuSeletor() {
+    const menu = document.querySelector('.seletor__menu');
+    if (!menu) return;
+    menu.classList.remove('seletor__menu--cfg');
+    menu.style.width = '';
+    delete menu.dataset.temaEfetivo;
+    delete menu.dataset.fonte;
+  }
+
+  function ajustarMenuSeletor(botao) {
+    const menu = document.querySelector('.seletor__menu');
+    if (!menu || menu.hidden || botao.getAttribute('aria-expanded') !== 'true') return;
+    const r = botao.getBoundingClientRect();
+    const margem = 8;
+    menu.classList.add('seletor__menu--cfg');
+    menu.dataset.temaEfetivo = raiz.dataset.temaEfetivo || 'claro';
+    menu.dataset.fonte = raiz.dataset.fonte || 'm';
+
+    let left;
+    if (mqCelular.matches) {
+      menu.style.width = Math.round(r.width) + 'px';
+      left = r.left;
+    } else {
+      left = r.right - menu.offsetWidth;
     }
+    left = Math.min(left, window.innerWidth - margem - menu.offsetWidth);
+    menu.style.left = Math.max(margem, left) + 'px';
+
+    // a altura pode ter mudado (texto quebrado): reavalia se abre para cima
+    const h = menu.offsetHeight;
+    let top = r.bottom + 6;
+    if (top + h > window.innerHeight - margem && r.top - h - 6 > margem) top = r.top - h - 6;
+    menu.style.top = top + 'px';
+  }
+
+  // captura: roda ANTES do seletor abrir (limpa largura da abertura anterior)
+  raiz.addEventListener('click', (ev) => {
+    if (ev.target.closest('.seletor__botao')) limparMenuSeletor();
+  }, true);
+  raiz.addEventListener('keydown', (ev) => {
+    if ((ev.key === 'ArrowDown' || ev.key === 'ArrowUp') && ev.target.closest('.seletor__botao')) limparMenuSeletor();
+  }, true);
+  // bubbling: roda DEPOIS do seletor abrir e posicionar o menu
+  const aposAbrir = (ev) => {
+    const botao = ev.target.closest('.seletor__botao');
+    if (botao) ajustarMenuSeletor(botao);
+  };
+  raiz.addEventListener('click', aposAbrir);
+  raiz.addEventListener('keydown', (ev) => {
+    if (ev.key === 'ArrowDown' || ev.key === 'ArrowUp') aposAbrir(ev);
   });
 
   // ------------------------------------------------------------
@@ -587,7 +810,7 @@
   // ------------------------------------------------------------
   if (params.get('demo') === '1') {
     demo = true;
-    preencherPerfil({ nome: 'Administrador', email: 'administrador@intelbras.com.br', cargo: 'Administrador de Sistema', telefone: '', idioma: 'pt-BR', fuso: 'America/Sao_Paulo', temFoto: false });
+    preencherPerfil({ nome: 'Administrador', email: 'administrador@intelbras.com.br', cargo: 'Administrador de Sistema', telefone: '', temFoto: false });
     preencherPreferencias(estado.preferencias);
     avisoDemo(true);
     marcarSnapshotPerfil();

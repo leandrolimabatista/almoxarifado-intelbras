@@ -38,9 +38,9 @@ $cfgLinks = [
      database/configuracoes.sql não executado), o JS avisa na tela
      e mantém os campos com os valores vindos do PHP/sessão.
 ============================================================= -->
-<link rel="stylesheet" href="conteudo/cadastrado/configuracoes/css/configuracoes.css?v=1">
-<link rel="stylesheet" href="conteudo/cadastrado/configuracoes/responsivo/configuracoes.responsivo.css?v=1">
-<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/configuracoes/css/configuracoes.css?v=20261014">
+<link rel="stylesheet" href="conteudo/cadastrado/configuracoes/responsivo/configuracoes.responsivo.css?v=3">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
 
 <div class="configuracoes" id="cfgRaiz" data-csrf="<?php echo htmlspecialchars($csrfConfiguracoes, ENT_QUOTES, 'UTF-8'); ?>">
@@ -85,9 +85,9 @@ $cfgLinks = [
         <span>Loja</span>
       </a>
       <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
-      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>Usuários</span>
+      <a href="index.php?pagina=dashboard" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="15" width="7" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Dashboard</span>
       </a>
       <?php endif; ?>
     </nav>
@@ -95,50 +95,63 @@ $cfgLinks = [
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">EQUIPES</span>
       <div class="inicio__channel-list">
+        <?php if (eqv_visivel('geral')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
           <span class="inicio__channel-dot" style="background:#00A859"></span>
           <span>Geral</span>
           <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('projetos')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
           <span class="inicio__channel-dot" style="background:#3B82F6"></span>
           <span>Projetos</span>
           <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('marketing')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
           <span class="inicio__channel-dot" style="background:#F59E0B"></span>
           <span>Marketing</span>
           <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('rh')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
           <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
           <span>RH</span>
           <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('financeiro')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
           <span class="inicio__channel-dot" style="background:#EC4899"></span>
           <span>Financeiro</span>
           <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('ti')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
           <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
           <span>TI</span>
           <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('sac')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
           <span class="inicio__channel-dot" style="background:#EF4444"></span>
           <span>SAC / Ouvidoria</span>
           <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
         </a>
+        <?php endif; ?>
       </div>
-      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
     </div>
 
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">ATALHOS</span>
-      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        <span>Nova conversa</span>
+      <a href="index.php?pagina=chat" class="inicio__shortcut" id="atalhoChatSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chat</span>
       </a>
       <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
         <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -155,9 +168,6 @@ $cfgLinks = [
 
     <!-- ===================== CABEÇALHO DA ÁREA ===================== -->
     <header class="configuracoes__cabecalho">
-      <span class="configuracoes__cabecalho-icone" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M19.4 15a1.7 1.7 0 00.3 1.8l.1.1a2 2 0 11-2.8 2.8l-.1-.1a1.7 1.7 0 00-1.8-.3 1.7 1.7 0 00-1 1.5V21a2 2 0 11-4 0v-.1a1.7 1.7 0 00-1.1-1.5 1.7 1.7 0 00-1.8.3l-.1.1a2 2 0 11-2.8-2.8l.1-.1a1.7 1.7 0 00.3-1.8 1.7 1.7 0 00-1.5-1H3a2 2 0 110-4h.1a1.7 1.7 0 001.5-1.1 1.7 1.7 0 00-.3-1.8l-.1-.1a2 2 0 112.8-2.8l.1.1a1.7 1.7 0 001.8.3H9a1.7 1.7 0 001-1.5V3a2 2 0 114 0v.1a1.7 1.7 0 001 1.5 1.7 1.7 0 001.8-.3l.1-.1a2 2 0 112.8 2.8l-.1.1a1.7 1.7 0 00-.3 1.8V9a1.7 1.7 0 001.5 1H21a2 2 0 110 4h-.1a1.7 1.7 0 00-1.5 1z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-      </span>
       <div class="configuracoes__titulos">
         <h1 class="configuracoes__titulo">Configurações</h1>
         <p class="configuracoes__subtitulo">Gerencie suas preferências, notificações e informações da sua conta.</p>
@@ -197,10 +207,6 @@ $cfgLinks = [
           <button type="button" class="configuracoes__menu-item" data-aba="seguranca">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5l7 3v5.3c0 4.4-2.9 7.8-7 8.7-4.1-.9-7-4.3-7-8.7V6.5l7-3z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
             <span>Segurança</span>
-          </button>
-          <button type="button" class="configuracoes__menu-item" data-aba="integracoes">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M9 15l6-6M8.5 8.5l-2 2a3.2 3.2 0 004.5 4.5l2-2M15.5 15.5l2-2a3.2 3.2 0 00-4.5-4.5l-2 2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            <span>Integrações</span>
           </button>
           <button type="button" class="configuracoes__menu-item" data-aba="sobre">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M12 11v6M12 7.5h.01" stroke="currentColor" stroke-width="1.9" stroke-linecap="round"/></svg>
@@ -254,34 +260,6 @@ $cfgLinks = [
                 <label for="cfgTelefone">Telefone</label>
                 <input type="tel" id="cfgTelefone" name="telefone" placeholder="(11) 98765-4321" inputmode="numeric" maxlength="15">
                 <span class="configuracoes__erro" data-erro-para="telefone"></span>
-              </div>
-
-              <div class="configuracoes__divisor"></div>
-              <h3 class="configuracoes__subsecao">Preferências</h3>
-
-              <div class="configuracoes__linha-pref">
-                <span class="configuracoes__linha-pref-rotulo">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M3.5 12h17M12 3.5c2.2 2.3 3.4 5.3 3.4 8.5s-1.2 6.2-3.4 8.5c-2.2-2.3-3.4-5.3-3.4-8.5S9.8 5.8 12 3.5z" stroke="currentColor" stroke-width="1.6"/></svg>
-                  <label for="cfgIdioma">Idioma</label>
-                </span>
-                <select id="cfgIdioma" name="idioma" data-seletor>
-                  <option value="pt-BR">Português (Brasil)</option>
-                  <option value="en-US">English (US)</option>
-                  <option value="es-ES">Español</option>
-                </select>
-              </div>
-
-              <div class="configuracoes__linha-pref">
-                <span class="configuracoes__linha-pref-rotulo">
-                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="8.5" stroke="currentColor" stroke-width="1.6"/><path d="M12 7.5V12l3 2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
-                  <label for="cfgFuso">Fuso horário</label>
-                </span>
-                <select id="cfgFuso" name="fuso" data-seletor>
-                  <option value="America/Noronha">(GMT-02:00) Fernando de Noronha</option>
-                  <option value="America/Sao_Paulo">(GMT-03:00) Brasília</option>
-                  <option value="America/Manaus">(GMT-04:00) Manaus</option>
-                  <option value="America/Rio_Branco">(GMT-05:00) Rio Branco</option>
-                </select>
               </div>
 
               <div class="configuracoes__acoes">
@@ -347,7 +325,7 @@ $cfgLinks = [
                 <span class="configuracoes__toggle"><input type="checkbox" data-pref="nao_perturbe" id="cfgNaoPerturbe"><span class="configuracoes__toggle-trilho"></span></span>
               </label>
             </div>
-            <div class="configuracoes__linha-horario" id="cfgNaoPerturbeHorario">
+            <div class="configuracoes__linha-horario" id="cfgNaoPerturbeHorario" data-grupo="notificacoes">
               <label>De <input type="time" data-pref="nao_perturbe_de"></label>
               <label>Até <input type="time" data-pref="nao_perturbe_ate"></label>
             </div>
@@ -364,7 +342,7 @@ $cfgLinks = [
               <p class="configuracoes__secao-sub">Controle quem enxerga suas informações.</p>
             </header>
 
-            <div class="configuracoes__linha-pref">
+            <div class="configuracoes__linha-pref" data-grupo="privacidade">
               <span class="configuracoes__linha-pref-rotulo"><label>Quem pode ver meu status</label></span>
               <select data-pref="status_visivel" data-seletor>
                 <option value="todos">Todos</option>
@@ -384,7 +362,7 @@ $cfgLinks = [
               </label>
             </div>
 
-            <div class="configuracoes__linha-pref">
+            <div class="configuracoes__linha-pref" data-grupo="privacidade">
               <span class="configuracoes__linha-pref-rotulo"><label>Quem pode me enviar mensagens diretas</label></span>
               <select data-pref="mensagens_diretas" data-seletor>
                 <option value="todos">Todos</option>
@@ -423,12 +401,6 @@ $cfgLinks = [
                 <span class="configuracoes__opcao-preview configuracoes__opcao-preview--automatico" aria-hidden="true"></span>
                 <span>Automático</span>
               </button>
-            </div>
-
-            <h3 class="configuracoes__subsecao">Densidade da interface</h3>
-            <div class="configuracoes__opcoes-pill" data-grupo="aparencia" data-pref="densidade">
-              <button type="button" class="configuracoes__pill" data-valor="confortavel">Confortável</button>
-              <button type="button" class="configuracoes__pill" data-valor="compacta">Compacta</button>
             </div>
 
             <h3 class="configuracoes__subsecao">Tamanho da fonte</h3>
@@ -480,50 +452,10 @@ $cfgLinks = [
 
             <div class="configuracoes__divisor"></div>
 
-            <h3 class="configuracoes__subsecao">Autenticação em duas etapas</h3>
-            <label class="configuracoes__toggle-linha">
-              <span>Exigir um código adicional ao entrar</span>
-              <span class="configuracoes__toggle"><input type="checkbox" data-pref="duas_etapas" data-grupo="seguranca"><span class="configuracoes__toggle-trilho"></span></span>
-            </label>
-
-            <div class="configuracoes__divisor"></div>
-
             <h3 class="configuracoes__subsecao">Sessões ativas</h3>
             <ul class="configuracoes__dispositivos" id="cfgListaSessoesAba" aria-live="polite"></ul>
             <div class="configuracoes__acoes">
               <button type="button" class="configuracoes__btn configuracoes__btn--contorno" id="cfgBtnEncerrarOutras">Encerrar todas as outras sessões</button>
-            </div>
-          </section>
-
-          <!-- ================= ABA: Integrações ================= -->
-          <section class="configuracoes__painel" data-painel="integracoes">
-            <header class="configuracoes__secao-cab">
-              <h2 class="configuracoes__secao-titulo">Integrações</h2>
-              <p class="configuracoes__secao-sub">Conecte outras ferramentas à sua conta.</p>
-            </header>
-
-            <div class="configuracoes__integracoes" data-grupo="integracoes">
-              <div class="configuracoes__integracao-card">
-                <div class="configuracoes__integracao-info">
-                  <strong>Calendário</strong>
-                  <span class="configuracoes__integracao-status" data-status="calendario">Desconectado</span>
-                </div>
-                <button type="button" class="configuracoes__btn configuracoes__btn--contorno" data-pref="calendario">Conectar</button>
-              </div>
-              <div class="configuracoes__integracao-card">
-                <div class="configuracoes__integracao-info">
-                  <strong>E-mail corporativo</strong>
-                  <span class="configuracoes__integracao-status" data-status="email">Desconectado</span>
-                </div>
-                <button type="button" class="configuracoes__btn configuracoes__btn--contorno" data-pref="email">Conectar</button>
-              </div>
-              <div class="configuracoes__integracao-card">
-                <div class="configuracoes__integracao-info">
-                  <strong>Armazenamento</strong>
-                  <span class="configuracoes__integracao-status" data-status="armazenamento">Desconectado</span>
-                </div>
-                <button type="button" class="configuracoes__btn configuracoes__btn--contorno" data-pref="armazenamento">Conectar</button>
-              </div>
             </div>
           </section>
 
@@ -583,13 +515,6 @@ $cfgLinks = [
               <span>Alterar senha</span>
               <svg class="configuracoes__card-seta" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-            <div class="configuracoes__linha-toggle">
-              <span class="configuracoes__linha-icone" aria-hidden="true">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5l7 3v5.3c0 4.4-2.9 7.8-7 8.7-4.1-.9-7-4.3-7-8.7V6.5l7-3z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-              </span>
-              <span>Autenticação em duas etapas</span>
-              <span class="configuracoes__toggle"><input type="checkbox" data-pref="duas_etapas" data-grupo="seguranca" data-espelho="1"><span class="configuracoes__toggle-trilho"></span></span>
-            </div>
             <button type="button" class="configuracoes__linha-clicavel" data-ir-para="dispositivos">
               <span class="configuracoes__linha-icone" aria-hidden="true">
                 <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3" y="5" width="18" height="12" rx="1.6" stroke="currentColor" stroke-width="1.6"/><path d="M8 20.5h8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -597,36 +522,6 @@ $cfgLinks = [
               <span>Sessões ativas</span>
               <svg class="configuracoes__card-seta" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M9 6l6 6-6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
             </button>
-          </div>
-        </section>
-
-        <section class="configuracoes__card configuracoes__card--lateral">
-          <header class="configuracoes__card-cab">
-            <span class="configuracoes__card-icone" aria-hidden="true">
-              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><path d="M9.5 9.5a2.5 2.5 0 015 .5c0 1.5-2.5 2-2.5 3.5M12 17h.01" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </span>
-            <div>
-              <h3>Ajuda e suporte</h3>
-              <p class="configuracoes__card-sub">Precisa de ajuda? Acesse nossos canais de suporte e tire suas dúvidas.</p>
-            </div>
-          </header>
-          <div class="configuracoes__lista-linhas">
-            <a class="configuracoes__linha-clicavel" href="<?php echo htmlspecialchars($cfgLinks['central'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
-              <span>Central de ajuda</span>
-              <svg class="configuracoes__card-externo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M8 5H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <a class="configuracoes__linha-clicavel" href="<?php echo htmlspecialchars($cfgLinks['fale_conosco'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
-              <span>Fale conosco</span>
-              <svg class="configuracoes__card-externo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M8 5H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <a class="configuracoes__linha-clicavel" href="<?php echo htmlspecialchars($cfgLinks['termos'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
-              <span>Termos de uso</span>
-              <svg class="configuracoes__card-externo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M8 5H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
-            <a class="configuracoes__linha-clicavel" href="<?php echo htmlspecialchars($cfgLinks['privacidade'], ENT_QUOTES, 'UTF-8'); ?>" target="_blank" rel="noopener noreferrer">
-              <span>Política de privacidade</span>
-              <svg class="configuracoes__card-externo" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M14 5h5v5M19 5l-8 8M8 5H6a1 1 0 00-1 1v12a1 1 0 001 1h12a1 1 0 001-1v-2" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
-            </a>
           </div>
         </section>
 
@@ -641,7 +536,18 @@ $cfgLinks = [
   <div class="configuracoes__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="cfgModalFotoTitulo">
     <h2 id="cfgModalFotoTitulo">Alterar foto</h2>
     <div class="configuracoes__modal-drop" id="cfgModalDrop">
-      <img id="cfgModalPreview" alt="" hidden>
+      <div class="configuracoes__crop" id="cfgModalEditor" hidden>
+        <div class="configuracoes__crop-vista" id="cfgModalVista">
+          <img id="cfgModalPreview" alt="" draggable="false">
+        </div>
+        <div class="configuracoes__crop-zoom">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="5" stroke="currentColor" stroke-width="1.6"/></svg>
+          <input type="range" id="cfgModalZoom" min="1" max="3" step="0.01" value="1" aria-label="Zoom da foto">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.6"/></svg>
+        </div>
+        <p class="configuracoes__crop-dica">Arraste para posicionar e use o controle para ajustar o zoom.</p>
+        <button type="button" id="cfgModalTrocar" class="configuracoes__link-botao">escolher outro arquivo</button>
+      </div>
       <p id="cfgModalDropTexto">Arraste uma imagem aqui ou <button type="button" id="cfgModalEscolher" class="configuracoes__link-botao">escolha um arquivo</button></p>
     </div>
     <p class="configuracoes__erro" id="cfgModalErro"></p>
@@ -657,9 +563,9 @@ $cfgLinks = [
 
 <!-- ===================== TOAST DE SUCESSO ===================== -->
 <div class="configuracoes__toast" id="cfgToast" role="status" aria-live="polite" hidden>
-  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#00A335"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><circle cx="12" cy="12" r="10" fill="#00A859"/><path d="M7.5 12.5l3 3 6-6.5" stroke="#fff" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
   <span id="cfgToastTexto">Alterações salvas com sucesso</span>
 </div>
 
 <script src="assets/js/equipes-badges.js?v=1"></script>
-<script src="conteudo/cadastrado/configuracoes/js/configuracoes.js?v=1"></script>
+<script src="conteudo/cadastrado/configuracoes/js/configuracoes.js?v=8"></script>

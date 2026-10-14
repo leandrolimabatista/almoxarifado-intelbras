@@ -34,6 +34,7 @@ if ($busca !== '') {
     $params['busca_nome']  = $padrao;
     $params['busca_email'] = $padrao;
 }
+$where[] = 'u.id <> 1'; // Administrador Intelbras não aparece para ninguém
 if ($equipe !== '') {
     $where[] = 'u.equipe_slug = :equipe';
     $params['equipe'] = $equipe;

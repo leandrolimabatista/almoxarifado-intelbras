@@ -40,13 +40,20 @@
   --eq-borda: #ECECEC;
   --eq-bg: #F7F8F9;
   --eq-bolha-recebida: #F2F3F5;
-  --eq-erro: #DC2626;
+  --eq-erro: #E5484D;
   --eq-online: #22C55E;
-  --eq-reuniao: #EF4444;
+  --eq-reuniao: #E5484D;
   --eq-ausente: #F59E0B;
   --eq-offline: #9CA3AF;
   --eq-sombra-1: 0 1px 2px rgba(0, 0, 0, .06);
   --eq-sombra-2: 0 4px 16px rgba(0, 0, 0, .10);
+}
+
+/* Padroniza a fonte: botões, campos e textareas não herdam font-family por
+   padrão. :where() mantém especificidade zero, então os títulos (Poppins) e
+   o editor/emojis continuam com as regras próprias. */
+:where(.equipes) :where(button, input, textarea, select) {
+  font-family: inherit;
 }
 
 .equipes {
@@ -429,12 +436,6 @@
 .equipes__tab--ativa:hover {
   color: var(--eq-verde);
   background: none;
-}
-
-.equipes__tab--add {
-  font-size: 16px;
-  font-weight: 700;
-  padding: 12px 12px 10px;
 }
 
 .equipes__corpo-aba {
@@ -1560,6 +1561,22 @@
   gap: 10px;
 }
 
+.equipes__membro--link {
+  text-decoration: none !important;
+  color: inherit;
+  cursor: pointer;
+  border-radius: 8px;
+  margin: -4px -6px;
+  padding: 4px 6px;
+  transition: background .15s ease;
+}
+
+.equipes__membro--link:hover,
+.equipes__membro--link:focus-visible {
+  background: var(--eq-verde-100);
+  outline: none;
+}
+
 .equipes__membro-avatar-wrap {
   position: relative;
   flex-shrink: 0;
@@ -1629,6 +1646,179 @@
   display: flex;
   flex-direction: column;
   gap: 2px;
+  position: relative;
+}
+
+/* Link que abre o calendário (botão com a mesma cara dos demais links) */
+.equipes__link-item--btn {
+  width: 100%;
+  background: none;
+  border: 0;
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Popup do calendário da equipe */
+.equipes__cal {
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 252px;
+  max-width: calc(100vw - 16px);
+  z-index: 60;
+  padding: 10px;
+  font-family: 'Noto Emoji Equipes', 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  border-radius: 12px;
+  box-shadow: var(--mv-sombra-menu, var(--eq-sombra-2));
+}
+
+.equipes__cal[hidden] {
+  display: none;
+}
+
+/* Entrada padrão do site (movimento.css): o popup nasce ao lado do painel */
+.equipes__cal.equipes__cal[data-mv-anim] {
+  transform-origin: right center;
+}
+
+/* Seletor de data das abas: abre abaixo do campo */
+html body .equipes__cal.equipes__cal--data[data-mv][data-mv-anim] {
+  transform-origin: top left;
+  animation: mv-fade 0.12s ease-out both;   /* só um fade curto, sem zoom */
+}
+
+.equipes__cal--data .equipes__cal-grade--troca {
+  animation-duration: 0.12s;
+}
+
+.equipes__cal-rodape--data {
+  justify-content: space-between;
+  align-items: center;
+}
+
+.equipes__cal-hoje.equipes__cal-hoje--limpar {
+  color: var(--eq-cinza);
+}
+
+/* Troca de mês: a grade entra com o mesmo fade do site */
+.equipes__cal-grade--troca {
+  animation: mv-fade var(--mv-t3, 0.4s) var(--mv-ease, ease) both;
+}
+
+.equipes__cal,
+.equipes__cal * {
+  box-sizing: border-box;
+}
+
+.equipes__cal button {
+  font-family: inherit;
+}
+
+.equipes__cal-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 6px;
+}
+
+.equipes__cal-titulo {
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--eq-preto);
+}
+
+.equipes__cal-nav {
+  width: 24px;
+  height: 24px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--eq-cinza);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.equipes__cal-nav {
+  transition: background-color var(--mv-t2, .15s) var(--mv-ease, ease), color var(--mv-t2, .15s) var(--mv-ease, ease);
+}
+
+.equipes__cal-nav:hover {
+  background: var(--mv-hover, #F3F6F4);
+  color: var(--eq-verde-escuro);
+}
+
+.equipes__cal-grade {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 2px;
+  text-align: center;
+}
+
+.equipes__cal-sem {
+  padding: 3px 0;
+  font-size: 10.5px;
+  font-weight: 700;
+  color: var(--eq-cinza);
+}
+
+.equipes__cal-dia {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  font-size: 11.5px;
+  color: var(--eq-preto);
+  transition: background-color var(--mv-t2, .15s) var(--mv-ease, ease), color var(--mv-t2, .15s) var(--mv-ease, ease), box-shadow var(--mv-t2, .15s) var(--mv-ease, ease);
+}
+
+button.equipes__cal-dia {
+  cursor: pointer;
+}
+
+button.equipes__cal-dia:hover:not(.equipes__cal-dia--sel) {
+  background: var(--mv-hover-tint, #F1FAF5);
+}
+
+button.equipes__cal-dia--sel:hover {
+  background: var(--mv-verde-escuro, #007A40);
+  box-shadow: var(--mv-brilho-verde, 0 3px 8px rgba(0, 168, 89, .28));
+}
+
+.equipes__cal-dia--fora {
+  color: #C4C8CE;
+}
+
+.equipes__cal-dia--hoje {
+  font-weight: 800;
+  box-shadow: inset 0 0 0 1px var(--eq-verde);
+}
+
+.equipes__cal-dia--sel {
+  background: var(--eq-verde);
+  color: #fff;
+  font-weight: 700;
+}
+
+.equipes__cal-rodape {
+  display: flex;
+  justify-content: flex-end;
+  margin-top: 4px;
+}
+
+.equipes__cal-hoje {
+  border: 0;
+  background: none;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--eq-verde-escuro);
+  cursor: pointer;
+  padding: 6px 8px;
 }
 
 .equipes__link-item {
@@ -2045,3 +2235,418 @@
   color: #A3A9B1;
   cursor: default;
 }
+
+/* ============================================================
+   Abas Tarefas, Calendário e Notas
+============================================================ */
+.equipes__aba-conteudo[hidden] { display: none; }
+
+.equipes__aba-conteudo,
+.equipes__aba-conteudo * { box-sizing: border-box; }
+
+.equipes__aba-conteudo {
+  font-family: inherit;
+  padding: 16px 24px 0;
+  gap: 12px;
+}
+
+.equipes__aba-conteudo button,
+.equipes__aba-conteudo input,
+.equipes__aba-conteudo textarea { font-family: inherit; }
+
+.equipes__aba-topo {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  flex-shrink: 0;
+}
+
+.equipes__aba-topo-acoes { display: flex; gap: 8px; }
+
+.equipes__aba-titulo {
+  margin: 0;
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--eq-preto);
+}
+
+.equipes__aba-filtros { display: flex; gap: 6px; }
+
+.equipes__aba-filtro {
+  border: 1px solid var(--eq-borda);
+  background: #fff;
+  color: var(--eq-cinza);
+  border-radius: 999px;
+  padding: 5px 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.equipes__aba-filtro:hover { background: #FAFAFA; }
+
+.equipes__aba-filtro--ativo,
+.equipes__aba-filtro--ativo:hover {
+  background: var(--eq-verde-100);
+  border-color: var(--eq-verde);
+  color: var(--eq-verde-escuro);
+}
+
+.equipes__aba-form {
+  display: flex;
+  gap: 8px;
+  flex-shrink: 0;
+}
+
+.equipes__aba-form--col { flex-direction: column; }
+.equipes__aba-form-linha { display: flex; gap: 8px; }
+
+.equipes__aba-input {
+  flex: 1;
+  min-width: 0;
+  border: 1px solid #DADDE1;
+  border-radius: 8px;
+  padding: 8px 10px;
+  font-size: 13.5px;
+  color: var(--eq-preto);
+  background: #fff;
+}
+
+.equipes__aba-input:focus {
+  outline: none;
+  border-color: var(--eq-verde);
+  box-shadow: 0 0 0 3px var(--eq-verde-100);
+}
+
+.equipes__aba-input--data { flex: 0 0 150px; }
+
+/* Campo de data (abre o calendário padrão da equipe, no lugar do <input type="date"> nativo) */
+.equipes__data { display: flex; flex: 0 0 150px; min-width: 0; }
+.equipes__data-btn {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  text-align: left;
+  font-family: inherit;
+  line-height: normal;
+  cursor: pointer;
+}
+.equipes__data-txt { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.equipes__data-txt--vazio { color: var(--eq-cinza); }
+.equipes__data-icone { flex: 0 0 auto; width: 15px; height: 15px; color: var(--eq-cinza); }
+.equipes__aba-input--hora { flex: 0 0 110px; }
+
+.equipes__aba-btn {
+  border: 1px solid transparent;
+  background: var(--eq-verde);
+  color: #fff;
+  border-radius: 8px;
+  padding: 8px 14px;
+  font-size: 13px;
+  font-weight: 700;
+  cursor: pointer;
+  white-space: nowrap;
+  transition: background-color .15s ease;
+}
+
+.equipes__aba-btn:hover { background: var(--eq-verde-escuro); }
+
+.equipes__aba-btn--sec {
+  background: #fff;
+  color: var(--eq-preto);
+  border-color: #DADDE1;
+}
+
+.equipes__aba-btn--sec:hover { background: var(--eq-bolha-recebida); }
+
+.equipes__aba-scroll {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding-bottom: 20px;
+}
+
+.equipes__aba-vazio {
+  margin: 40px 0;
+  text-align: center;
+  color: var(--eq-cinza);
+  font-size: 14px;
+}
+
+.equipes__aba-vazio--pequeno { margin: 16px 0; font-size: 13px; }
+
+.equipes__aba-lista {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+/* ----- Tarefas e eventos (linhas) ----- */
+.equipes__tarefa,
+.equipes__evento {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid var(--eq-borda);
+  border-radius: 10px;
+  background: #fff;
+}
+
+.equipes__tarefa--edicao,
+.equipes__evento--edicao { flex-wrap: wrap; }
+
+.equipes__tarefa-check {
+  width: 17px;
+  height: 17px;
+  accent-color: var(--eq-verde);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.equipes__tarefa-info {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.equipes__tarefa-titulo {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: var(--eq-preto);
+  overflow-wrap: anywhere;
+}
+
+.equipes__tarefa--feita .equipes__tarefa-titulo {
+  text-decoration: line-through;
+  color: var(--eq-cinza);
+}
+
+.equipes__tarefa-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  font-size: 12px;
+  color: var(--eq-cinza);
+}
+
+.equipes__tarefa-prazo--atrasada { color: var(--eq-erro); font-weight: 700; }
+
+.equipes__item-acoes { display: flex; gap: 2px; flex-shrink: 0; }
+
+.equipes__icone-btn {
+  border: 0;
+  background: none;
+  color: var(--eq-cinza);
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  font-size: 15px;
+  cursor: pointer;
+}
+
+.equipes__icone-btn:hover { background: var(--eq-bolha-recebida); color: var(--eq-preto); }
+
+/* ----- Calendário ----- */
+.equipes__agenda-nav { display: flex; align-items: center; gap: 6px; }
+.equipes__agenda-mes { min-width: 140px; text-align: center; font-size: 14px; color: var(--eq-preto); }
+
+.equipes__agenda-corpo {
+  display: grid;
+  grid-template-columns: minmax(0, 1.5fr) minmax(240px, 1fr);
+  gap: 20px;
+  align-items: start;
+}
+
+.equipes__agenda-grade {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.equipes__agenda-sem {
+  text-align: center;
+  font-size: 11.5px;
+  font-weight: 700;
+  color: var(--eq-cinza);
+  padding: 4px 0;
+}
+
+.equipes__agenda-dia {
+  position: relative;
+  min-height: 52px;
+  border: 1px solid var(--eq-borda);
+  border-radius: 8px;
+  background: #fff;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eq-preto);
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: space-between;
+  cursor: pointer;
+  text-align: left;
+}
+
+.equipes__agenda-dia:hover { background: #FAFAFA; }
+.equipes__agenda-dia--fora { background: #FAFAFA; color: #C2C6CC; cursor: default; }
+.equipes__agenda-dia--hoje span { color: var(--eq-verde); font-weight: 800; }
+
+.equipes__agenda-dia--sel,
+.equipes__agenda-dia--sel:hover {
+  background: var(--eq-verde-100);
+  border-color: var(--eq-verde);
+}
+
+.equipes__agenda-ponto {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--eq-verde);
+}
+
+.equipes__agenda-lateral { display: flex; flex-direction: column; gap: 10px; }
+.equipes__agenda-dia-titulo { margin: 0; font-size: 14px; font-weight: 700; color: var(--eq-preto); }
+
+.equipes__evento-hora {
+  flex: 0 0 56px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--eq-verde-escuro);
+}
+
+/* ----- Notas ----- */
+.equipes__notas-grade {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+  gap: 12px;
+}
+
+.equipes__nota-card {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  text-align: left;
+  border: 1px solid var(--eq-borda);
+  border-radius: 12px;
+  background: #fff;
+  padding: 14px;
+  cursor: pointer;
+  font-family: inherit;
+  min-height: 120px;
+}
+
+.equipes__nota-card:hover { border-color: var(--eq-verde); box-shadow: var(--eq-sombra-1); }
+.equipes__nota-card-titulo { font-size: 14px; font-weight: 700; color: var(--eq-preto); overflow-wrap: anywhere; }
+
+.equipes__nota-card-texto {
+  flex: 1;
+  font-size: 12.5px;
+  color: var(--eq-cinza);
+  white-space: pre-line;
+  overflow: hidden;
+  overflow-wrap: anywhere;
+}
+
+.equipes__nota-editor { display: flex; flex-direction: column; gap: 10px; }
+.equipes__nota-titulo-input { flex: 0 0 auto; font-size: 16px; font-weight: 700; }
+.equipes__nota-texto { flex: 1; min-height: 260px; resize: vertical; line-height: 1.5; }
+
+@media (max-width: 860px) {
+  .equipes__aba-conteudo { padding: 12px 16px 0; }
+  .equipes__agenda-corpo { grid-template-columns: 1fr; }
+  .equipes__agenda-dia { min-height: 42px; }
+  .equipes__aba-form { flex-wrap: wrap; }
+  .equipes__aba-input--data,
+  .equipes__data { flex: 1 1 140px; }
+}
+
+
+/* ============================================================
+   TELA CHEIA, SEM RODAPÉ — mesmo funcionamento do Chat
+   A página não rola mais: o chat (e o painel direito) têm a altura
+   da tela e rolam por dentro, então o campo de envio fica sempre
+   visível na base. O rodapé é incluído pelo index.php em todas as
+   páginas; aqui ele some só quando Equipes está aberta (este CSS só
+   é carregado nesta página).
+============================================================= */
+body:has(#equipesRaiz) .footer {
+  display: none;
+}
+
+/* O menu lateral tem a altura da tela e, se a janela for baixa, rola
+   por dentro (não empurra mais a altura da página). */
+.equipes .inicio__sidebar {
+  height: calc(100vh - 73px);
+  height: calc(100dvh - 73px);
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+}
+
+/* Área principal (chat + painel) com a altura exata da tela */
+.equipes__main {
+  height: calc(100vh - 73px);
+  height: calc(100dvh - 73px);
+}
+
+/* O chat pode encolher até a altura da tela: só a lista de mensagens rola */
+.equipes__chat {
+  min-height: 0;
+}
+
+/* Abas que não são o Chat (Tarefas, Calendário, Notas, Arquivos) rolam por dentro */
+.equipes__corpo-aba:not([data-corpo-aba="chat"]) {
+  overflow-y: auto;
+}
+
+
+/* ----- Ícones do cabeçalho do canal (vídeo, voz, membros, mais): mesmo tamanho, traço e cor ----- */
+.equipes__canal-acoes .equipes__icone-btn {
+  width: 38px; height: 38px; padding: 0; border: 0; border-radius: 8px;
+  background: transparent; color: var(--eq-cinza, #6B7280); font-size: 13px; font-weight: 700;
+}
+.equipes__canal-acoes .equipes__icone-btn--membros { width: auto; min-width: 38px; padding: 0 10px; gap: 5px; }
+.equipes__canal-acoes .equipes__icone-btn svg { width: 21px; height: 21px; flex: none; }
+.equipes__canal-acoes .equipes__icone-btn svg [stroke] { stroke-width: 1.8; }
+.equipes__canal-acoes .equipes__icone-btn:hover,
+.equipes__canal-acoes .equipes__icone-btn[aria-expanded="true"] { background: #F5F5F5; color: var(--eq-verde, #007A40); }
+
+/* Resumo da chamada (volta da sala) — mesmo visual do Chat */
+.equipes__modal {
+  position: fixed; inset: 0; z-index: 4000; display: flex; align-items: center; justify-content: center;
+  background: rgba(17, 24, 39, 0.5); padding: 16px;
+}
+.equipes__modal[hidden] { display: none; }
+.equipes__modal-caixa {
+  width: 100%; max-width: 400px; background: #fff; border-radius: 12px; padding: 28px 24px 24px;
+  display: flex; flex-direction: column; align-items: center; text-align: center;
+  box-shadow: 0 30px 70px -14px rgba(16, 24, 20, 0.34);
+}
+.equipes__pos-icone {
+  width: 56px; height: 56px; border-radius: 50%; background: #E6F7EE; color: #00A859;
+  display: flex; align-items: center; justify-content: center; margin-bottom: 12px;
+}
+.equipes__pos-icone--aviso { background: #FEF2F2; color: #DC2626; }
+.equipes__pos-icone svg { width: 28px; height: 28px; }
+.equipes__modal-caixa h2 { margin: 0 0 8px; font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; font-size: 18px; font-weight: 700; }
+.equipes__pos-texto { margin: 0 0 4px; font-size: 14px; color: #4B5563; }
+.equipes__pos-resumo { display: flex; gap: 32px; margin: 8px 0 0; }
+.equipes__pos-resumo div { display: flex; flex-direction: column; gap: 2px; }
+.equipes__pos-resumo dt { font-size: 12px; color: #6B7280; }
+.equipes__pos-resumo dd { margin: 0; font-size: 15px; font-weight: 700; max-width: 220px; }
+.equipes__pos-btn {
+  margin-top: 20px; min-height: 40px; padding: 0 20px; border: 0; border-radius: 8px; background: #00A859; color: #fff;
+  font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: background-color 0.15s;
+}
+.equipes__pos-btn:hover { background: #007A40; }

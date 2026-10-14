@@ -49,6 +49,13 @@ const CH_CARGOS = [
 /** Cargos que podem chamar/agendar com a equipe toda. */
 const CH_CARGOS_EQUIPE = ['gerente', 'diretor', 'ceo'];
 
+/**
+ * O usuário id 1 ("Administrador Intelbras") é o superusuário da plataforma:
+ * vê os contatos de QUALQUER equipe, chama qualquer pessoa, chama/agenda com
+ * qualquer equipe inteira, independentemente do cargo ou da própria equipe.
+ */
+const CH_SUPER_ADMIN_ID = 1;
+
 const CH_MSG_REGRA_EQUIPE = 'Apenas Diretores, Gerentes e CEO podem chamar a equipe toda.';
 const CH_MSG_REGRA_MESMA_EQUIPE = 'Você só pode chamar pessoas da sua equipe.';
 
@@ -157,8 +164,16 @@ function ch_usuario(PDO $pdo, int $id): array
     return $u;
 }
 
+function ch_e_super_admin(int $usuarioId): bool
+{
+    return $usuarioId === CH_SUPER_ADMIN_ID;
+}
+
 function ch_pode_chamar_equipe(array $usuario): bool
 {
+    if (ch_e_super_admin((int)($usuario['id'] ?? 0))) {
+        return true;
+    }
     return in_array((string)$usuario['cargo'], CH_CARGOS_EQUIPE, true);
 }
 

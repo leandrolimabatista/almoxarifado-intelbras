@@ -44,15 +44,6 @@
     padding: 20px 16px 32px;
   }
 
-  .reuniao__titulo {
-    font-size: 22px;
-  }
-
-  .reuniao__cabecalho-icone {
-    width: 28px;
-    height: 28px;
-  }
-
   .reuniao__card {
     padding: 16px;
   }
@@ -141,5 +132,12 @@
 
   .reuniao__dlg-contagem {
     flex-basis: 100%;
+  }
+}
+
+/* Título do cabeçalho igual ao de Documentos no celular pequeno */
+@media (max-width: 480px) {
+  .reuniao__titulo {
+    font-size: 22px;
   }
 }

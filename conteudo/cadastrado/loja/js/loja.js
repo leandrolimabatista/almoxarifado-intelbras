@@ -183,6 +183,35 @@
     openDrawer();
   });
 
+  // Botão direito num produto: menu padronizado do site (assets/js/menu-contexto.js).
+  // Shift + botão direito abre o menu do navegador.
+  grid.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    const card = e.target.closest('.loja__card');
+    if (!M || !card || e.shiftKey || M.temSelecao()) return;
+    const sku = card.querySelector('.loja__sku');
+    const product = sku && findProduct(sku.textContent.trim());
+    if (!product) return;
+    e.preventDefault();
+    const pos = M.posicao(e, card);
+    const esgotado = product.stock === 0;
+    const noLimite = (cart[product.id] || 0) >= Math.min(MAX_PER_ITEM, product.stock);
+    M.mostrar({
+      x: pos.x, y: pos.y, alvo: null,
+      aria: 'Opções de ' + product.name,
+      cabeca: M.cabeca('carrinho', product.name),
+      opcoes: [
+        { rotulo: esgotado ? 'Produto esgotado' : (noLimite ? 'Limite no carrinho' : 'Adicionar ao carrinho'),
+          icone: 'carrinho', destaque: true, desabilitado: esgotado || noLimite,
+          acao: () => { addToCart(product.id); openDrawer(); } },
+        { rotulo: 'Abrir carrinho', icone: 'carrinho', acao: () => openDrawer() },
+        'sep',
+        { rotulo: 'Copiar código do produto', icone: 'codigo', acao: () => M.copiar(product.id, 'Código copiado') },
+        { rotulo: 'Copiar nome', icone: 'copiar', acao: () => M.copiar(product.name, 'Nome copiado') },
+      ],
+    });
+  });
+
   /* ---------------- Utilitários da compra ---------------- */
   const round2 = (n) => Math.round(n * 100) / 100;
   const soDig = (v) => String(v || '').replace(/\D/g, '');
@@ -300,6 +329,7 @@
   function isDrawerOpen() { return drawer.classList.contains('is-open'); }
   function openDrawer() {
     ajustarTopoDrawer();
+    abaDrawer = 'carrinho';   // o botão do carrinho sempre abre na aba Carrinho
     renderDrawer();
     drawer.classList.add('is-open');
     overlay.classList.add('is-open');
@@ -321,12 +351,111 @@
     return [...livres.filter((p) => cats.has(p.cat)), ...livres.filter((p) => !cats.has(p.cat))];
   }
 
+  /* ---------------- Abas do drawer: Carrinho | Compras ---------------- */
+  let abaDrawer = 'carrinho';
+  let compras = null;            // lista carregada (null = ainda não)
+  let comprasEstado = 'idle';    // idle | loading | ok | erro
+  let comprasErro = '';
+
+  const STATUS_COMPRA = {
+    iniciado:  { txt: 'Pagamento iniciado', cls: 'iniciado' },
+    pago:      { txt: 'Pago',               cls: 'pago' },
+    cancelado: { txt: 'Cancelado',          cls: 'cancelado' },
+  };
+  const fmtDataHora = (iso) => {
+    const d = new Date(iso);
+    return isNaN(d) ? '' : d.toLocaleString('pt-BR', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+  };
+
+  function trocarAba(aba) {
+    abaDrawer = aba;
+    if (aba === 'compras') carregarCompras();
+    renderDrawer();
+  }
+  function carregarCompras() {
+    comprasEstado = 'loading';
+    API.listarPedidos()
+      .then((lista) => { compras = lista; comprasEstado = 'ok'; })
+      .catch((err) => { console.error(err); comprasEstado = 'erro'; comprasErro = err.message; })
+      .finally(() => { if (abaDrawer === 'compras') renderDrawer(); });
+  }
+
+  function renderCompras() {
+    const body = $('lojaDrawerBody');
+    $('lojaDrawerFoot').innerHTML = '';
+    $('lojaDrawerTitulo').textContent = 'Minhas compras';
+
+    if (comprasEstado === 'loading' && !compras) {
+      body.innerHTML = '<div class="loja__cart-vazio">Carregando suas compras...</div>';
+      return;
+    }
+    if (comprasEstado === 'erro' && !compras) {
+      body.innerHTML = `<div class="loja__cart-vazio">Não foi possível carregar suas compras agora.<br>
+        <button type="button" class="lcompra__retry" data-compras-recarregar>Tentar de novo</button></div>`;
+      return;
+    }
+    if (!compras || !compras.length) {
+      body.innerHTML = '<div class="loja__cart-vazio">Você ainda não fez nenhuma compra.<br>Seus pedidos vão aparecer aqui.</div>';
+      return;
+    }
+    body.innerHTML = compras.map((c) => {
+      const st = STATUS_COMPRA[c.status] || STATUS_COMPRA.iniciado;
+      const qtd = c.itens.reduce((n, i) => n + i.quantidade, 0);
+      const linhas = c.itens.map((i) => `
+        <div class="lcompra__item"><span>${i.quantidade}× ${esc(i.nome)}</span><span>${fmtBRL(round2(i.preco * i.quantidade))}</span></div>`).join('');
+      const entrega = c.cidade ? `${esc(c.cidade)}${c.uf ? ' - ' + esc(c.uf) : ''}` : '';
+      return `
+        <details class="lcompra">
+          <summary>
+            <span class="lcompra__top">
+              <strong class="lcompra__cod">${esc(c.codigo)}</strong>
+              <span class="lcompra__status lcompra__status--${st.cls}">${st.txt}</span>
+            </span>
+            <span class="lcompra__meta"><span>${fmtDataHora(c.criado_em)}</span><span>${qtd} ${qtd === 1 ? 'item' : 'itens'}</span></span>
+            <span class="lcompra__total"><span>Total</span><strong>${fmtBRL(c.total)}</strong></span>
+          </summary>
+          <div class="lcompra__det">
+            ${linhas}
+            ${c.cupom ? `<div class="lcompra__item lcompra__item--dim"><span>Cupom ${esc(c.cupom)}</span><span>aplicado</span></div>` : ''}
+            <div class="lcompra__item lcompra__item--dim"><span>Frete${c.frete_nome ? ' · ' + esc(c.frete_nome) : ''}</span><span>${c.frete > 0 ? fmtBRL(c.frete) : 'Grátis'}</span></div>
+            ${entrega ? `<div class="lcompra__item lcompra__item--dim"><span>Entrega</span><span>${entrega}</span></div>` : ''}
+            <button type="button" class="lcompra__again" data-recomprar="${esc(c.codigo)}">Comprar novamente</button>
+          </div>
+        </details>`;
+    }).join('');
+  }
+
+  function recomprar(codigo) {
+    const c = (compras || []).find((x) => x.codigo === codigo);
+    if (!c) return;
+    let faltou = false;
+    c.itens.forEach((i) => {
+      const p = findProduct(i.id);
+      if (!p || p.stock <= 0) { faltou = true; return; }
+      for (let k = 0; k < i.quantidade; k++) addToCart(i.id);   // respeita limite por item e estoque
+      if ((cart[i.id] || 0) < i.quantidade) faltou = true;
+    });
+    abaDrawer = 'carrinho';
+    renderDrawer();
+    if (faltou) mostrarMensagem('Alguns itens não estão mais disponíveis na quantidade original e foram ajustados.');
+  }
+
+  function atualizarAbas() {
+    drawer.querySelectorAll('[data-aba]').forEach((b) => {
+      const ativa = b.dataset.aba === abaDrawer;
+      b.classList.toggle('is-active', ativa);
+      b.setAttribute('aria-selected', ativa ? 'true' : 'false');
+    });
+  }
+
   function renderDrawer() {
     const body = $('lojaDrawerBody');
     const foot = $('lojaDrawerFoot');
     const title = $('lojaDrawerTitulo');
     const n = cartItemCount();
 
+    atualizarAbas();
+    if (abaDrawer === 'compras') { renderCompras(); return; }
     title.textContent = n ? `Carrinho • ${n}` : 'Carrinho';
 
     if (n === 0) {
@@ -422,7 +551,13 @@
     const nav = e.target.closest('[data-upsell]');
     const add = e.target.closest('[data-upsell-add]');
     const fin = e.target.closest('[data-finalizar]');
-    if (inc) addToCart(inc.dataset.inc);
+    const aba = e.target.closest('[data-aba]');
+    const again = e.target.closest('[data-recomprar]');
+    const reload = e.target.closest('[data-compras-recarregar]');
+    if (aba) trocarAba(aba.dataset.aba);
+    else if (again) recomprar(again.dataset.recomprar);
+    else if (reload) { carregarCompras(); renderDrawer(); }
+    else if (inc) addToCart(inc.dataset.inc);
     else if (dec) decFromCart(dec.dataset.dec);
     else if (rem) removeFromCart(rem.dataset.remove);
     else if (nav) { upsellIdx += parseInt(nav.dataset.upsell, 10); renderDrawer(); }
@@ -544,7 +679,32 @@
     const regiao = FRETE_REGIOES[uf];
     return (FRETE_OPCOES[regiao] || []).map((o) => ({ ...o }));
   }
-  const prazoTxt = (p) => `${p[0]} a ${p[1]} dias úteis`;
+  const prazoTxt = (p) => (p[0] === p[1] ? `${p[1]} dias úteis` : `${p[0]} a ${p[1]} dias úteis`);
+
+  /* Cotação real (api/loja/frete.php); se falhar, usa a tabela por região acima.
+     Resultado em cache por CEP + carrinho: digitar número/complemento não refaz a consulta. */
+  const freteCache = {};   // chave -> { opcoes, estimado }
+  const freteEmVoo = {};   // chave -> Promise
+  let freteToken = 0;
+  let fretePref = null;    // id da opção escolhida (mantém a escolha ao recotar)
+
+  function chaveFrete(cep, uf) {
+    const itens = Object.keys(cart).sort().map((id) => id + ':' + cart[id]).join(',');
+    return cep + '|' + uf + '|' + itens;
+  }
+  function obterFrete(chave, cep, uf) {
+    if (freteCache[chave]) return Promise.resolve(freteCache[chave]);
+    if (freteEmVoo[chave]) return freteEmVoo[chave];
+    const itens = Object.keys(cart).map((id) => ({ id, quantidade: cart[id], preco: precoUnit(findProduct(id)) }));
+    freteEmVoo[chave] = API.cotarFrete(cep, itens)
+      .then((res) => (freteCache[chave] = res))
+      .catch((err) => {
+        console.warn('Frete: usando tabela por região.', err.message);
+        return { opcoes: calcularFrete(uf), estimado: true };   // reserva não fica em cache: tenta a API de novo depois
+      })
+      .finally(() => { delete freteEmVoo[chave]; });
+    return freteEmVoo[chave];
+  }
 
   /* ---------- Montagem do formulário (uma vez) ---------- */
   function campo(id, label, o = {}) {
@@ -640,6 +800,7 @@
       const r = e.target.closest('input[name="ckFreteOp"]');
       if (!r) return;
       frete = ckOpcoes.find((o) => o.id === r.value) || null;
+      if (frete) fretePref = frete.id;
       $ck('ckFrete').querySelectorAll('.lck__op').forEach((l) =>
         l.classList.toggle('is-sel', l.contains(r)));
       $ck('ckFreteErro').textContent = '';
@@ -706,29 +867,51 @@
   function recalcFrete() {
     const box = $('ckFrete');
     if (!box) return;
-    const pronto = soDig($('ckCep').value).length === 8 && $('ckUf').value &&
+    const cep = soDig($('ckCep').value);
+    const uf = $('ckUf').value;
+    const pronto = cep.length === 8 && uf &&
       $('ckEndereco').value.trim() && $('ckNumero').value.trim();
 
     if (!pronto) {
+      freteToken++;
       frete = null; ckOpcoes = [];
       box.innerHTML = '<div class="lck__frete-aviso">Insira o endereço de entrega para ver as formas de frete disponíveis.</div>';
       renderResumo();
       return;
     }
-    ckOpcoes = calcularFrete($('ckUf').value);
+
+    const chave = chaveFrete(cep, uf);
+    if (freteCache[chave]) { mostrarFrete(freteCache[chave]); return; }
+
+    const token = ++freteToken;
+    if (frete) fretePref = frete.id;
+    frete = null; ckOpcoes = [];
+    box.innerHTML = '<div class="lck__frete-aviso" role="status">Calculando frete...</div>';
+    $('ckFreteErro').textContent = '';
+    renderResumo();
+    obterFrete(chave, cep, uf).then((res) => {
+      if (token !== freteToken) return;          // endereço/carrinho mudou enquanto consultava
+      mostrarFrete(res);
+    });
+  }
+
+  function mostrarFrete(res) {
+    const box = $('ckFrete');
+    ckOpcoes = res.opcoes.map((o) => ({ ...o }));
     if (!ckOpcoes.length) {
       frete = null;
       box.innerHTML = '<div class="lck__frete-aviso">Não há formas de frete disponíveis para este endereço.</div>';
       renderResumo();
       return;
     }
-    frete = ckOpcoes.find((o) => frete && o.id === frete.id) || ckOpcoes[0];
+    frete = ckOpcoes.find((o) => o.id === fretePref) || ckOpcoes[0];
     box.innerHTML = ckOpcoes.map((o) => `
       <label class="lck__op${o.id === frete.id ? ' is-sel' : ''}">
         <input type="radio" name="ckFreteOp" value="${o.id}" ${o.id === frete.id ? 'checked' : ''}>
-        <span class="lck__op-txt"><strong>${o.nome}</strong><small>${prazoTxt(o.prazo)}</small></span>
+        <span class="lck__op-txt"><strong>${esc(o.nome)}</strong><small>${prazoTxt(o.prazo)}</small></span>
         <span class="lck__op-preco">${fmtBRL(o.preco)}</span>
-      </label>`).join('');
+      </label>`).join('') +
+      (res.estimado ? '<div class="lck__frete-aviso">Valores estimados para a sua região.</div>' : '');
     $('ckFreteErro').textContent = '';
     renderResumo();
   }
@@ -853,6 +1036,28 @@
     return items;
   }
 
+  // Grava o pedido (aba "Compras"). Espera no máximo 3 s e ignora qualquer erro:
+  // o histórico é secundário, o pagamento já foi gerado.
+  async function registrarPedidoSeguro(initPoint) {
+    try {
+      const pedido = {
+        itens: Object.keys(cart).map((id) => {
+          const p = findProduct(id);
+          return { id, nome: p.name, quantidade: cart[id], preco: precoUnit(p) };
+        }),
+        frete: frete ? { nome: frete.nome, preco: frete.preco } : null,
+        cupom: cupom ? cupom.codigo : null,
+        cep: soDig($('ckCep').value),
+        cidade: $('ckCidade').value.trim(),
+        uf: $('ckUf').value,
+        init_point: initPoint || '',   // o servidor extrai o id da preferência p/ confirmar o pagamento depois
+      };
+      await Promise.race([API.registrarPedido(pedido), new Promise((r) => setTimeout(r, 3000))]);
+    } catch (err) {
+      console.warn('Pedido não registrado no histórico:', err.message);
+    }
+  }
+
   async function pagar() {
     if (pagando) return;
     if (cartItemCount() === 0) return;
@@ -872,11 +1077,10 @@
     btn.textContent = 'Em processamento...';
 
     try {
-      const data = await API.criarPagamento(
-  montarItens(),
-  $('ckEmail').value.trim()
-);
+      const data = await API.criarPagamento(montarItens());
       if (data && data.init_point) {
+        await registrarPedidoSeguro(data.init_point); // histórico em "Compras"; nunca impede o pagamento
+        compras = null;
         window.location.href = data.init_point;   // Mercado Pago
         return;
       }
@@ -920,7 +1124,6 @@
   const ICON_TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1.5 1.5 0 0 0 1.5 1.4h7A1.5 1.5 0 0 0 17 19l1-12M9 7V4.5A1 1 0 0 1 10 3.5h4a1 1 0 0 1 1 1V7"/></svg>';
   const ICON_CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 
-  $('lojaSaldo').textContent = fmtBRL(COST_CENTER_BALANCE);
   renderCategoryPanel();
   renderGrid();
   updatePageHead();

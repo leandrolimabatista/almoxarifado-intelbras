@@ -1,17 +1,36 @@
+<?php
+// Token CSRF do módulo Chat: gerado uma vez por sessão e enviado pelo JS
+// no header X-CSRF-Token em todas as requisições que alteram dados
+// (mesmo padrão do módulo Documentos).
+if (session_status() !== PHP_SESSION_ACTIVE) {
+    session_start();
+}
+if (empty($_SESSION['csrf_chat'])) {
+    $_SESSION['csrf_chat'] = bin2hex(random_bytes(32));
+}
+$csrfChat = (string)$_SESSION['csrf_chat'];
+$meuIdChat = (int)($_SESSION['usuario_id'] ?? 0);
+?>
 <!-- ============================================================
      CONTEÚDO — Chat (área CADASTRADO)
-     Destino de "Iniciar conversa" (index.php?pagina=chat&id=<conversa>).
+     Acessado pelo atalho "Chat" do menu lateral (index.php?pagina=chat).
 
-     STATUS: a tela de mensagens ainda não foi desenvolvida — mostra um
-     placeholder "em breve". A conversa já foi criada no banco
-     (tb_chat_conversas / tb_chat_participantes).
+     Chat pessoal, um-para-um, com qualquer usuário cadastrado —
+     mesma ideia do chat pessoal do Microsoft Teams: lista de
+     conversas à esquerda (com prévia da última mensagem e contador
+     de não lidas), conversa aberta à direita, busca de contatos em
+     "Nova conversa" (botão "+"). Tudo vem de api/chat/*.php; mensagens
+     novas chegam por polling (api/chat/mensagens.php?depois_de=).
+
+     Menu lateral: o mesmo componente das demais páginas (Equipes e
+     Atalhos dinâmicos), com "Chat" ativo em ATALHOS.
 ============================================================= -->
-<link rel="stylesheet" href="conteudo/cadastrado/chat/css/chat.css?v=1">
-<link rel="stylesheet" href="conteudo/cadastrado/chat/responsivo/chat.responsivo.css?v=1">
-<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/chat/css/chat.css?v=20261021">
+<link rel="stylesheet" href="conteudo/cadastrado/chat/responsivo/chat.responsivo.css?v=20261007">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
 
-<div class="chat">
+<div class="chat" id="chatRaiz" data-csrf="<?php echo htmlspecialchars($csrfChat, ENT_QUOTES, 'UTF-8'); ?>" data-meu-id="<?php echo $meuIdChat; ?>" data-meu-nome="<?php echo htmlspecialchars((string)($_SESSION['usuario_nome'] ?? ''), ENT_QUOTES, 'UTF-8'); ?>">
 
   <aside class="inicio__sidebar" id="sidebar">
     <nav class="inicio__nav">
@@ -53,9 +72,9 @@
         <span>Loja</span>
       </a>
       <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
-      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>Usuários</span>
+      <a href="index.php?pagina=dashboard" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="15" width="7" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Dashboard</span>
       </a>
       <?php endif; ?>
     </nav>
@@ -63,50 +82,63 @@
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">EQUIPES</span>
       <div class="inicio__channel-list">
+        <?php if (eqv_visivel('geral')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
           <span class="inicio__channel-dot" style="background:#00A859"></span>
           <span>Geral</span>
           <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('projetos')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
           <span class="inicio__channel-dot" style="background:#3B82F6"></span>
           <span>Projetos</span>
           <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('marketing')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
           <span class="inicio__channel-dot" style="background:#F59E0B"></span>
           <span>Marketing</span>
           <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('rh')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
           <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
           <span>RH</span>
           <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('financeiro')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
           <span class="inicio__channel-dot" style="background:#EC4899"></span>
           <span>Financeiro</span>
           <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('ti')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
           <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
           <span>TI</span>
           <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('sac')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
           <span class="inicio__channel-dot" style="background:#EF4444"></span>
           <span>SAC / Ouvidoria</span>
           <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
         </a>
+        <?php endif; ?>
       </div>
-      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
     </div>
 
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">ATALHOS</span>
-      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut inicio__shortcut--active" id="atalhoNovaConversaSidebar" aria-current="page">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        <span>Nova conversa</span>
+      <a href="index.php?pagina=chat" class="inicio__shortcut inicio__shortcut--active" id="atalhoChatSidebar" aria-current="page">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chat</span>
       </a>
       <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
         <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -120,15 +152,245 @@
   </aside>
 
   <main class="chat__main">
-    <div class="chat__empty">
-      <span class="chat__empty-icon" aria-hidden="true">
-        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M5 5h14a2 2 0 012 2v8a2 2 0 01-2 2h-7l-5 4v-4H5a2 2 0 01-2-2V7a2 2 0 012-2z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
-      </span>
-      <h1 class="chat__empty-title">Conversa criada</h1>
-      <p class="chat__empty-text">A tela de mensagens ainda está em desenvolvimento. A conversa já foi criada e ficará disponível aqui em breve.</p>
-      <a href="index.php?pagina=nova-conversa" class="chat__empty-back">Iniciar outra conversa</a>
-    </div>
-  </main>
+
+    <!-- ----- Coluna esquerda: conversas ----- -->
+    <section class="chat__coluna-lista" aria-label="Conversas">
+      <header class="chat__lista-cabecalho">
+        <h1 class="chat__lista-titulo">Chat</h1>
+        <button type="button" class="chat__btn-novo" id="chatBtnNovaConversa" title="Nova conversa" aria-haspopup="dialog" aria-expanded="false">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
+      </header>
+
+      <label class="chat__busca">
+        <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        <input type="search" id="chatBuscaConversas" class="chat__busca-input" placeholder="Pesquisar conversas..." autocomplete="off" maxlength="100">
+      </label>
+
+      <div class="chat__aviso" id="chatAviso" role="status" hidden></div>
+
+      <ul class="chat__lista" id="chatLista" aria-live="polite"></ul>
+
+      <p class="chat__lista-vazia" id="chatListaVazia" hidden>
+        Nenhuma conversa ainda.<br>Clique em <strong>+</strong> para começar a falar com alguém.
+      </p>
+    </section>
+
+    <!-- ----- Coluna direita: conversa aberta ----- -->
+    <section class="chat__coluna-thread" aria-label="Conversa">
+
+      <div class="chat__vazio" id="chatVazio">
+        <span class="chat__vazio-icone" aria-hidden="true">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        </span>
+        <p>Escolha uma conversa ao lado<br>ou inicie uma nova.</p>
+      </div>
+
+      <div class="chat__thread" id="chatThread" hidden>
+        <header class="chat__thread-cabecalho">
+          <button type="button" class="chat__thread-voltar" id="chatThreadVoltar" aria-label="Voltar para as conversas">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M15 6l-6 6 6 6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          </button>
+          <span class="chat__avatar" id="chatThreadAvatar" aria-hidden="true"></span>
+          <div class="chat__thread-titulos">
+            <h1 class="chat__thread-nome" id="chatThreadNome"></h1>
+            <p class="chat__thread-cargo" id="chatThreadCargo"></p>
+          </div>
+          <div class="chat__thread-acoes">
+            <button type="button" class="chat__icone-btn" id="chatBtnVideo" aria-label="Chamada de vídeo com a pessoa" title="Chamada de vídeo">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 10.5l4.6-2.8a.7.7 0 0 1 1.1.6v7.4a.7.7 0 0 1-1.1.6L16 13.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <button type="button" class="chat__icone-btn" id="chatBtnLigar" aria-label="Ligar para a pessoa" title="Ligar">
+              <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </button>
+            <div class="chat__menu-wrap">
+              <button type="button" class="chat__icone-btn" id="chatBtnMais" aria-label="Mais opções" aria-haspopup="true" aria-expanded="false" title="Mais opções">
+                <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="12" cy="5.5" r="1.6" fill="currentColor"/><circle cx="12" cy="12" r="1.6" fill="currentColor"/><circle cx="12" cy="18.5" r="1.6" fill="currentColor"/></svg>
+              </button>
+              <div class="chat__menu" id="chatMenuMais" role="menu" hidden>
+                <button type="button" class="chat__menu-item" id="chatMenuSilenciar" role="menuitem">Silenciar conversa</button>
+                <button type="button" class="chat__menu-item" id="chatMenuDocumentos" role="menuitem">Ver arquivos da conversa</button>
+              </div>
+            </div>
+          </div>
+        </header>
+
+        <!-- Abas da conversa (mesmo padrão de Equipes) -->
+        <nav class="chat__tabs" id="chatTabs" aria-label="Seções da conversa">
+          <button type="button" class="chat__tab chat__tab--ativa" data-aba="chat">Chat</button>
+          <button type="button" class="chat__tab" data-aba="arquivos">Arquivos</button>
+        </nav>
+
+        <!-- Corpo da aba Chat -->
+        <div class="chat__corpo-aba" data-corpo-aba="chat">
+
+        <!-- Área de mensagens (mesmo padrão de Equipes) -->
+        <div class="chat__messages" id="chatMensagens">
+          <div class="chat__messages-lista" id="chatMensagensLista"></div>
+
+          <div class="chat__thread-vazio" id="chatThreadVazio" hidden>
+            <span class="chat__thread-vazio-icone" aria-hidden="true">
+              <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            </span>
+            <p class="chat__thread-vazio-titulo" id="chatThreadVazioTitulo">Inicie a conversa</p>
+            <p class="chat__thread-vazio-texto">Ainda não há mensagens nesta conversa. Diga oi para começar.</p>
+          </div>
+        </div>
+
+        <!-- Campo de envio (mesmo padrão de Equipes) -->
+        <div class="chat__composer-wrap">
+
+          <form class="chat__composer" id="chatComposer">
+
+            <!-- Prévia do anexo escolhido -->
+            <div class="chat__anexo-preview" id="chatAnexoPreview" hidden>
+              <span class="chat__anexo-preview-icone" aria-hidden="true">📎</span>
+              <span class="chat__anexo-preview-nome" id="chatAnexoPreviewNome"></span>
+              <button type="button" class="chat__resposta-fechar" id="chatAnexoPreviewRemover" aria-label="Remover anexo">&times;</button>
+            </div>
+
+            <!-- Barra de formatação (estilo Teams): aparece ao clicar no "A" -->
+            <div class="chat__formatacao" id="chatFormatacao" role="toolbar" aria-label="Formatação de texto" hidden>
+              <button type="button" data-formatar="negrito" data-cmd="bold" title="Negrito (Ctrl+B)" aria-label="Negrito"><strong>B</strong></button>
+              <button type="button" data-formatar="italico" data-cmd="italic" title="Itálico (Ctrl+I)" aria-label="Itálico"><em>I</em></button>
+              <button type="button" data-formatar="sublinhado" data-cmd="underline" title="Sublinhado (Ctrl+U)" aria-label="Sublinhado"><u>U</u></button>
+              <button type="button" data-formatar="tachado" data-cmd="strikeThrough" title="Tachado" aria-label="Tachado"><s>S</s></button>
+              <span class="chat__formatacao-sep" aria-hidden="true"></span>
+              <button type="button" data-formatar="lista" data-cmd="insertUnorderedList" title="Lista com marcadores" aria-label="Lista com marcadores">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="5" cy="7" r="1.3" fill="currentColor"/><circle cx="5" cy="12" r="1.3" fill="currentColor"/><circle cx="5" cy="17" r="1.3" fill="currentColor"/><path d="M10 7h10M10 12h10M10 17h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" data-formatar="numerada" data-cmd="insertOrderedList" title="Lista numerada" aria-label="Lista numerada">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 7h10M10 12h10M10 17h10" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M4 6l1.2-.8V9M3.8 11.2c.6-.9 2-.8 2 .2 0 .7-1.2 1.2-2 2.1h2.2M3.8 16.3h2l-1 1.1c.8 0 1.2.4 1.2.9 0 .7-.8 1-2.2.7" stroke="currentColor" stroke-width="1" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <span class="chat__formatacao-sep" aria-hidden="true"></span>
+              <button type="button" data-formatar="link" title="Inserir link" aria-label="Inserir link">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M10 14a4 4 0 005.7 0l3-3a4 4 0 00-5.7-5.7l-1 1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/><path d="M14 10a4 4 0 00-5.7 0l-3 3a4 4 0 005.7 5.7l1-1" stroke="currentColor" stroke-width="1.7" stroke-linecap="round"/></svg>
+              </button>
+              <button type="button" class="chat__formatacao-descartar" id="chatFormatacaoDescartar" title="Descartar mensagem" aria-label="Descartar mensagem">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1.5 1.5 0 001.5 1.4h7A1.5 1.5 0 0017 19l1-12M9 7V4.5h6V7" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+            </div>
+
+            <!-- Diálogo "Inserir link" (abre ao clicar no botão de link da barra) -->
+            <div class="chat__link-dialogo" id="chatLinkDialogo" role="dialog" aria-labelledby="chatLinkTitulo" hidden>
+              <h3 class="chat__link-titulo" id="chatLinkTitulo">Inserir link</h3>
+              <label for="chatLinkTexto">Texto a ser exibido</label>
+              <input type="text" id="chatLinkTexto" placeholder="Texto a ser exibido" autocomplete="off">
+              <label for="chatLinkEndereco">Endereço</label>
+              <input type="text" id="chatLinkEndereco" placeholder="Link para um arquivo ou página da web" autocomplete="off" inputmode="url">
+              <p class="chat__link-erro" id="chatLinkErro" role="alert" hidden>Endereço de link inválido. Use algo como https://exemplo.com.</p>
+              <div class="chat__link-acoes">
+                <button type="button" class="chat__link-cancelar" id="chatLinkCancelar">Cancelar</button>
+                <button type="button" class="chat__link-inserir" id="chatLinkInserir" disabled>Inserir</button>
+              </div>
+            </div>
+
+            <div class="chat__composer-linha">
+              <button type="button" class="chat__composer-btn" id="chatBtnAnexar" aria-label="Anexar arquivo" title="Anexar arquivo">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M8 12.5l6.5-6.5a3 3 0 114.2 4.2L11 18a5 5 0 11-7-7l7.3-7.3" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
+              </button>
+              <input type="file" id="chatInputArquivo" hidden>
+
+              <div class="chat__campo-wrap">
+                <textarea
+                  class="chat__campo"
+                  id="chatInputTexto"
+                  rows="1"
+                  placeholder="Digite uma mensagem..."
+                  maxlength="4000"
+                ></textarea>
+
+                <!-- Editor com formatação visual (só aparece depois de clicar no "A") -->
+                <div
+                  class="chat__editor"
+                  id="chatEditor"
+                  contenteditable="true"
+                  role="textbox"
+                  aria-multiline="true"
+                  aria-label="Digite uma mensagem"
+                  data-placeholder="Digite uma mensagem..."
+                  hidden
+                ></div>
 </div>
 
-<script src="conteudo/cadastrado/chat/js/chat.js?v=1"></script>
+              <div class="chat__composer-icones">
+                <button type="button" class="chat__composer-btn" id="chatBtnFormatar" aria-label="Formatação de texto" title="Formatação de texto">A</button>
+                <div class="chat__emoji-wrap">
+                  <button type="button" class="chat__composer-btn" id="chatBtnEmoji" aria-label="Emoji" title="Emoji">
+                    <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="12" cy="12" r="9" stroke="currentColor" stroke-width="1.7"/><circle cx="9" cy="10.3" r="1.1" fill="currentColor"/><circle cx="15" cy="10.3" r="1.1" fill="currentColor"/><path d="M8 14.3c1 1.3 2.3 2 4 2s3-.7 4-2" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
+                  </button>
+                  <div class="chat__popover chat__popover--emoji" id="chatEmojiPopover" hidden>
+                    <div class="chat__emoji-abas" role="tablist" aria-label="Tipo de conteúdo">
+                      <button type="button" class="chat__emoji-aba chat__emoji-aba--ativa" role="tab" aria-selected="true" data-emoji-aba="emoji">Emoji</button>
+                    </div>
+                    <div class="chat__emoji-busca-linha">
+                      <div class="chat__emoji-busca">
+                        <input type="text" id="chatEmojiBusca" placeholder="Encontre algo divertido" autocomplete="off" aria-label="Buscar emoji">
+                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+                      </div>
+                      <div class="chat__emoji-tom-wrap" id="chatEmojiTomWrap">
+                        <button type="button" class="chat__emoji-tom-btn" id="chatEmojiTomBtn" aria-label="Tom de pele" aria-haspopup="true" aria-expanded="false" title="Tom de pele">✋</button>
+                        <div class="chat__emoji-tom-menu" id="chatEmojiTomMenu" hidden></div>
+                      </div>
+                    </div>
+                    <div class="chat__emoji-grade" id="chatEmojiGrade"></div>
+                    <div class="chat__emoji-categorias" id="chatEmojiCategorias" hidden></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="chat__enviar-wrap">
+                <button type="submit" class="chat__enviar" id="chatBtnEnviar" disabled aria-label="Enviar mensagem">
+                  <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" fill="white"/></svg>
+                </button>
+              </div>
+            </div>
+          </form>
+        </div>
+        </div>
+
+        <!-- Corpo da aba Arquivos: anexos enviados nesta conversa -->
+        <div class="chat__corpo-aba chat__arquivos" data-corpo-aba="arquivos" hidden>
+          <ul class="chat__arquivos-lista" id="chatArquivosLista"></ul>
+          <p class="chat__arquivos-vazio" id="chatArquivosVazio" hidden>Nenhum arquivo foi compartilhado nesta conversa ainda.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ----- Painel "Nova conversa" (busca de contatos) ----- -->
+    <div class="chat__novo-fundo" id="chatNovoFundo" hidden>
+      <div class="chat__novo-painel" role="dialog" aria-modal="true" aria-labelledby="chatNovoTitulo">
+        <header class="chat__novo-cabecalho">
+          <h2 id="chatNovoTitulo">Nova conversa</h2>
+          <button type="button" class="chat__novo-fechar" id="chatNovoFechar" aria-label="Fechar">
+            <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          </button>
+        </header>
+        <label class="chat__busca chat__busca--painel">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21l-4.3-4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <input type="search" id="chatNovoBusca" class="chat__busca-input" placeholder="Pesquisar por nome ou email..." autocomplete="off" maxlength="100">
+        </label>
+        <ul class="chat__novo-lista" id="chatNovoLista"></ul>
+        <p class="chat__novo-vazio" id="chatNovoVazio" hidden>Ninguém encontrado.</p>
+      </div>
+    </div>
+
+  </main>
+
+  <!-- Resumo da chamada (aparece sobre o Chat quando a ligação feita daqui termina) -->
+  <div class="chat__modal" id="chatPos" hidden>
+    <div class="chat__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="chatPosTitulo">
+      <span class="chat__pos-icone" id="chatPosIcone" aria-hidden="true"></span>
+      <h2 id="chatPosTitulo">Chamada encerrada</h2>
+      <p class="chat__pos-texto" id="chatPosTexto" hidden></p>
+      <dl class="chat__pos-resumo" id="chatPosResumo">
+        <div><dt>Duração</dt><dd id="chatPosDuracao">00:00</dd></div>
+        <div><dt>Participantes</dt><dd id="chatPosPartes">—</dd></div>
+      </dl>
+      <button type="button" class="chat__pos-btn" id="chatPosFechar">Voltar para o Chat</button>
+    </div>
+  </div>
+</div>
+
+<script src="conteudo/cadastrado/equipes/js/emojis-dados.js?v=2"></script>
+<script src="conteudo/cadastrado/chat/js/chat.js?v=20261026"></script>

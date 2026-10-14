@@ -1,0 +1,525 @@
+/* ============================================================
+   MOVIMENTO — camada global de animação e padronização visual
+   ------------------------------------------------------------
+   Carregada por último em index.php / index.html, vale para TODAS
+   as páginas (visitante e área logada).
+
+   REFERÊNCIA: o comportamento original das telas (card de Serviços
+   que sobe 2px com sombra maior em 0,15s). Esse é o PADRÃO — todo
+   card clicável, botão, item de menu e campo do site agora se
+   move do mesmo jeito.
+
+   REGRAS DESTA CAMADA
+   - NÃO altera fonte, tamanho (width/height/padding/margin/gap),
+     posicionamento (position/top/left/display/flex/grid) NEM o raio
+     de borda: cada página mantém a forma que já tinha.
+   - Só mexe em: transições, animações de entrada, hover/press/foco,
+     sombras de elevação e cores de estado.
+   - Efeitos de movimento usam as propriedades `translate` e `scale`
+     (não `transform`), então nunca brigam com transform já existente
+     (centralizações, rotações, etc.).
+
+   COMO FUNCIONA
+   O movimento.js marca cada elemento com data-mv="<função>"
+   (btn, surface, tile, field, menu, dialog, toast, navitem, row...).
+   Aqui o CSS dá o MESMO comportamento a cada função, em qualquer
+   módulo — é isso que deixa o site 100% padronizado.
+============================================================= */
+
+:root {
+  /* ---- movimento (valores do padrão original) ---- */
+  --mv-ease: ease;
+  --mv-ease-suave: ease;
+  --mv-t1: 0.15s;   /* press, ícones */
+  --mv-t2: 0.15s;   /* hover em tudo (igual ao card de Serviços) */
+  --mv-t3: 0.4s;    /* entrada dos cards */
+  --mv-entrada-opacidade: 1;  /* 1 = entra só com MOVIMENTO (sem fade); 0 = entra com fade */
+
+  /* ---- elevação do hover (igual ao card de Serviços) ---- */
+  --mv-lift: -1.5px;        /* cards/tiles */
+  --mv-lift-btn: -1px;    /* botões */
+  --mv-sombra-hover: 0 2px 5px rgba(0, 0, 0, 0.08), 0 8px 18px rgba(0, 0, 0, 0.06);
+
+  /* ---- camadas flutuantes ---- */
+  --mv-sombra-menu: 0 2px 6px rgba(16, 24, 20, 0.06), 0 14px 34px -6px rgba(16, 24, 20, 0.2);
+  --mv-sombra-modal: 0 30px 70px -14px rgba(16, 24, 20, 0.34);
+
+  /* ---- brilho de botão (igual ao "Adicionar" da Loja) ---- */
+  --mv-brilho-verde: 0 3px 8px rgba(0, 168, 89, 0.28);
+  --mv-brilho-vermelho: 0 3px 8px rgba(229, 72, 77, 0.26);
+  --mv-anel: 0 0 0 3px rgba(0, 168, 89, 0.2);
+
+  /* ---- cores de estado ---- */
+  --mv-verde: #00a859;
+  --mv-verde-escuro: #007a40;
+  --mv-hover: #f3f6f4;
+  --mv-hover-tint: #f1faf5;
+}
+
+/* ------------------------------------------------------------
+   0. Troca de página: SEM crossfade (a página muda direto; o que se
+   move são os cards e o menu, não a tela inteira esmaecendo).
+------------------------------------------------------------ */
+
+/* ------------------------------------------------------------
+   1. Detalhes globais
+------------------------------------------------------------ */
+::selection {
+  background: rgba(0, 168, 89, 0.22);
+}
+body * {
+  scrollbar-color: #cdd5d0 transparent;
+}
+/* Menu lateral: pode rolar (roda do mouse/toque) mas sem mostrar a barra */
+html body .inicio__sidebar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+html body .inicio__sidebar::-webkit-scrollbar {
+  display: none;
+}
+html body * {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* ------------------------------------------------------------
+   2. Animações de entrada
+------------------------------------------------------------ */
+@keyframes mv-rise {
+  from { opacity: var(--mv-entrada-opacidade); translate: 0 8px; }
+  to   { opacity: 1; translate: 0 0; }
+}
+@keyframes mv-fade {
+  from { opacity: 0; }
+  to   { opacity: 1; }
+}
+@keyframes mv-pop {
+  from { opacity: 0; translate: 0 -6px; scale: 0.96; }
+  to   { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes mv-pop-modal {
+  from { opacity: 0; translate: 0 14px; scale: 0.95; }
+  to   { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes mv-toast {
+  from { opacity: 0; translate: 0 14px; scale: 0.97; }
+  to   { opacity: 1; translate: 0 0; scale: 1; }
+}
+@keyframes mv-slide-in {
+  from { opacity: var(--mv-entrada-opacidade); translate: -6px 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+
+/* Saída dos modais: quem some por [hidden] agora também sai com fade (0,18s), igual à entrada.
+   (a animação de entrada usa fill "backwards" para não segurar a opacidade; `display` é
+   animado como valor discreto, então o elemento só some de verdade no fim do fade.) */
+@media (prefers-reduced-motion: no-preference) {
+  html body [data-mv~="backdrop"] {
+    transition: opacity var(--mv-t2) var(--mv-ease), display var(--mv-t2) allow-discrete;
+  }
+  html body [data-mv~="backdrop"][hidden] { opacity: 0; pointer-events: none; }
+  html body [data-mv~="backdrop"] > [data-mv~="dialog"] {
+    transition: translate var(--mv-t2) var(--mv-ease), scale var(--mv-t2) var(--mv-ease);
+  }
+  html body [data-mv~="backdrop"][hidden] > [data-mv~="dialog"] { translate: 0 8px; scale: 0.97; }
+}
+
+/* Troca de página: o navegador segura a tela anterior e faz um fade curto até a nova
+   (cabeçalho e menu lateral são iguais nas duas, então ficam parados; só o conteúdo troca).
+   Substitui o antigo <meta name="view-transition">, que os navegadores atuais ignoram. */
+@view-transition { navigation: auto; }
+::view-transition-old(root), ::view-transition-new(root) {
+  animation-duration: var(--mv-t2);
+  animation-timing-function: var(--mv-ease);
+}
+
+/* Anti-flash: enquanto o movimento.js não classificou a página, o <main>
+   fica invisível (classe posta no <head>; o JS remove na 1ª varredura).
+   Sem isso os cards aparecem inteiros e "pulam" para o início da animação. */
+html.mv-boot main { opacity: 0; }
+
+/* Cards/blocos entrando em cascata (índice definido pelo JS) */
+html body [data-mv-in] {
+  animation: mv-rise var(--mv-t3) cubic-bezier(0.22, 0.8, 0.26, 1) backwards;
+  animation-delay: calc(var(--mv-i, 0) * 38ms + 40ms);
+}
+
+/* Itens do menu lateral (só na 1ª visita da sessão) */
+html body [data-mv-nav-in] {
+  animation: mv-slide-in 0.4s var(--mv-ease) backwards;
+  animation-delay: calc(var(--mv-i, 0) * 20ms + 60ms);
+}
+
+/* Menus, dropdowns, popovers: animam toda vez que aparecem */
+html body [data-mv~="menu"][data-mv-anim] {
+  animation: mv-pop 0.18s var(--mv-ease) both;
+  transform-origin: top center;
+}
+html body [data-mv~="dialog"][data-mv-anim] {
+  animation: mv-pop-modal 0.28s var(--mv-ease) backwards;
+}
+html body [data-mv~="backdrop"][data-mv-anim] {
+  animation: mv-fade 0.22s var(--mv-ease-suave) backwards;
+}
+html body [data-mv~="toast"][data-mv-anim] {
+  animation: mv-toast 0.3s var(--mv-ease) both;
+}
+
+/* ------------------------------------------------------------
+   3. Botões  (data-mv="btn" + primary | danger | ghost | icon)
+------------------------------------------------------------ */
+html body [data-mv~="btn"] {
+  transition:
+    transform var(--mv-t2) var(--mv-ease),
+    translate var(--mv-t2) var(--mv-ease),
+    scale var(--mv-t1) var(--mv-ease),
+    background-color var(--mv-t2) var(--mv-ease-suave),
+    border-color var(--mv-t2) var(--mv-ease-suave),
+    color var(--mv-t2) var(--mv-ease-suave),
+    box-shadow var(--mv-t2) var(--mv-ease-suave),
+    filter var(--mv-t2) var(--mv-ease-suave);
+}
+html body [data-mv~="btn"]:not(:disabled):not([aria-disabled="true"]):not([class*="desabilit"]):active {
+  scale: 0.97;
+}
+html body [data-mv~="btn"]:focus-visible {
+  outline: none;
+  box-shadow: var(--mv-anel);
+}
+
+/* primário (verde) */
+html body [data-mv~="primary"]:not(:disabled):not([aria-disabled="true"]):hover {
+  background-color: var(--mv-verde-escuro);
+  border-color: var(--mv-verde-escuro);
+  translate: 0 var(--mv-lift-btn);
+  box-shadow: var(--mv-brilho-verde);
+}
+html body [data-mv~="primary"]:not(:disabled):not([aria-disabled="true"]):active {
+  translate: 0 0;
+  box-shadow: none;
+}
+
+/* perigo (vermelho) */
+html body [data-mv~="danger"]:not(:disabled):not([aria-disabled="true"]):hover {
+  translate: 0 var(--mv-lift-btn);
+  box-shadow: var(--mv-brilho-vermelho);
+  filter: brightness(0.96);
+}
+
+/* secundário / contorno */
+html body [data-mv~="ghost"]:not(:disabled):not([aria-disabled="true"]):hover {
+  border-color: rgba(0, 168, 89, 0.55);
+  background-color: var(--mv-hover-tint);
+  translate: 0 var(--mv-lift-btn);
+}
+
+/* botão comum (sem variante: link "Ver todos", filtros, "Abrir"...): mesma
+   elevação de todo botão, sem mexer em cor/fundo da página */
+html body [data-mv~="btn"]:not([data-mv~="primary"]):not([data-mv~="danger"]):not([data-mv~="ghost"]):not([data-mv~="icon"]):not(:disabled):not([aria-disabled="true"]):hover {
+  translate: 0 var(--mv-lift-btn);
+}
+
+/* só ícone */
+html body [data-mv~="icon"]:not(:disabled):not([aria-disabled="true"]):hover {
+  scale: 1.08;
+}
+html body [data-mv~="icon"]:not(:disabled):not([aria-disabled="true"]):active {
+  scale: 0.92;
+}
+
+html body [data-mv~="btn"]:disabled,
+html body [data-mv~="btn"][aria-disabled="true"] {
+  cursor: default;
+}
+
+/* ------------------------------------------------------------
+   4. Campos de formulário
+------------------------------------------------------------ */
+html body [data-mv~="field"] {
+  transition:
+    border-color var(--mv-t2) var(--mv-ease-suave),
+    box-shadow var(--mv-t2) var(--mv-ease-suave),
+    background-color var(--mv-t2) var(--mv-ease-suave);
+}
+html body [data-mv~="field"]:hover:not(:disabled):not(:focus) {
+  border-color: #b9c4bd;
+}
+html body [data-mv~="field"]:focus,
+html body [data-mv~="field"]:focus-visible {
+  outline: none;
+  border-color: var(--mv-verde);
+  box-shadow: var(--mv-anel);
+}
+html body [data-mv~="field"]:disabled {
+  cursor: default;
+}
+
+/* ------------------------------------------------------------
+   5. Cards e blocos (surface = estático, tile = clicável)
+------------------------------------------------------------ */
+html body [data-mv~="surface"] {
+  transition:
+    transform var(--mv-t2) var(--mv-ease),
+    translate var(--mv-t2) var(--mv-ease),
+    box-shadow var(--mv-t2) var(--mv-ease),
+    border-color var(--mv-t2) var(--mv-ease),
+    background-color var(--mv-t2) var(--mv-ease);
+}
+
+html body [data-mv~="tile"] {
+  cursor: pointer;
+}
+/* PADRÃO: sobe 2px e a sombra cresce (igual ao card de Serviços) */
+html body [data-mv~="tile"]:not(:is(
+  [class*="--sel"], [class*="--ativ"], [class*="--active"],
+  [class*="--atual"], [class*="--current"], [class*="--erro"],
+  [class*="--off"], [class*="--desabil"]
+)):hover {
+  translate: 0 var(--mv-lift);
+  box-shadow: var(--mv-sombra-hover);
+}
+/* o transform antigo de cada página sai de cena: quem move é o `translate` */
+html body [data-mv~="tile"]:hover {
+  transform: none;
+}
+html body [data-mv~="tile"]:active {
+  translate: 0 -1px;
+  transition-duration: var(--mv-t1);
+}
+html body [data-mv~="tile"]:focus-visible {
+  outline: none;
+  box-shadow: var(--mv-anel), 0 1px 3px rgba(0, 0, 0, 0.08);
+}
+
+/* ------------------------------------------------------------
+   6. Menus, popovers, caixas de diálogo, avisos
+------------------------------------------------------------ */
+html body [data-mv~="menu"] {
+  box-shadow: var(--mv-sombra-menu);
+}
+html body [data-mv~="dialog"] {
+  box-shadow: var(--mv-sombra-modal);
+}
+html body [data-mv~="toast"] {
+  box-shadow: var(--mv-sombra-menu);
+}
+
+/* ------------------------------------------------------------
+   7. Itens clicáveis de lista, menu e abas
+------------------------------------------------------------ */
+html body [data-mv~="menuitem"],
+html body [data-mv~="row"],
+html body [data-mv~="navitem"] {
+  transition:
+    background-color var(--mv-t2) var(--mv-ease-suave),
+    color var(--mv-t2) var(--mv-ease-suave),
+    border-color var(--mv-t2) var(--mv-ease-suave),
+    translate var(--mv-t2) var(--mv-ease);
+}
+html body [data-mv~="menuitem"]:not(:is(
+  [class*="--perigo"], [class*="--sair"], [class*="--danger"],
+  [class*="--ativ"], [class*="--active"], [class*="--sel"]
+)):hover,
+html body [data-mv~="row"]:not(:is(
+  [class*="--current"], [class*="--atual"], [class*="--ativ"],
+  [class*="--sel"], [class*="is-ativa"]
+)):hover {
+  background-color: var(--mv-hover);
+}
+html body [data-mv~="chip"] {
+  transition:
+    background-color var(--mv-t2) var(--mv-ease-suave),
+    border-color var(--mv-t2) var(--mv-ease-suave),
+    color var(--mv-t2) var(--mv-ease-suave),
+    box-shadow var(--mv-t2) var(--mv-ease-suave),
+    translate var(--mv-t2) var(--mv-ease),
+    scale var(--mv-t1) var(--mv-ease);
+}
+html body [data-mv~="chip"]:not(:is(
+  [class*="--ativ"], [class*="--active"], [class*="--sel"], [class*="--atual"]
+)):hover {
+  border-color: rgba(0, 168, 89, 0.5);
+  translate: 0 var(--mv-lift-btn);
+}
+html body [data-mv~="chip"]:active {
+  scale: 0.96;
+}
+
+/* Linhas de tabela */
+html body tbody tr > td {
+  transition: background-color var(--mv-t2) var(--mv-ease-suave);
+}
+html body tbody tr:hover > td {
+  background-color: #f7faf8;
+}
+
+/* ------------------------------------------------------------
+   8. Menu lateral (mesmo componente em todas as páginas)
+   - hover: o item desliza 3px, o ícone cresce, o fundo acende
+   - pressionar: encolhe de leve
+   - item ativo: "pousa" ao carregar a página
+   - ao abrir o menu: itens entram em cascata (movimento.js)
+------------------------------------------------------------ */
+html body [data-mv-side]:not([data-mv-side="recolher"]) {
+  transition:
+    background-color var(--mv-t2) var(--mv-ease),
+    color var(--mv-t2) var(--mv-ease),
+    translate var(--mv-t2) var(--mv-ease),
+    scale var(--mv-t1) var(--mv-ease);
+}
+html body [data-mv-side]:not([data-mv-side="recolher"]):not(.inicio__sidebar-label):not([class*="--active"]):hover {
+  background-color: var(--mv-hover);
+  translate: 2px 0;
+}
+html body [data-mv-side]:not([data-mv-side="recolher"]):not(.inicio__sidebar-label):active {
+  scale: 0.98;
+}
+
+/* item ativo mantém o verde no hover (antes virava cinza) */
+html body [data-mv-side][class*="--active"]:hover {
+  background-color: #e7f7ee;
+}
+
+/* ícones */
+html body [data-mv-side] svg {
+  transition: scale var(--mv-t2) var(--mv-ease), color var(--mv-t2) var(--mv-ease);
+}
+html body [data-mv-side]:hover svg {
+  scale: 1.06;
+}
+html body .inicio__shortcut:not([class*="--active"]):hover svg {
+  color: var(--mv-verde);
+}
+
+/* bolinha colorida das equipes */
+html body [data-mv-side] .inicio__channel-dot {
+  transition: scale var(--mv-t2) var(--mv-ease);
+}
+html body [data-mv-side]:hover .inicio__channel-dot {
+  scale: 1.25;
+}
+
+/* "« Recolher": a seta aponta para a esquerda no hover */
+html body [data-mv-side="recolher"] {
+  transition: color var(--mv-t2) var(--mv-ease), scale var(--mv-t1) var(--mv-ease);
+}
+html body [data-mv-side="recolher"] > span {
+  display: inline-block;
+  transition: translate var(--mv-t2) var(--mv-ease);
+}
+html body [data-mv-side="recolher"]:hover > span {
+  translate: -3px 0;
+}
+html body [data-mv-side="recolher"]:active {
+  scale: 0.97;
+}
+
+/* item ativo pousa ao carregar a página (não compete com a cascata) */
+@keyframes mv-side-ativo {
+  from { opacity: var(--mv-entrada-opacidade); translate: -5px 0; }
+  to   { opacity: 1; translate: 0 0; }
+}
+html body [data-mv-side][class*="--active"]:not([data-mv-nav-in]) {
+  animation: mv-side-ativo 0.4s var(--mv-ease) backwards;
+}
+
+/* ------------------------------------------------------------
+   9. Banner da Início
+------------------------------------------------------------ */
+html body [class~="inicio__banner-dot"],
+html body [class~="content__banner-dot"] {
+  transition:
+    width 0.35s var(--mv-ease),
+    background-color 0.35s var(--mv-ease-suave);
+}
+html body [class~="inicio__banner-arrow"],
+html body [class~="content__banner-arrow"] {
+  transition: background-color var(--mv-t2) var(--mv-ease-suave), scale var(--mv-t1) var(--mv-ease);
+}
+html body [class~="inicio__banner-arrow"]:hover,
+html body [class~="content__banner-arrow"]:hover {
+  scale: 1.07;
+}
+html body [class~="inicio__banner-arrow"]:active,
+html body [class~="content__banner-arrow"]:active {
+  scale: 0.92;
+}
+
+/* ------------------------------------------------------------
+   9b. Efeitos próprios de página que fugiam do padrão
+   Cada um desses CSS tinha um hover diferente (zoom na foto, transform
+   em vez de translate, escala em botão). Aqui eles saem de cena: quem
+   anima é a camada, igual em todo o site.
+------------------------------------------------------------ */
+html body .loja__card:hover .loja__card-media img { transform: none; }  /* sem zoom na foto */
+html body .loja__add:hover,
+html body .inteligencia-artificial__sugestao:hover,
+html body .modulo-video__play:hover { transform: none; }                /* evita somar 2 elevações */
+
+/* Avisos (toasts), menus suspensos e modais: cada página tinha a sua própria
+   animação (sobe 8px, desce 8px, 0,14s, 0,18s, 0,2s...). Todos agora usam as
+   mesmas três: aviso = mv-toast, menu = mv-pop, modal = mv-pop-modal. */
+@media (prefers-reduced-motion: no-preference) {
+  html body :is(.documentos__toast, .reuniao__toast, .chamadas__snack) {
+    animation: mv-toast 0.3s var(--mv-ease) both;
+  }
+  html body .user-menu__card {
+    animation: mv-pop 0.18s var(--mv-ease) both;
+    transform-origin: top right;
+  }
+  html body .login-modal__card {
+    animation: mv-pop-modal 0.28s var(--mv-ease) both;
+  }
+}
+/* dropdown de categorias da Loja (transição ao abrir/fechar): mesmos valores do mv-pop */
+html body .loja__cat-panel {
+  transform: translateY(-6px) scale(0.96);
+  transform-origin: top right;
+  transition: opacity 0.18s var(--mv-ease), transform 0.18s var(--mv-ease);
+}
+html body .loja__cat-wrap.is-open .loja__cat-panel {
+  transform: none;
+}
+
+/* ------------------------------------------------------------
+   10. Acessibilidade: "reduzir movimento" (Windows/macOS/Chrome)
+   Sem animação de entrada (nem fade, nem deslocamento). Fica só o
+   hover curto de 2px, que é disparado pelo próprio usuário.
+------------------------------------------------------------ */
+@media (prefers-reduced-motion: reduce) {
+  html body [data-mv-in],
+  html body [data-mv-nav-in],
+  html body [data-mv][data-mv-anim],
+  html body [data-mv-side][class*="--active"]:not([data-mv-nav-in]) {
+    animation: none;
+  }
+  html body [data-mv]:hover,
+  html body [data-mv]:active,
+  html body [data-mv-side] svg,
+  html body [data-mv-side] .inicio__channel-dot {
+    scale: none;
+  }
+}
+
+/* ------------------------------------------------------------
+   11. Chat: busca da lista com foco e mensagens novas
+   A busca usa o mesmo anel verde dos demais campos. O campo de envio
+   (anexar / A / emoji / enviar) já é o de Equipes, que a camada trata
+   igual. Mensagens que chegam (envio ou polling) entram subindo, como
+   os cards; a conversa já carregada não reanima.
+------------------------------------------------------------ */
+html body .chat__busca {
+  transition: border-color var(--mv-t2) var(--mv-ease-suave), box-shadow var(--mv-t2) var(--mv-ease-suave);
+}
+html body .chat__busca:hover:not(:focus-within) {
+  border-color: #b9c4bd;
+}
+html body .chat__busca:focus-within {
+  border-color: var(--mv-verde);
+  box-shadow: var(--mv-anel);
+}
+@media (prefers-reduced-motion: no-preference) {
+  html body .chat__msg[data-mv-nova] {
+    animation: mv-rise 0.3s var(--mv-ease) backwards;
+  }
+}

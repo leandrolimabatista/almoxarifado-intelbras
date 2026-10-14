@@ -1117,9 +1117,58 @@
   // ------------------------------------------------------------
   // Diálogos
   // ------------------------------------------------------------
+  // O <dialog> modal fica na camada superior do navegador, acima de qualquer
+  // z-index. O menu do seletor padrão é criado no <body> e abriria por baixo
+  // do popup (lista de equipes invisível). Enquanto o popup está aberto, o
+  // menu é levado para dentro dele; ao fechar, volta para o <body>.
+  function prenderMenuSeletor(d) {
+    // O seletor padrão abre o menu para cima quando falta espaço embaixo.
+    // Aqui o menu sempre abre PARA BAIXO, colado no campo; se faltar espaço,
+    // a lista rola dentro do próprio menu.
+    let menuObservado = null;
+    const obsMenu = new MutationObserver(() => abaixo());
+    function abaixo() {
+      const menu = menuObservado;
+      if (!menu || menu.hidden) return;
+      const botao = d.querySelector('.seletor__botao[aria-expanded="true"]');
+      if (!botao) return;
+      const r = botao.getBoundingClientRect();
+      const topo = Math.round(r.bottom + 6);
+      menu.style.boxSizing = 'border-box';
+      const altura = Math.max(120, window.innerHeight - topo - 8) + 'px';
+      if (menu.style.top !== topo + 'px') menu.style.top = topo + 'px';
+      if (menu.style.maxHeight !== altura) menu.style.maxHeight = altura;
+    }
+    const levar = () => {
+      const menu = document.querySelector('.seletor__menu');
+      if (menu && menu.parentNode !== d) d.appendChild(menu);
+      if (menu && menuObservado !== menu) {
+        menuObservado = menu;
+        obsMenu.observe(menu, { attributes: true, attributeFilter: ['style', 'hidden'] });
+      }
+      abaixo();
+    };
+    const obs = new MutationObserver(levar);
+    obs.observe(document.body, { childList: true });
+    levar();
+    d.addEventListener('close', function soltar() {
+      d.removeEventListener('close', soltar);
+      obs.disconnect();
+      obsMenu.disconnect();
+      const menu = d.querySelector('.seletor__menu');
+      if (menu) {
+        menu.style.maxHeight = '';
+        menu.style.boxSizing = '';
+        document.body.appendChild(menu);
+      }
+    });
+  }
+
   function abrirDialogo(d) {
-    if (typeof d.showModal === 'function') d.showModal();
-    else d.setAttribute('open', '');
+    if (typeof d.showModal === 'function') {
+      d.showModal();
+      prenderMenuSeletor(d);
+    } else d.setAttribute('open', '');
   }
 
   function fecharDialogo(d) {
@@ -1637,6 +1686,46 @@
     } else if (botao.classList.contains('documentos__mais-btn')) {
       alternarMenu(botao, () => menuLinha(doc));
     }
+  });
+
+  // Botão direito numa linha: as mesmas ações do menu "⋯", no menu padronizado do site
+  // (assets/js/menu-contexto.js). Shift + botão direito abre o menu do navegador.
+  refs.corpo.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    const tr = e.target.closest('tr[data-id]');
+    if (!M || !tr || e.shiftKey || M.temSelecao()) return;
+    const doc = estado.docs.find((d) => String(d.id) === tr.dataset.id);
+    if (!doc) return;
+    e.preventDefault();
+    fecharMenu(false); // fecha o menu "⋯" / filtros, se estiver aberto
+    const pos = M.posicao(e, tr);
+
+    let opcoes;
+    if (doc.excluido_em) {
+      opcoes = [
+        { rotulo: 'Restaurar', icone: 'restaurar', destaque: true, acao: () => restaurar(doc, false) },
+        { rotulo: 'Excluir definitivamente', icone: 'lixeira', perigo: true, acao: () => excluirDefinitivo(doc) },
+      ];
+    } else {
+      opcoes = [
+        { rotulo: 'Abrir', icone: 'abrir', destaque: true, acao: () => abrirVisualizador(doc) },
+        { rotulo: 'Baixar', icone: 'baixar', acao: () => baixar(doc) },
+        { rotulo: doc.favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos', icone: 'estrela',
+          acao: () => alternarFavorito(doc, tr.querySelector('.documentos__estrela')) },
+        { rotulo: 'Copiar nome', icone: 'copiar', acao: () => M.copiar(doc.nome, 'Nome copiado') },
+      ];
+      if (doc.meu) {
+        opcoes.push('sep');
+        opcoes.push({ rotulo: 'Renomear', icone: 'editar', acao: () => abrirRenomear(doc) });
+        opcoes.push({ rotulo: 'Mover para a lixeira', icone: 'lixeira', perigo: true, acao: () => moverParaLixeira(doc) });
+      }
+    }
+    M.mostrar({
+      x: pos.x, y: pos.y, alvo: null,
+      aria: 'Opções de ' + doc.nome,
+      cabeca: M.cabeca('arquivos', truncar(doc.nome, 32)),
+      opcoes: opcoes,
+    });
   });
 
   // ------------------------------------------------------------

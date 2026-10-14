@@ -3,9 +3,23 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Intelbras</title>
+  <link rel="icon" href="assets/img/favicon/favicon.ico?v=2" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32.png?v=2">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon/favicon-192.png?v=2">
+  <link rel="apple-touch-icon" href="assets/img/favicon/apple-touch-icon.png?v=2">
+  <title>Início — Intelbras</title>
+  <meta name="color-scheme" content="light dark">
+  <!-- Tema (Claro/Escuro/Automático): tem que vir antes dos CSS -->
+  <script src="assets/js/tema.js?v=1"></script>
+  <script src="assets/js/dialogo.js?v=1"></script>
+  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=2">
+  <!-- Anti-flash da camada de movimento: esconde o <main> até o movimento.js
+       classificar a página (1ª varredura). Se algo falhar, libera em 1,5s. -->
+  <script>document.documentElement.classList.add('mv-boot');setTimeout(function(){document.documentElement.classList.remove('mv-boot')},1500);</script>
   <link rel="stylesheet" href="assets/css/popout-bloqueio.css">
+  <link rel="stylesheet" href="assets/css/dialogo.css?v=1">
   <link rel="stylesheet" href="assets/css/seletor.css">
+  <link rel="stylesheet" href="assets/css/busca-pagina.css?v=3">
 </head>
 <body style="margin:0;">
 
@@ -37,8 +51,8 @@
         });
     }
 
-    carregarBloco('cabecalho/html/cabecalho.html', 'cabecalho-placeholder', 'cabecalho/js/cabecalho.js?v=1787771373');
-    carregarBloco('conteudo/nao-cadastrado/inicio/html/conteudo.html', 'conteudo-placeholder', 'conteudo/nao-cadastrado/inicio/js/conteudo.js?v=1788201758');
+    carregarBloco('cabecalho/html/cabecalho.html', 'cabecalho-placeholder', 'cabecalho/js/cabecalho.js?v=1791920000');
+    carregarBloco('conteudo/nao-cadastrado/inicio/html/inicio.html', 'conteudo-placeholder', 'conteudo/nao-cadastrado/inicio/js/inicio.js?v=1788201758');
     carregarBloco('rodape/html/rodape.html', 'rodape-placeholder', null);
   </script>
 
@@ -46,6 +60,12 @@
        pois escuta cliques no document inteiro via delegação) -->
   <script src="assets/js/popout-bloqueio.js?v=1788205181"></script>
   <script src="assets/js/seletor.js?v=2"></script>
+  <!-- Busca na página (Ctrl+F) no padrão do site -->
+  <script src="assets/js/busca-pagina.js?v=2"></script>
+
+  <!-- Camada global de animação + padronização visual -->
+  <link rel="stylesheet" href="assets/css/movimento.css?v=10">
+  <script src="assets/js/movimento.js?v=9"></script>
 
 </body>
 </html>

@@ -18,15 +18,30 @@ try {
     $eu  = ch_usuario($pdo, $uid);
     ch_batida($pdo, $uid, 'online');
 
-    $minha = (string)($eu['equipe_slug'] ?? '');
-    $pedida = isset($_GET['equipe']) ? trim((string)$_GET['equipe']) : $minha;
-    if ($pedida !== $minha) {
+    $admin = ch_e_super_admin($uid);
+    $propria = (string)($eu['equipe_slug'] ?? '');
+    $pedida = isset($_GET['equipe']) ? trim((string)$_GET['equipe']) : $propria;
+    if ($admin && $pedida === '') {
+        $pedida = 'geral';
+    }
+    // Usuário comum: só a própria equipe. Administrador (id 1): qualquer equipe.
+    if ($pedida !== $propria && !($admin && isset(CH_EQUIPES[$pedida]))) {
         ch_erro(403, CH_MSG_REGRA_MESMA_EQUIPE);
     }
+    $minha = $pedida; // equipe que está sendo exibida
 
     $equipes = [];
     foreach (CH_EQUIPES as $slug => $nome) {
-        $equipes[] = ['slug' => $slug, 'nome' => $nome, 'minha' => $slug === $minha];
+        // Usuário comum só enxerga a própria equipe no seletor; o admin (id 1) vê todas.
+        if (!$admin && $slug !== $propria) {
+            continue;
+        }
+        $equipes[] = [
+            'slug'     => $slug,
+            'nome'     => $nome,
+            'minha'    => $slug === $minha,
+            'liberada' => $admin || $slug === $propria,
+        ];
     }
 
     $contatos = [];
@@ -34,6 +49,8 @@ try {
     $online = 0;
     if ($minha !== '') {
         $membros = ch_membros_da_equipe($pdo, $minha);
+        // Administrador Intelbras (id 1) não aparece para ninguém na lista de contatos.
+        $membros = array_values(array_filter($membros, static fn(array $m): bool => (int)$m['id'] !== 1));
         $status  = ch_status_de($pdo, array_column($membros, 'id'));
         foreach ($membros as $m) {
             $id = (int)$m['id'];
@@ -68,8 +85,9 @@ try {
             'inicial'            => ch_inicial((string)$eu['nome']),
             'cargo'              => (string)$eu['cargo'],
             'cargo_nome'         => CH_CARGOS[$eu['cargo']] ?? '',
-            'equipe_slug'        => $minha,
-            'equipe_nome'        => ch_equipe_nome($minha),
+            'equipe_slug'        => $propria,
+            'equipe_nome'        => ch_equipe_nome($propria),
+            'super_admin'        => $admin,
             'pode_chamar_equipe' => ch_pode_chamar_equipe($eu),
             'nao_perturbe'       => (int)$st->fetchColumn() === 1,
         ],

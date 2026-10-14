@@ -1,7 +1,7 @@
 // ============================================================
 // CABEÇALHO — Intelbras
 // O botão "Todas categorias" abre/fecha o menu lateral
-// (marcação em conteudo/conteudo.html), alternando a classe
+// (marcação em conteudo/nao-cadastrado/inicio/html/inicio.html), alternando a classe
 // "sidebar-open" no <body>. O próprio CSS do conteúdo reage
 // a essa classe — funciona mesmo o cabeçalho e o conteúdo
 // sendo componentes carregados separadamente.
@@ -14,7 +14,10 @@
       // Lembra a preferência entre navegações (cada troca de aba é um
       // reload de página PHP) para o menu continuar aberto/fechado do
       // jeito que o usuário deixou.
-      localStorage.setItem('sidebarOpen', aberto ? '1' : '0');
+      // Em tela estreita (gaveta) o estado não é lembrado: só vale na página atual.
+      if (!window.matchMedia('(max-width: 860px)').matches) {
+        localStorage.setItem('sidebarOpen', aberto ? '1' : '0');
+      }
     });
   }
 
@@ -64,7 +67,13 @@
   const cadastroStepForm = document.getElementById('cadastroStepForm');
   const loginForm = document.getElementById('loginStepForm');
   const cadastroForm = document.getElementById('cadastroStepForm');
+  const esqueciStepForm = document.getElementById('esqueciStepForm');
+  const redefinirStepForm = document.getElementById('redefinirStepForm');
+  const linkEsqueciSenha = document.getElementById('linkEsqueciSenha');
+  const btnVoltarEsqueci = document.getElementById('btnVoltarEsqueci');
 
+  const TITULO_ESQUECI = 'Recuperar senha:';
+  const TITULO_REDEFINIR = 'Crie uma nova senha:';
   const TITULO_ACESSO = 'Acesse sua conta:';
   const TITULO_CADASTRO = 'Faça seu cadastro:';
 
@@ -100,6 +109,8 @@
     if (loginStepChoice) loginStepChoice.hidden = true;
     if (loginStepForm) loginStepForm.hidden = true;
     if (cadastroStepForm) cadastroStepForm.hidden = true;
+    if (esqueciStepForm) esqueciStepForm.hidden = true;
+    if (redefinirStepForm) redefinirStepForm.hidden = true;
   }
 
   function mostrarEtapaForm() {
@@ -112,6 +123,28 @@
     esconderTodasEtapas();
     if (loginStepChoice) loginStepChoice.hidden = false;
     if (loginModalTitle) loginModalTitle.textContent = TITULO_ACESSO;
+  }
+
+  function mostrarEtapaEsqueci() {
+    esconderTodasEtapas();
+    if (esqueciStepForm) esqueciStepForm.hidden = false;
+    if (loginModalTitle) loginModalTitle.textContent = TITULO_ESQUECI;
+    const erro = document.getElementById('erroEsqueci');
+    const ok = document.getElementById('okEsqueci');
+    if (erro) erro.textContent = '';
+    if (ok) ok.textContent = '';
+    const campo = document.getElementById('esqueciEmail');
+    if (campo) {
+      // Aproveita o email já digitado no login, se houver
+      if (!campo.value && loginEmail && loginEmail.value.trim()) campo.value = loginEmail.value.trim();
+      campo.classList.remove('is-invalid');
+    }
+  }
+
+  function mostrarEtapaRedefinir() {
+    esconderTodasEtapas();
+    if (redefinirStepForm) redefinirStepForm.hidden = false;
+    if (loginModalTitle) loginModalTitle.textContent = TITULO_REDEFINIR;
   }
 
   function mostrarEtapaCadastro() {
@@ -308,9 +341,28 @@
     btnVoltarCadastro.addEventListener('click', mostrarEtapaChoice);
   }
 
+  // Guarda onde o clique começou: se a pessoa pressionou o mouse DENTRO
+  // do popout (ex.: selecionando texto num campo) e soltou fora, o
+  // navegador dispara o "click" no elemento pai comum — isso não é um
+  // clique fora e não pode fechar o popout.
+  let cliqueComecouNoLogin = false;
+  document.addEventListener('pointerdown', (e) => {
+    cliqueComecouNoLogin = !!(loginModal && loginModal.contains(e.target));
+  }, true);
+
   // Fecha ao clicar fora do dropdown (em qualquer lugar da página)
   document.addEventListener('click', (e) => {
     if (!isLoginModalOpen()) return;
+    // O menu do select de Gênero (assets/js/seletor.js) é anexado ao
+    // <body>, fora do popout, e ao escolher uma opção ele limpa o próprio
+    // conteúdo ANTES deste listener rodar — o item clicado já saiu do DOM
+    // e .closest() não o acha mais. Por isso olhamos o caminho do evento
+    // (calculado na hora do clique) e ignoramos alvos que já foram
+    // removidos da página: nenhum dos dois é "clicar fora".
+    const caminho = typeof e.composedPath === 'function' ? e.composedPath() : [];
+    if (caminho.some((n) => n && n.classList && n.classList.contains('seletor__menu'))) return;
+    if (!document.documentElement.contains(e.target)) return;
+    if (cliqueComecouNoLogin) { cliqueComecouNoLogin = false; return; }
     if (headerUser && !headerUser.contains(e.target)) {
       fecharLoginModal();
     }
@@ -423,6 +475,164 @@
       if (!isOutro && cadastroGeneroOutro) cadastroGeneroOutro.value = '';
     });
   }
+
+  // ------------------------------------------------------------
+  // "Esqueci minha senha": pede o email -> api/esqueci_senha.php envia
+  // o link pela Brevo -> o link abre index.php?redefinir_senha=TOKEN e
+  // o popout mostra a etapa "nova senha" -> api/redefinir_senha.php.
+  // ------------------------------------------------------------
+  if (linkEsqueciSenha) {
+    linkEsqueciSenha.addEventListener('click', (e) => {
+      e.preventDefault();
+      mostrarEtapaEsqueci();
+    });
+  }
+
+  if (btnVoltarEsqueci) {
+    btnVoltarEsqueci.addEventListener('click', mostrarEtapaForm);
+  }
+
+  if (esqueciStepForm) {
+    esqueciStepForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const campo = document.getElementById('esqueciEmail');
+      const erro = document.getElementById('erroEsqueci');
+      const ok = document.getElementById('okEsqueci');
+      const email = campo ? campo.value.trim() : '';
+      erro.textContent = '';
+      ok.textContent = '';
+      campo.classList.remove('is-invalid');
+
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        campo.classList.add('is-invalid');
+        erro.textContent = 'Informe um email válido.';
+        return;
+      }
+
+      const botao = esqueciStepForm.querySelector('.login-modal__submit');
+      const textoOriginal = botao.textContent;
+      botao.disabled = true;
+      botao.textContent = 'Enviando...';
+
+      fetch('api/esqueci_senha.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      })
+        .then((r) => r.json().then((dados) => ({ status: r.status, dados })))
+        .then(({ status, dados }) => {
+          if (status === 200 && dados.sucesso) {
+            ok.textContent = dados.mensagem || 'Pronto! Confira seu email.';
+          } else {
+            campo.classList.add('is-invalid');
+            erro.textContent = dados.erro || 'Não foi possível enviar agora. Tente novamente.';
+          }
+        })
+        .catch(() => {
+          erro.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        })
+        .finally(() => {
+          botao.disabled = false;
+          botao.textContent = textoOriginal;
+        });
+    });
+  }
+
+  let tokenRedefinicao = '';
+
+  if (redefinirStepForm) {
+    redefinirStepForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const campoSenha = document.getElementById('redefinirSenha');
+      const campoRep = document.getElementById('redefinirRepetirSenha');
+      const erro = document.getElementById('erroRedefinir');
+      erro.textContent = '';
+      [campoSenha, campoRep].forEach((c) => c.classList.remove('is-invalid'));
+
+      const senha = campoSenha.value;
+      const rep = campoRep.value;
+      if (senha.length < 8 || !/[A-Za-z]/.test(senha) || !/\d/.test(senha)) {
+        campoSenha.classList.add('is-invalid');
+        erro.textContent = 'Use ao menos 8 caracteres, com letras e números.';
+        return;
+      }
+      if (senha !== rep) {
+        campoRep.classList.add('is-invalid');
+        erro.textContent = 'As senhas não coincidem.';
+        return;
+      }
+
+      const botao = redefinirStepForm.querySelector('.login-modal__submit');
+      const textoOriginal = botao.textContent;
+      botao.disabled = true;
+      botao.textContent = 'Salvando...';
+
+      fetch('api/redefinir_senha.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ token: tokenRedefinicao, senha, repetir_senha: rep }),
+      })
+        .then((r) => r.json().then((dados) => ({ status: r.status, dados })))
+        .then(({ status, dados }) => {
+          if (status === 200 && dados.sucesso) {
+            tokenRedefinicao = '';
+            campoSenha.value = '';
+            campoRep.value = '';
+            // Volta ao login com um aviso de sucesso
+            mostrarEtapaForm();
+            const erroLogin = document.getElementById('erroLogin');
+            if (erroLogin) erroLogin.textContent = '';
+            if (loginSenha) { loginSenha.value = ''; loginSenha.focus(); }
+            const aviso = document.getElementById('okLoginRedefinido');
+            if (aviso) aviso.textContent = 'Senha alterada! Entre com a nova senha.';
+            return;
+          }
+          erro.textContent = dados.erro || 'Não foi possível salvar a senha. Tente novamente.';
+          if (status === 410) {
+            // link expirado/usado: leva o usuário a pedir outro
+            setTimeout(mostrarEtapaEsqueci, 2500);
+          }
+        })
+        .catch(() => {
+          erro.textContent = 'Erro de conexão. Verifique sua internet e tente novamente.';
+        })
+        .finally(() => {
+          botao.disabled = false;
+          botao.textContent = textoOriginal;
+        });
+    });
+  }
+
+  // Link do email: index.php?redefinir_senha=TOKEN
+  (function abrirRedefinicaoPeloLink() {
+    if (!loginModal || !redefinirStepForm) return;
+    const params = new URLSearchParams(window.location.search);
+    const token = (params.get('redefinir_senha') || '').trim();
+    if (!token) return;
+
+    // Tira o token da barra de endereço (não fica no histórico nem vaza em Referer)
+    params.delete('redefinir_senha');
+    const resto = params.toString();
+    window.history.replaceState(null, '', window.location.pathname + (resto ? '?' + resto : '') + window.location.hash);
+
+    fetch('api/redefinir_senha.php?token=' + encodeURIComponent(token))
+      .then((r) => r.json())
+      .then((dados) => {
+        loginModal.classList.add('is-open');
+        loginModal.setAttribute('aria-hidden', 'false');
+        if (dados && dados.valido) {
+          tokenRedefinicao = token;
+          mostrarEtapaRedefinir();
+          const campo = document.getElementById('redefinirSenha');
+          if (campo) campo.focus();
+        } else {
+          mostrarEtapaEsqueci();
+          const erro = document.getElementById('erroEsqueci');
+          if (erro) erro.textContent = 'Este link expirou ou já foi usado. Peça um novo abaixo.';
+        }
+      })
+      .catch(() => { /* sem rede: o usuário pode pedir outro link normalmente */ });
+  })();
 
   // Envio do formulário de login
   if (loginForm) {
@@ -796,11 +1006,11 @@
               if (spanErro) spanErro.textContent = mensagem;
             });
           } else {
-            alert(dados.erro || 'Não foi possível concluir o cadastro. Tente novamente.');
+            window.IBDialogo.avisar({ titulo: 'Não foi possível cadastrar', texto: dados.erro || 'Não foi possível concluir o cadastro. Tente novamente.' });
           }
         })
         .catch(() => {
-          alert('Erro de conexão. Verifique sua internet e tente novamente.');
+          window.IBDialogo.avisar({ titulo: 'Erro de conexão', texto: 'Verifique sua internet e tente novamente.' });
         })
         .finally(() => {
           botaoCadastrar.disabled = false;
@@ -814,6 +1024,7 @@
   // do nome do usuário, mesmo padrão visual do login-modal.
   // ==========================================================
   const btnUsuarioMenu = document.getElementById('btnUsuarioMenu');
+  const btnUsuarioAvatar = document.getElementById('btnUsuarioAvatar');
   const userMenu = document.getElementById('userMenu');
 
   function fecharUserMenu() {
@@ -821,6 +1032,7 @@
     userMenu.classList.remove('is-open');
     userMenu.setAttribute('aria-hidden', 'true');
     if (btnUsuarioMenu) btnUsuarioMenu.setAttribute('aria-expanded', 'false');
+    if (btnUsuarioAvatar) btnUsuarioAvatar.setAttribute('aria-expanded', 'false');
   }
 
   function alternarUserMenu(event) {
@@ -830,10 +1042,14 @@
     userMenu.classList.toggle('is-open', abrindo);
     userMenu.setAttribute('aria-hidden', String(!abrindo));
     if (btnUsuarioMenu) btnUsuarioMenu.setAttribute('aria-expanded', String(abrindo));
+    if (btnUsuarioAvatar) btnUsuarioAvatar.setAttribute('aria-expanded', String(abrindo));
   }
 
   if (btnUsuarioMenu) {
     btnUsuarioMenu.addEventListener('click', alternarUserMenu);
+  }
+  if (btnUsuarioAvatar) {
+    btnUsuarioAvatar.addEventListener('click', alternarUserMenu);
   }
 
   // ==========================================================
@@ -849,11 +1065,617 @@
 
   document.addEventListener('click', (e) => {
     if (!userMenu || !userMenu.classList.contains('is-open')) return;
-    if (userMenu.contains(e.target) || (btnUsuarioMenu && btnUsuarioMenu.contains(e.target))) return;
+    if (userMenu.contains(e.target) || (btnUsuarioMenu && btnUsuarioMenu.contains(e.target)) || (btnUsuarioAvatar && btnUsuarioAvatar.contains(e.target))) return;
     fecharUserMenu();
   });
 
   document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') fecharUserMenu();
   });
+  // ==========================================================
+  // BUSCA DO CABEÇALHO
+  // Antes o formulário enviava para "/busca" (rota que não existe).
+  // Agora a busca funciona direto aqui, sem backend:
+  //  - sugestões em tempo real: pessoas, equipes, páginas e produtos
+  //  - pessoa  -> abre o chat pessoal com ela
+  //  - equipe  -> abre o canal da equipe
+  //  - setas ↑/↓ navegam, Enter abre, Esc fecha
+  //  - Enter sem item escolhido abre o 1º resultado
+  //  - visitante (não logado) abre o dropdown de login
+  // ==========================================================
+  const buscaForm = document.getElementById('headerSearch');
+  const buscaInput = buscaForm ? buscaForm.querySelector('.header__search-input') : null;
+
+  if (buscaForm && buscaInput) {
+    const logado = document.body.getAttribute('data-logado') === '1';
+
+    const PAGINAS_BUSCA = [
+      { titulo: 'Início', chaves: 'inicio home principal', href: 'index.php?pagina=inicio' },
+      { titulo: 'Serviços', chaves: 'servicos gmail drive meet agenda docs planilhas slides', href: 'index.php?pagina=servicos' },
+      { titulo: 'Inteligência Artificial', chaves: 'ia ai assistente chatbot', href: 'index.php?pagina=inteligencia-artificial' },
+      { titulo: 'Documentos', chaves: 'documentos arquivos pastas', href: 'index.php?pagina=documentos' },
+      { titulo: 'Unidade', chaves: 'unidade filial setor', href: 'index.php?pagina=unidade' },
+      { titulo: 'Chamadas', chaves: 'chamadas ligacao video voz agenda', href: 'index.php?pagina=chamadas' },
+      { titulo: 'Cursos', chaves: 'cursos treinamentos aulas', href: 'index.php?pagina=cursos' },
+      { titulo: 'Loja', chaves: 'loja produtos comprar carrinho', href: 'index.php?pagina=loja' },
+      { titulo: 'Chat', chaves: 'chat mensagens conversa', href: 'index.php?pagina=chat' },
+      { titulo: 'Agendar reunião', chaves: 'agendar reuniao meet calendario', href: 'index.php?pagina=agendar-reuniao' },
+      { titulo: 'Meu perfil', chaves: 'perfil configuracoes conta senha foto', href: 'index.php?pagina=configuracoes' },
+    ];
+
+    // Reserva caso a Loja não esteja carregada nesta página
+    // (quando está, usamos o catálogo real: window.LojaDados).
+    const PRODUTOS_RESERVA = [
+      ['VIP1230B', 'Câmera bullet VIP 1230 B'], ['VIP3230D', 'Câmera dome VIP 3230 D'],
+      ['MIBOCAM2', 'Câmera Wi-Fi Mibo Cam 2'], ['NVD1408', 'Gravador NVD 1408'],
+      ['ARF1200', 'Roteador Action RF 1200'], ['SG2404MR', 'Switch SG 2404 MR'],
+      ['ACCESSPT', 'Access Point AP 1350'], ['PATCHCB5', 'Patch cord Cat5e (2m)'],
+      ['AMT8000', 'Central de alarme AMT 8000'], ['IVPDUAL', 'Sensor infravermelho IVP Dual'],
+      ['XAT4010', 'Sirene XAT 4010'], ['TIP200LT', 'Telefone IP TIP 200 Lite'],
+      ['TS4010', 'Central telefônica TS 4010'], ['HEADSETPRO', 'Headset corporativo HS Pro'],
+      ['NOBRK1200', 'Nobreak 1200 VA'], ['FILTLINHA', 'Filtro de linha 8 tomadas'],
+    ].map(([id, name]) => ({ id, name }));
+
+    function produtosBusca() {
+      const dados = window.LojaDados && Array.isArray(window.LojaDados.PRODUCTS)
+        ? window.LojaDados.PRODUCTS
+        : PRODUTOS_RESERVA;
+      return dados.map((p) => ({ id: String(p.id), name: String(p.name) }));
+    }
+
+    function normalizar(txt) {
+      return String(txt || '')
+        .toLowerCase()
+        .normalize('NFD')
+        .replace(/[\u0300-\u036f]/g, '')
+        .trim();
+    }
+
+    function hrefLoja(termo) {
+      return 'index.php?pagina=loja&busca=' + encodeURIComponent(termo);
+    }
+
+    // Lista de resultados (criada uma vez, dentro do próprio form)
+    const lista = document.createElement('ul');
+    lista.className = 'header__search-results';
+    lista.id = 'headerSearchResults';
+    lista.setAttribute('role', 'listbox');
+    lista.hidden = true;
+    buscaForm.appendChild(lista);
+
+    buscaInput.setAttribute('autocomplete', 'off');
+    buscaInput.setAttribute('aria-controls', 'headerSearchResults');
+    buscaInput.setAttribute('aria-expanded', 'false');
+
+    let resultados = [];
+    let ativo = -1;
+
+    function fecharResultados() {
+      lista.hidden = true;
+      lista.innerHTML = '';
+      resultados = [];
+      ativo = -1;
+      buscaInput.setAttribute('aria-expanded', 'false');
+    }
+
+    function marcarAtivo(indice) {
+      const itens = lista.querySelectorAll('.header__search-item');
+      itens.forEach((el, i) => el.classList.toggle('is-active', i === indice));
+      ativo = indice;
+      if (itens[indice]) itens[indice].scrollIntoView({ block: 'nearest' });
+    }
+
+    // Pessoas e equipes vêm do mesmo endpoint da tela "Nova conversa"
+    // (api/conversas/contatos.php). Carregado uma vez, na 1ª interação.
+    let pessoas = [];
+    let equipes = [];
+    let contatosCarregando = false;
+    let contatosCarregados = false;
+
+    function carregarContatos() {
+      if (!logado || contatosCarregando || contatosCarregados) return;
+      contatosCarregando = true;
+      fetch('api/conversas/contatos.php', { headers: { Accept: 'application/json' } })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((dados) => {
+          if (!dados || !dados.sucesso) return;
+          pessoas = Array.isArray(dados.contatos) ? dados.contatos : [];
+          equipes = Array.isArray(dados.equipes) ? dados.equipes : [];
+          contatosCarregados = true;
+          // se a pessoa já digitou algo enquanto carregava, atualiza a lista
+          if (buscaInput.value.trim() && document.activeElement === buscaInput) {
+            desenhar(buscaInput.value);
+          }
+        })
+        .catch(() => {})
+        .finally(() => { contatosCarregando = false; });
+    }
+
+    const TITULOS_GRUPO = ['Equipes', 'Pessoas', 'Páginas', 'Produtos'];
+
+    // Quanto menor, mais relevante: começa com o termo < palavra começa < contém
+    function pontuar(titulo, termo) {
+      const t = normalizar(titulo);
+      if (t.startsWith(termo)) return 0;
+      if (t.split(/\s+/).some((w) => w.startsWith(termo))) return 1;
+      return 2;
+    }
+
+    function buscar(termoBruto) {
+      const termo = normalizar(termoBruto);
+      if (!termo) return [];
+      const partes = termo.split(/\s+/);
+      const bate = (alvo) => partes.every((p) => alvo.includes(p));
+
+      const itens = [];
+
+      equipes.forEach((eq) => {
+        if (!bate(normalizar(eq.nome))) return;
+        itens.push({
+          tipo: '', grupo: 0, titulo: String(eq.nome),
+          href: 'index.php?pagina=equipes&equipe=' + encodeURIComponent(eq.slug),
+        });
+      });
+
+      pessoas.forEach((pe) => {
+        if (!bate(normalizar(pe.nome))) return;
+        itens.push({
+          tipo: pe.cargo_nome ? String(pe.cargo_nome) : '', grupo: 1, titulo: String(pe.nome),
+          href: 'index.php?pagina=chat&usuario=' + encodeURIComponent(pe.id),
+        });
+      });
+
+      PAGINAS_BUSCA.forEach((pg) => {
+        if (!bate(normalizar(pg.titulo + ' ' + pg.chaves))) return;
+        itens.push({ tipo: '', grupo: 2, titulo: pg.titulo, href: pg.href });
+      });
+
+      produtosBusca().forEach((pr) => {
+        if (!bate(normalizar(pr.name + ' ' + pr.id))) return;
+        itens.push({ tipo: '', grupo: 3, titulo: pr.name, href: hrefLoja(pr.name) });
+      });
+
+      itens.forEach((it) => { it.pontos = pontuar(it.titulo, termo); });
+      // Agrupado por seção (equipes, pessoas, páginas, produtos); dentro de
+      // cada uma, o mais relevante primeiro. No máximo 4 por seção.
+      itens.sort((a, b) => (a.grupo - b.grupo) || (a.pontos - b.pontos) || a.titulo.localeCompare(b.titulo, 'pt-BR'));
+
+      const contagem = {};
+      return itens.filter((it) => {
+        contagem[it.grupo] = (contagem[it.grupo] || 0) + 1;
+        return contagem[it.grupo] <= 4;
+      });
+    }
+
+    function desenhar(termoBruto) {
+      resultados = buscar(termoBruto);
+      ativo = -1;
+      lista.innerHTML = '';
+
+      if (!termoBruto.trim()) {
+        fecharResultados();
+        return;
+      }
+
+      if (resultados.length === 0) {
+        const vazio = document.createElement('li');
+        vazio.className = 'header__search-empty';
+        vazio.textContent = 'Nenhum resultado encontrado.';
+        lista.appendChild(vazio);
+      } else {
+        let grupoAtual = -1;
+        resultados.forEach((r, i) => {
+          if (r.grupo !== grupoAtual) {
+            grupoAtual = r.grupo;
+            const cab = document.createElement('li');
+            cab.className = 'header__search-group';
+            cab.setAttribute('role', 'presentation');
+            cab.textContent = TITULOS_GRUPO[r.grupo];
+            lista.appendChild(cab);
+          }
+          const li = document.createElement('li');
+          li.className = 'header__search-item';
+          li.setAttribute('role', 'option');
+          const nome = document.createElement('span');
+          nome.className = 'header__search-item-title';
+          nome.textContent = r.titulo;
+          const tipo = document.createElement('span');
+          tipo.className = 'header__search-item-type';
+          tipo.textContent = r.tipo;
+          li.appendChild(nome);
+          if (r.tipo) li.appendChild(tipo);
+          // mousedown (e não click) para disparar antes de qualquer blur
+          li.addEventListener('mousedown', (e) => {
+            e.preventDefault();
+            irPara(r.href);
+          });
+          li.addEventListener('mouseenter', () => marcarAtivo(i));
+          lista.appendChild(li);
+        });
+      }
+
+      lista.hidden = false;
+      buscaInput.setAttribute('aria-expanded', 'true');
+    }
+
+    function irPara(href) {
+      fecharResultados();
+      window.location.href = href;
+    }
+
+    buscaInput.addEventListener('input', () => {
+      if (!logado) {
+        fecharResultados();
+        return;
+      }
+      carregarContatos();
+      desenhar(buscaInput.value);
+    });
+
+    buscaInput.addEventListener('focus', () => {
+      carregarContatos();
+      if (logado && buscaInput.value.trim()) desenhar(buscaInput.value);
+    });
+
+    buscaInput.addEventListener('keydown', (e) => {
+      if (lista.hidden || resultados.length === 0) return;
+      if (e.key === 'ArrowDown') {
+        e.preventDefault();
+        marcarAtivo((ativo + 1) % resultados.length);
+      } else if (e.key === 'ArrowUp') {
+        e.preventDefault();
+        marcarAtivo(ativo <= 0 ? resultados.length - 1 : ativo - 1);
+      } else if (e.key === 'Escape') {
+        fecharResultados();
+      }
+    });
+
+    // Enter / clique na lupa
+    buscaForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const termo = buscaInput.value.trim();
+      if (!termo) {
+        buscaInput.focus();
+        return;
+      }
+
+      // Visitante: as páginas e a Loja só existem para quem está logado
+      if (!logado) {
+        if (typeof window.intelbrasAbrirLogin === 'function') window.intelbrasAbrirLogin();
+        return;
+      }
+
+      const escolhido = ativo >= 0 ? resultados[ativo] : resultados[0];
+      if (escolhido) irPara(escolhido.href);
+    });
+
+    // Clique fora fecha as sugestões
+    document.addEventListener('click', (e) => {
+      if (!buscaForm.contains(e.target)) fecharResultados();
+    });
+
+    // Chegou no Chat vindo da busca (?pagina=chat&usuario=<id>): abre (ou
+    // cria) a conversa pessoal com essa pessoa e recarrega já na conversa
+    // (?id=<conversa>), que é o que o próprio Chat sabe abrir. O token
+    // CSRF vem do próprio Chat (#chatRaiz), então só roda nessa página.
+    window.addEventListener('load', () => {
+      const usuarioId = Number(new URLSearchParams(window.location.search).get('usuario') || 0);
+      const raizChat = document.getElementById('chatRaiz');
+      if (!usuarioId || !raizChat) return;
+
+      fetch('api/chat/iniciar.php', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'X-CSRF-Token': raizChat.getAttribute('data-csrf') || '',
+        },
+        body: JSON.stringify({ usuario_id: usuarioId }),
+      })
+        .then((r) => r.json())
+        .then((dados) => {
+          if (dados && dados.sucesso && dados.conversa_id) {
+            window.location.replace('index.php?pagina=chat&id=' + encodeURIComponent(dados.conversa_id));
+          }
+        })
+        .catch(() => {});
+    });
+
+    // Chegou na Loja vindo da busca (?busca=...): preenche o campo da
+    // própria Loja e dispara o filtro dela. Usa "load" para garantir
+    // que o js da Loja (carregado depois do cabeçalho) já está pronto.
+    window.addEventListener('load', () => {
+      const termo = new URLSearchParams(window.location.search).get('busca');
+      const campoLoja = document.getElementById('lojaBusca');
+      if (termo && campoLoja) {
+        campoLoja.value = termo;
+        campoLoja.dispatchEvent(new Event('input', { bubbles: true }));
+      }
+    });
+  }
+  // ==========================================================
+  // SILENCIADOS — equipes silenciadas no menu lateral
+  // Equipe silenciada: sem badge de não lidas e com ícone de "sino
+  // cortado" ao lado do nome. A lista fica no navegador
+  // (localStorage 'equipesSilenciadas'), gravada pelo "Silenciar canal"
+  // da página Equipes. Vale para o menu lateral de qualquer página.
+  // ==========================================================
+  function lerListaSilenciada(chave) {
+    try {
+      const v = JSON.parse(localStorage.getItem(chave) || '[]');
+      return Array.isArray(v) ? v.map(String) : [];
+    } catch (e) { return []; }
+  }
+
+  const ICONE_SINO_CORTADO = '<svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M8.7 3A6 6 0 0 1 18 8a21.3 21.3 0 0 0 .6 5" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M17 17H3s3-2 3-9a4.67 4.67 0 0 1 .3-1.7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="M10.3 21a1.94 1.94 0 0 0 3.4 0" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/><path d="m2 2 20 20" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>';
+
+  function marcarEquipesSilenciadas() {
+    const mudas = lerListaSilenciada('equipesSilenciadas');
+    document.querySelectorAll('.inicio__channel-item[data-equipe-slug]').forEach((item) => {
+      const slug = item.getAttribute('data-equipe-slug');
+      const mudo = mudas.indexOf(slug) !== -1;
+      item.classList.toggle('inicio__channel-item--silenciada', mudo);
+      let icone = item.querySelector('.inicio__channel-mudo');
+      if (mudo && !icone) {
+        icone = document.createElement('span');
+        icone.className = 'inicio__channel-mudo';
+        icone.title = 'Notificações silenciadas';
+        icone.setAttribute('aria-label', 'Silenciada');
+        icone.innerHTML = ICONE_SINO_CORTADO;
+        item.appendChild(icone);
+      } else if (!mudo && icone) {
+        icone.remove();
+      }
+    });
+  }
+
+  document.addEventListener('DOMContentLoaded', marcarEquipesSilenciadas);
+  window.addEventListener('storage', marcarEquipesSilenciadas);
+  window.addEventListener('intelbras:silenciadas', marcarEquipesSilenciadas);
+
+  // ==========================================================
+  // NOTIFICAÇÕES (sino) — popout com o que chegou e não foi lido
+  //  - mensagens e arquivos das conversas pessoais (api/chat/conversas.php)
+  //  - mensagens novas nas equipes (api/equipes/contagens.php)
+  // O número no sino é o total de não lidas; some quando zera.
+  // Atualiza sozinho a cada 20 s e sempre que o popout é aberto.
+  // Clicar em um item leva direto para a conversa / canal.
+  // ==========================================================
+  const sinoBtn = document.getElementById('btnNotificacoes');
+  const sinoBadge = document.getElementById('notificacoesBadge');
+
+  if (sinoBtn) {
+    const INTERVALO_NOTIF_MS = 20000;
+    let notifItens = [];
+    let notifTotal = 0;
+    let notifErro = false;
+    let notifCarregou = false;
+    let equipesInfo = null; // { slug: { nome, cor } }, buscado só se precisar
+
+    const popoutNotif = document.createElement('div');
+    popoutNotif.className = 'notif-popout';
+    popoutNotif.id = 'notifPopout';
+    popoutNotif.setAttribute('role', 'dialog');
+    popoutNotif.setAttribute('aria-label', 'Notificações');
+    popoutNotif.hidden = true;
+    popoutNotif.innerHTML =
+      '<div class="notif-popout__topo"><span class="notif-popout__titulo">Notificações</span></div>' +
+      '<div class="notif-popout__lista" id="notifLista"></div>';
+    (document.querySelector('.header') || document.body).appendChild(popoutNotif);
+    const listaNotif = popoutNotif.querySelector('#notifLista');
+
+    sinoBtn.setAttribute('aria-controls', 'notifPopout');
+
+    function textoBadge(n) {
+      return n > 99 ? '99+' : String(n);
+    }
+
+    function tempoRelativo(iso) {
+      const t = Date.parse(iso || '');
+      if (!t) return '';
+      const min = Math.max(0, Math.round((Date.now() - t) / 60000));
+      if (min < 1) return 'agora';
+      if (min < 60) return min + ' min';
+      const h = Math.round(min / 60);
+      if (h < 24) return h + ' h';
+      const d = Math.round(h / 24);
+      return d === 1 ? 'ontem' : d + ' d';
+    }
+
+    function atualizarBadgeSino() {
+      if (!sinoBadge) return;
+      if (notifTotal > 0) {
+        sinoBadge.textContent = textoBadge(notifTotal);
+        sinoBadge.hidden = false;
+      } else {
+        sinoBadge.hidden = true;
+      }
+    }
+
+    function criarItemNotif(it) {
+      const a = document.createElement('a');
+      a.className = 'notif-item';
+      a.href = it.href;
+
+      const av = document.createElement('span');
+      av.className = 'notif-item__avatar' + (it.cor ? ' notif-item__avatar--cor' : '');
+      if (it.cor) av.style.background = it.cor;
+      av.textContent = it.avatar;
+
+      const corpo = document.createElement('span');
+      corpo.className = 'notif-item__corpo';
+      const titulo = document.createElement('span');
+      titulo.className = 'notif-item__titulo';
+      titulo.textContent = it.titulo;
+      const texto = document.createElement('span');
+      texto.className = 'notif-item__texto';
+      texto.textContent = it.texto;
+      corpo.appendChild(titulo);
+      corpo.appendChild(texto);
+
+      const meta = document.createElement('span');
+      meta.className = 'notif-item__meta';
+      const quando = document.createElement('span');
+      quando.className = 'notif-item__tempo';
+      quando.textContent = it.tempo ? it.tipo + ' · ' + it.tempo : it.tipo;
+      const qtd = document.createElement('span');
+      qtd.className = 'notif-item__qtd';
+      qtd.textContent = textoBadge(it.qtd);
+      meta.appendChild(quando);
+      meta.appendChild(qtd);
+
+      a.appendChild(av);
+      a.appendChild(corpo);
+      a.appendChild(meta);
+      return a;
+    }
+
+    function desenharNotif() {
+      listaNotif.innerHTML = '';
+      if (notifErro && notifItens.length === 0) {
+        listaNotif.innerHTML = '<p class="notif-popout__vazio">Não foi possível carregar as notificações.</p>';
+        return;
+      }
+      if (!notifCarregou) {
+        listaNotif.innerHTML = '<p class="notif-popout__vazio">Carregando...</p>';
+        return;
+      }
+      if (notifItens.length === 0) {
+        listaNotif.innerHTML = '<p class="notif-popout__vazio">Você não tem notificações novas.</p>';
+        return;
+      }
+      notifItens.forEach((it) => listaNotif.appendChild(criarItemNotif(it)));
+    }
+
+    function buscarJson(url) {
+      return fetch(url, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+        .then((r) => (r.ok ? r.json() : null))
+        .then((d) => (d && d.sucesso ? d : null))
+        .catch(() => null);
+    }
+
+    async function carregarNotificacoes() {
+      if (document.hidden && notifCarregou) return;
+
+      const [chat, eq] = await Promise.all([
+        buscarJson('api/chat/conversas.php'),
+        buscarJson('api/equipes/contagens.php'),
+      ]);
+
+      notifErro = !chat && !eq;
+      if (notifErro && notifCarregou) return; // mantém o que já estava na tela
+
+      const itens = [];
+
+      if (chat && Array.isArray(chat.conversas)) {
+        let silenciadas = [];
+        try {
+          const v = JSON.parse(localStorage.getItem('chatConversasSilenciadas') || '[]');
+          if (Array.isArray(v)) silenciadas = v.map(Number);
+        } catch (e) { /* sem storage */ }
+
+        chat.conversas
+          .filter((c) => Number(c.nao_lidas) > 0 && silenciadas.indexOf(Number(c.id)) === -1)
+          .forEach((c) => {
+            const previa = c.ultima_mensagem ? String(c.ultima_mensagem) : 'Nova mensagem';
+            const ehArquivo = previa.indexOf('📎') === 0;
+            itens.push({
+              avatar: c.usuario.iniciais || '?',
+              titulo: c.usuario.nome,
+              texto: previa,
+              tipo: ehArquivo ? 'Arquivo' : 'Mensagem',
+              tempo: tempoRelativo(c.ultima_em),
+              qtd: Number(c.nao_lidas),
+              href: 'index.php?pagina=chat&id=' + encodeURIComponent(c.id),
+            });
+          });
+      }
+
+      if (eq && eq.contagens) {
+        const equipesMudas = lerListaSilenciada('equipesSilenciadas');
+        const comNovas = Object.keys(eq.contagens).filter(
+          (slug) => Number(eq.contagens[slug]) > 0 && equipesMudas.indexOf(slug) === -1
+        );
+        if (comNovas.length && !equipesInfo) {
+          const info = await buscarJson('api/conversas/contatos.php');
+          if (info && Array.isArray(info.equipes)) {
+            equipesInfo = {};
+            info.equipes.forEach((e) => { equipesInfo[e.slug] = { nome: e.nome, cor: e.cor }; });
+          }
+        }
+        comNovas.forEach((slug) => {
+          const n = Number(eq.contagens[slug]);
+          const e = (equipesInfo && equipesInfo[slug]) || { nome: slug, cor: '' };
+          itens.push({
+            avatar: '#',
+            cor: e.cor || '#00A859',
+            titulo: e.nome,
+            texto: n === 1 ? '1 mensagem nova na equipe' : n + ' mensagens novas na equipe',
+            tipo: 'Equipe',
+            tempo: '',
+            qtd: n,
+            href: 'index.php?pagina=equipes&equipe=' + encodeURIComponent(slug),
+          });
+        });
+      }
+
+      notifItens = itens;
+      notifTotal = itens.reduce((soma, it) => soma + it.qtd, 0);
+      notifCarregou = true;
+      atualizarBadgeSino();
+      desenharNotif();
+    }
+
+    function posicionarNotif() {
+      const r = sinoBtn.getBoundingClientRect();
+      const largura = Math.min(380, window.innerWidth - 24);
+      let esquerda = r.right - largura + 20;
+      esquerda = Math.max(12, Math.min(esquerda, window.innerWidth - largura - 12));
+      popoutNotif.style.width = largura + 'px';
+      popoutNotif.style.left = esquerda + 'px';
+      popoutNotif.style.top = (r.bottom + 10) + 'px';
+    }
+
+    function notifAberto() {
+      return !popoutNotif.hidden;
+    }
+
+    function fecharNotif() {
+      popoutNotif.hidden = true;
+      sinoBtn.setAttribute('aria-expanded', 'false');
+    }
+
+    function abrirNotif() {
+      desenharNotif();
+      posicionarNotif();
+      popoutNotif.hidden = false;
+      sinoBtn.setAttribute('aria-expanded', 'true');
+      carregarNotificacoes(); // atualiza ao abrir
+    }
+
+    sinoBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      if (notifAberto()) fecharNotif();
+      else abrirNotif();
+    });
+
+    popoutNotif.addEventListener('click', (e) => e.stopPropagation());
+
+    document.addEventListener('click', () => {
+      if (notifAberto()) fecharNotif();
+    });
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && notifAberto()) {
+        fecharNotif();
+        sinoBtn.focus();
+      }
+    });
+
+    window.addEventListener('resize', () => {
+      if (notifAberto()) posicionarNotif();
+    });
+
+    carregarNotificacoes();
+    setInterval(carregarNotificacoes, INTERVALO_NOTIF_MS);
+  }
 })();

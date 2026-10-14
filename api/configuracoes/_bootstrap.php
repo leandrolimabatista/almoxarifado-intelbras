@@ -18,15 +18,6 @@ if (basename((string)($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__)
 
 require_once __DIR__ . '/../conexao.php';
 
-const CFG_IDIOMAS = ['pt-BR' => 'Português (Brasil)', 'en-US' => 'English (US)', 'es-ES' => 'Español'];
-
-const CFG_FUSOS = [
-    'America/Noronha'   => '(GMT-02:00) Fernando de Noronha',
-    'America/Sao_Paulo' => '(GMT-03:00) Brasília',
-    'America/Manaus'    => '(GMT-04:00) Manaus',
-    'America/Rio_Branco' => '(GMT-05:00) Rio Branco',
-];
-
 const CFG_CARGOS = [
     'estagiario' => 'Estagiário', 'funcionario' => 'Funcionário', 'supervisor' => 'Supervisor',
     'coordenador' => 'Coordenador', 'gerente' => 'Gerente', 'diretor' => 'Diretor', 'ceo' => 'CEO',

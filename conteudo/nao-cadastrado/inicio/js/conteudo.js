@@ -6,17 +6,31 @@
   const dots = document.querySelectorAll('.content__banner-dot');
   const btnPrev = document.querySelector('.content__banner-arrow--left');
   const btnNext = document.querySelector('.content__banner-arrow--right');
+  const slides = document.querySelectorAll('.content__banner-slide');
   let current = 0;
 
   function goTo(index) {
     if (!dots.length) return;
     current = (index + dots.length) % dots.length;
     dots.forEach((dot, i) => dot.classList.toggle('content__banner-dot--active', i === current));
+    slides.forEach((sl, i) => sl.classList.toggle('content__banner-slide--ativo', i === current));
   }
 
-  if (btnPrev) btnPrev.addEventListener('click', () => goTo(current - 1));
-  if (btnNext) btnNext.addEventListener('click', () => goTo(current + 1));
-  dots.forEach((dot, i) => dot.addEventListener('click', () => goTo(i)));
+  // Troca automática do banner a cada 3 segundos. Quando a pessoa usa as
+  // setas ou as bolinhas, o relógio recomeça (para não pular logo em seguida).
+  const INTERVALO_BANNER_MS = 3000;
+  let timerBanner = null;
+
+  function reiniciarAutoBanner() {
+    clearInterval(timerBanner);
+    if (dots.length < 2) return;
+    timerBanner = setInterval(() => goTo(current + 1), INTERVALO_BANNER_MS);
+  }
+
+  if (btnPrev) btnPrev.addEventListener('click', () => { goTo(current - 1); reiniciarAutoBanner(); });
+  if (btnNext) btnNext.addEventListener('click', () => { goTo(current + 1); reiniciarAutoBanner(); });
+  dots.forEach((dot, i) => dot.addEventListener('click', () => { goTo(i); reiniciarAutoBanner(); }));
+  reiniciarAutoBanner();
 
   // Fecha o menu lateral pelo botão "Recolher"
   const btnRecolher = document.getElementById('btnRecolher');

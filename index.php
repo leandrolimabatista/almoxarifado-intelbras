@@ -6,6 +6,12 @@ if (session_status() !== PHP_SESSION_ACTIVE) {
 
 $logado = !empty($_SESSION['usuario_id']);
 
+// Visibilidade das equipes no menu lateral (cada usuário só vê a própria
+// equipe; o Administrador Intelbras, id 1, vê todas).
+if ($logado) {
+    require_once __DIR__ . '/api/equipes/_visibilidade.php';
+}
+
 // Token CSRF do módulo Chamadas (usado também pelo alerta global de
 // chamada recebida, que roda em todas as páginas da área logada).
 if ($logado && empty($_SESSION['csrf_chamadas'])) {
@@ -29,36 +35,118 @@ $paginasCadastrado = [
     'chamadas'                => 'conteudo/cadastrado/chamadas/html/chamadas.html',
     'cursos'                  => 'conteudo/cadastrado/cursos/html/cursos.html',
     'loja'                    => 'conteudo/cadastrado/loja/html/loja.html',
-    'usuarios'                => 'conteudo/cadastrado/usuarios/html/usuarios.html',
+    'dashboard'               => 'conteudo/cadastrado/dashboard/html/dashboard.html',
     'equipes'                 => 'conteudo/cadastrado/equipes/html/equipes.html',
-    'nova-conversa'           => 'conteudo/cadastrado/nova-conversa/html/nova-conversa.html',
     'chat'                    => 'conteudo/cadastrado/chat/html/chat.html',
     'agendar-reuniao'         => 'conteudo/cadastrado/agendar-reuniao/html/agendar-reuniao.html',
     'configuracoes'           => 'conteudo/cadastrado/configuracoes/html/configuracoes.html',
 ];
 
+// Título da aba: sempre "Página — Intelbras" (mesmo padrão das páginas legais).
+$titulosPagina = [
+    'inicio'                  => 'Início',
+    'servicos'                => 'Serviços',
+    'inteligencia-artificial' => 'Inteligência Artificial',
+    'documentos'              => 'Documentos',
+    'unidade'                 => 'Unidade',
+    'chamadas'                => 'Chamadas',
+    'cursos'                  => 'Cursos',
+    'loja'                    => 'Loja',
+    'dashboard'               => 'Dashboard',
+    'equipes'                 => 'Equipes',
+    'chat'                    => 'Chat',
+    'agendar-reuniao'         => 'Agendar reunião',
+    'configuracoes'           => 'Configurações',
+];
+
+// Compatibilidade: a antiga rota ?pagina=usuarios virou ?pagina=dashboard
+// (favoritos e links antigos continuam funcionando).
+if (($_GET['pagina'] ?? '') === 'usuarios') {
+    header('Location: index.php?pagina=dashboard', true, 301);
+    exit;
+}
+
 $paginaSolicitada = isset($_GET['pagina']) ? (string)$_GET['pagina'] : 'inicio';
 if (!array_key_exists($paginaSolicitada, $paginasCadastrado)) {
     $paginaSolicitada = 'inicio';
 }
+
+// "Agendar reunião": só Gerente, Diretor e CEO (e o Administrador, id 1).
+$podeAgendar = false;
+if ($logado) {
+    if ((int)$_SESSION['usuario_id'] === 1) {
+        $podeAgendar = true;
+    } else {
+        try {
+            require_once __DIR__ . '/api/conexao.php';
+            $stCargo = conectar()->prepare('SELECT cargo FROM tb_usuarios WHERE id = ? LIMIT 1');
+            $stCargo->execute([(int)$_SESSION['usuario_id']]);
+            $podeAgendar = in_array((string)$stCargo->fetchColumn(), ['gerente', 'diretor', 'ceo'], true);
+        } catch (Throwable $e) {
+            $podeAgendar = false;
+        }
+    }
+    if ($paginaSolicitada === 'agendar-reuniao' && !$podeAgendar) {
+        header('Location: index.php?pagina=chamadas&aviso=agendar');
+        exit;
+    }
+}
+
+// Tema do site (Configurações > Aparência): claro | escuro | automatico.
+// Usuário logado: vale a preferência da conta (tb_usuario_preferencias).
+// Visitante: o assets/js/tema.js usa o último valor guardado no navegador.
+// Sem preferência salva (ou se a tabela ainda não existir): CLARO.
+$temaPref = 'claro';
+if ($logado) {
+    try {
+        require_once __DIR__ . '/api/conexao.php';
+        $stTema = conectar()->prepare('SELECT dados FROM tb_usuario_preferencias WHERE usuario_id = ? LIMIT 1');
+        $stTema->execute([(int)$_SESSION['usuario_id']]);
+        $dadosTema = json_decode((string)$stTema->fetchColumn(), true);
+        $valorTema = is_array($dadosTema) ? ($dadosTema['aparencia']['tema'] ?? 'claro') : 'claro';
+        if (in_array($valorTema, ['claro', 'escuro', 'automatico'], true)) {
+            $temaPref = $valorTema;
+        }
+    } catch (Throwable $e) {
+        $temaPref = 'claro';
+    }
+}
 ?>
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html lang="pt-BR"<?php echo $logado ? ' data-tema-pref="' . $temaPref . '"' : ''; ?>>
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="icon" href="assets/img/favicon/favicon.ico?v=2" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32.png?v=2">
+  <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon/favicon-192.png?v=2">
+  <link rel="apple-touch-icon" href="assets/img/favicon/apple-touch-icon.png?v=2">
+  <meta name="color-scheme" content="light dark">
+  <!-- Tema (Claro/Escuro/Automático): script síncrono + CSS, antes de todo o resto, para não piscar -->
+  <script src="assets/js/tema.js?v=1"></script>
+  <script src="assets/js/dialogo.js?v=1"></script>
+  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=2">
   <!-- Ativa a transição nativa do navegador (crossfade) entre navegações
        de página inteira (troca de aba do menu lateral, ex.: Início -> Loja).
        Suportado em navegadores baseados em Chromium recentes; nos demais,
        a navegação simplesmente ocorre sem a transição, sem quebrar nada. -->
   <meta name="view-transition" content="same-origin">
-  <title>Intelbras</title>
+  <title><?php echo htmlspecialchars((($logado ? ($titulosPagina[$paginaSolicitada] ?? 'Início') : 'Início')) . ' — Intelbras', ENT_QUOTES, 'UTF-8'); ?></title>
+  <!-- Anti-flash da camada de movimento: esconde o <main> até o movimento.js
+       classificar a página (1ª varredura). Se algo falhar, libera em 1,5s. -->
+  <script>document.documentElement.classList.add('mv-boot');setTimeout(function(){document.documentElement.classList.remove('mv-boot')},1500);</script>
   <link rel="stylesheet" href="assets/css/popout-bloqueio.css">
+  <link rel="stylesheet" href="assets/css/dialogo.css?v=1">
   <link rel="stylesheet" href="assets/css/seletor.css">
-  <link rel="stylesheet" href="assets/css/chamadas-alerta.css?v=1">
+  <link rel="stylesheet" href="assets/css/busca-pagina.css?v=3">
+  <link rel="stylesheet" href="assets/css/chamadas-alerta.css?v=20261004">
+  <link rel="stylesheet" href="assets/css/menu-contexto.css?v=8">
+  <link rel="stylesheet" href="assets/css/aviso-permissao.css?v=2">
   <style>
     /* Suaviza o crossfade nativo da troca de página (padrão do navegador
        é meio abrupto); mantém curto pra não parecer lento. */
+    /* Liga a transição entre páginas (precisa estar no <head>, antes do 1º desenho). */
+    @view-transition { navigation: auto; }
     ::view-transition-old(root),
     ::view-transition-new(root) {
       animation-duration: 0.18s;
@@ -66,13 +154,15 @@ if (!array_key_exists($paginaSolicitada, $paginasCadastrado)) {
     }
   </style>
 </head>
-<body style="margin:0;" data-logado="<?php echo $logado ? '1' : '0'; ?>" data-chamadas-csrf="<?php echo htmlspecialchars($csrfChamadasGlobal, ENT_QUOTES, 'UTF-8'); ?>">
+<body style="margin:0;" data-logado="<?php echo $logado ? '1' : '0'; ?>" data-pode-agendar="<?php echo $podeAgendar ? '1' : '0'; ?>" data-chamadas-csrf="<?php echo htmlspecialchars($csrfChamadasGlobal, ENT_QUOTES, 'UTF-8'); ?>">
   <script>
     // Aplica a classe "sidebar-open" o quanto antes (assim que o <body>
     // existe, antes do menu ser desenhado), lendo a preferência salva
     // pelo cabecalho.js. Isso mantém o menu lateral aberto ao trocar de
     // aba, em vez de fechar e exigir clicar em "Todas categorias" de novo.
-    if (localStorage.getItem('sidebarOpen') === '1') {
+    // Em tela estreita (zoom alto / celular) o menu é uma gaveta por cima do
+    // conteúdo e começa sempre fechado (ver assets/css/zoom.css e zoom.js).
+    if (localStorage.getItem('sidebarOpen') === '1' && !window.matchMedia('(max-width: 860px)').matches) {
       document.body.classList.add('sidebar-open');
     }
   </script>
@@ -84,7 +174,7 @@ if (!array_key_exists($paginaSolicitada, $paginasCadastrado)) {
     if ($logado) {
         include $paginasCadastrado[$paginaSolicitada];
     } else {
-        include 'conteudo/nao-cadastrado/inicio/html/conteudo.html';
+        include 'conteudo/nao-cadastrado/inicio/html/inicio.html';
     }
     ?>
   </main>
@@ -95,7 +185,22 @@ if (!array_key_exists($paginaSolicitada, $paginasCadastrado)) {
        não logado — ver checagem de data-logado no próprio script) -->
   <script src="assets/js/popout-bloqueio.js?v=1788205181"></script>
   <script src="assets/js/seletor.js?v=2"></script>
+  <!-- Busca na página (Ctrl+F) no padrão do site -->
+  <script src="assets/js/busca-pagina.js?v=2"></script>
   <script src="assets/js/chamadas-alerta.js?v=1"></script>
+  <script src="assets/js/aviso-permissao.js?v=1"></script>
+  <!-- Botão direito nas categorias do menu lateral (mover, desafixar, personalizar...) -->
+  <script src="assets/js/menu-contexto.js?v=13"></script>
+
+  <!-- Camada global de animação + padronização visual (vale para todas as páginas).
+       Fica por último para ter a palavra final na cascata. -->
+  <link rel="stylesheet" href="assets/css/movimento.css?v=12">
+  <script src="assets/js/movimento.js?v=9"></script>
+
+  <!-- Zoom do navegador até 500%: cabeçalho compacto, menu lateral em gaveta e
+       altura do cabeçalho em --hdr-h. Por último, para ter a palavra final. -->
+  <link rel="stylesheet" href="assets/css/zoom.css?v=4">
+  <script src="assets/js/zoom.js?v=1"></script>
 
 </body>
 </html>

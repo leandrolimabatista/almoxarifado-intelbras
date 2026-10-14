@@ -12,7 +12,7 @@
 (function () {
   'use strict';
 
-  const API_BASE_URL = '';
+  const API_BASE_URL = 'http://44.204.128.56:3000';
   const PATH_CRIAR_PAGAMENTO = '/criar-pagamento';
 
   /**
@@ -21,17 +21,14 @@
    * para o chamador tratar no catch.
    * @param {{id:string,title:string,quantity:number,unit_price:number}[]} items
    */
-  async function criarPagamento(items, emailComprovante) {
-  const resp = await fetch(API_BASE_URL + PATH_CRIAR_PAGAMENTO, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      items,
-      email_comprovante: emailComprovante
-    }),
-  });
-  return resp.json();
-}
+  async function criarPagamento(items) {
+    const resp = await fetch(API_BASE_URL + PATH_CRIAR_PAGAMENTO, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ items }),
+    });
+    return resp.json();
+  }
 
   /**
    * Consulta de CEP (ViaCEP, serviço público). Devolve
@@ -46,5 +43,48 @@
     return d && !d.erro ? d : null;
   }
 
-  window.LojaApi = { API_BASE_URL, PATH_CRIAR_PAGAMENTO, criarPagamento, buscarCep };
+  /**
+   * Cotação de frete no nosso PHP (api/loja/frete.php -> Melhor Envio).
+   * Devolve { opcoes:[{ id, nome, preco, prazo:[min,max] }], estimado }; lança erro se a cotação
+   * não estiver disponível (o chamador usa a tabela por região como reserva).
+   * @param {string} cep somente dígitos (8)
+   * @param {{id:string,quantidade:number,preco:number}[]} itens
+   */
+  async function cotarFrete(cep, itens) {
+    const resp = await fetch('api/loja/frete.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ cep, itens }),
+    });
+    const d = await resp.json();
+    if (!resp.ok || !d || d.sucesso !== true || !Array.isArray(d.opcoes) || !d.opcoes.length) {
+      throw new Error('Cotação indisponível' + (d && d.motivo ? ' (' + d.motivo + ')' : ''));
+    }
+    return { opcoes: d.opcoes, estimado: d.estimado === true };
+  }
+
+  /** Histórico de compras do usuário logado (api/loja/pedidos.php). */
+  async function listarPedidos() {
+    const resp = await fetch('api/loja/pedidos.php', { credentials: 'same-origin', cache: 'no-store' });
+    let d = null;
+    try { d = await resp.json(); } catch (_) { /* resposta não-JSON */ }
+    if (!resp.ok || !d || d.sucesso !== true) throw new Error((d && d.erro) || 'Erro ao carregar compras');
+    return d.pedidos || [];
+  }
+
+  /** Registra o pedido quando o pagamento é iniciado. Devolve o código do pedido. */
+  async function registrarPedido(pedido) {
+    const resp = await fetch('api/loja/pedidos.php', {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(pedido),
+    });
+    const d = await resp.json();
+    if (!resp.ok || !d || d.sucesso !== true) throw new Error((d && d.erro) || 'Erro ao registrar pedido');
+    return d.codigo;
+  }
+
+  window.LojaApi = { API_BASE_URL, PATH_CRIAR_PAGAMENTO, criarPagamento, buscarCep, cotarFrete, listarPedidos, registrarPedido };
 })();

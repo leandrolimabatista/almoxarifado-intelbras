@@ -1,0 +1,10 @@
+/* Aviso de permissão: mesmo snackbar do módulo Chamadas (rodapé central, texto de uma linha). */
+.aviso-perm {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%); z-index: 5000;
+  max-width: calc(100vw - 24px);
+  background: #111827; color: #fff; padding: 10px 16px; border-radius: 8px;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-size: 13.5px; font-weight: 400; line-height: 1.4; box-shadow: 0 6px 18px rgba(0, 0, 0, .25);
+  pointer-events: none; opacity: 0; transition: opacity .2s ease;
+}
+.aviso-perm--vis { opacity: 1; }
+@media (max-width: 720px) { .aviso-perm { bottom: 84px; } }

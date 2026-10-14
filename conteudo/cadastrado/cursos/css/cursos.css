@@ -42,7 +42,7 @@
   justify-content: space-between;
   align-items: flex-start;
   gap: 24px;
-  margin-bottom: 20px;
+  margin-bottom: 28px;
 }
 
 .cursos__topo-texto {
@@ -81,9 +81,10 @@
 
 .cursos__titulo {
   font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
-  font-size: 28px;
+  font-size: 24px;
   font-weight: 700;
-  margin: 0 0 6px;
+  color: var(--intelbras-preto);
+  margin: 0 0 4px;
 }
 
 .cursos__subtitulo {
@@ -111,7 +112,7 @@
   flex: 0 0 auto;
   width: 436px;
   max-width: 100%;
-  padding: 18px 22px;
+  padding: 12px 20px;
   border-radius: 8px;
   background: var(--intelbras-verde-100);
 }
@@ -148,6 +149,9 @@
   flex-wrap: wrap;
   gap: 10px;
   margin-bottom: 26px;
+  /* compensação óptica: a ponta arredondada do primeiro filtro parece
+     recuada em relação ao título e à borda reta dos cards */
+  margin-left: -2px;
 }
 
 .chip-filtro {
@@ -229,10 +233,18 @@
 
 .curso-card__capa {
   position: relative;
-  height: 118px;
+  aspect-ratio: 2172 / 692; /* proporção das capas: nada é cortado */
   border-radius: 6px;
   overflow: hidden;
   background: #03130c;
+}
+
+/* Capa em imagem: ocupa todo o quadro, sempre inteira e responsiva */
+.curso-card__capa-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
 }
 
 .curso-card__capa-svg {
@@ -242,9 +254,8 @@
 }
 
 .curso-card__tag {
-  position: absolute;
-  top: 8px;
-  left: 8px;
+  align-self: flex-start;
+  margin-bottom: 10px; /* a tag fica abaixo da capa para não cobrir a imagem */
 }
 
 .curso-tag {
@@ -445,7 +456,8 @@
 /* ---------------- Tela C — Detalhe do curso ---------------- */
 .curso-hero {
   display: flex;
-  gap: 28px;
+  flex-direction: column;
+  gap: 20px;
   margin-bottom: 28px;
   padding: 16px;
   border-radius: 10px;
@@ -454,11 +466,18 @@
 }
 
 .curso-hero__capa {
-  flex: 0 0 380px;
-  min-height: 220px;
+  width: 100%;
+  aspect-ratio: 2172 / 692;
+  max-height: 400px; /* em telas largas a arte fica com zoom (corta só a área vazia) */
   border-radius: 8px;
   overflow: hidden;
   background: #03130c;
+}
+
+.curso-hero__capa .curso-card__capa-img {
+  object-fit: cover;
+  /* 44% (e não 50%) equilibra a margem acima do logo e abaixo do subtítulo */
+  object-position: 50% 44%;
 }
 
 .curso-hero__capa .curso-card__capa-svg {
@@ -836,3 +855,61 @@
   line-height: 1.55;
   color: var(--intelbras-cinza);
 }
+
+/* ---------- Módulo em formato texto (Material de Leitura) ----------
+   Padrão do site: verde Intelbras, Poppins nos títulos, entrada em
+   cascata (mv-rise) e hover que sobe, igual aos demais cards. */
+.leitura{background:#fff;border:1px solid var(--content-border);border-radius:10px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.leitura__cabecalho{display:flex;align-items:center;gap:10px;padding:16px 28px;background:var(--intelbras-verde-100);border-bottom:1px solid #CDEBDB;font-family:'Poppins','Segoe UI',Arial,sans-serif;font-size:17px;font-weight:600;color:var(--intelbras-verde-escuro)}
+.leitura__corpo{padding:28px 32px 32px;color:#3F3F3F;font-size:15.5px;line-height:1.75}
+.leitura__corpo>*{animation:mv-rise .4s cubic-bezier(.22,.8,.26,1) backwards;animation-delay:calc(var(--i,0)*45ms + 40ms)}
+.leitura__corpo p{margin:0 0 16px}
+.leitura__meta{display:flex;flex-wrap:wrap;align-items:center;gap:10px;margin-bottom:14px}
+.leitura__chip--tempo{display:inline-flex;align-items:center;gap:6px;padding:4px 12px;border-radius:999px;background:#F1F2F4;font-size:12.5px;font-weight:700;color:var(--intelbras-cinza)}
+.leitura__chip--tempo svg{width:15px;height:15px}
+.leitura__titulo{margin:0 0 14px;font-family:'Poppins','Segoe UI',Arial,sans-serif;font-size:26px;font-weight:700;line-height:1.25;color:var(--intelbras-preto)}
+.leitura__intro{font-size:17px;color:#2B2B2B}
+.leitura__objetivo{margin:18px 0 8px;padding:16px 20px;border-radius:10px;background:#F8FAF9;border:1px solid var(--content-border)}
+.leitura__objetivo strong{color:var(--intelbras-verde-escuro)}
+.leitura__objetivo ul{margin:8px 0 0;padding-left:22px}
+.leitura__objetivo li{margin-bottom:4px}
+.leitura__objetivo li::marker{color:var(--intelbras-verde)}
+.leitura__subtitulo{margin:26px 0 14px;font-family:'Poppins','Segoe UI',Arial,sans-serif;font-size:19px;font-weight:700;color:var(--intelbras-preto)}
+.leitura__cards{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:14px;margin-bottom:22px}
+.leitura__card{position:relative;padding:18px 18px 16px;border-radius:10px;background:#fff;border:1px solid var(--content-border);box-shadow:0 1px 3px rgba(0,0,0,.05);transition:translate .15s ease,box-shadow .15s ease,border-color .15s ease}
+.leitura__card:hover{translate:0 -1.5px;border-color:#BFE5D0;box-shadow:0 2px 5px rgba(0,0,0,.08),0 8px 18px rgba(0,0,0,.06)}
+.leitura__card-num{display:inline-flex;align-items:center;justify-content:center;width:26px;height:26px;margin-bottom:10px;border-radius:50%;background:var(--intelbras-verde);color:#fff;font-size:13px;font-weight:700}
+.leitura__card h4{margin:0 0 6px;font-family:'Poppins','Segoe UI',Arial,sans-serif;font-size:15px;font-weight:600;color:var(--intelbras-preto)}
+.leitura__card p{margin:0;font-size:14px;line-height:1.55;color:#555}
+.leitura__destaque{margin:6px 0 24px;padding:16px 20px;border-radius:10px;background:var(--intelbras-verde-100);border-left:4px solid var(--intelbras-verde)}
+.leitura__destaque strong{display:block;margin-bottom:4px;font-family:'Poppins','Segoe UI',Arial,sans-serif;color:var(--intelbras-verde-escuro)}
+.leitura__destaque p{margin:0;font-size:15px}
+.leitura__check{display:grid;gap:8px;margin-bottom:20px}
+.leitura__check>strong{margin-bottom:2px}
+.leitura__check-item{display:flex;align-items:center;gap:12px;width:100%;padding:11px 14px;border:1px solid var(--content-border);border-radius:8px;background:#fff;font-family:inherit;font-size:14.5px;color:inherit;text-align:left;cursor:pointer;transition:background .15s ease,border-color .15s ease,translate .15s ease}
+.leitura__check-item:hover{translate:0 -1px;border-color:#BFE5D0;background:#F1FAF5}
+.leitura__check-item i{display:inline-flex;flex:none;align-items:center;justify-content:center;width:22px;height:22px;border:2px solid #CFCFCF;border-radius:50%;color:transparent;transition:background .15s ease,border-color .15s ease,color .15s ease}
+.leitura__check-item i svg{width:13px;height:13px}
+.leitura__check-item[aria-pressed="true"]{border-color:var(--intelbras-verde);background:var(--intelbras-verde-100)}
+.leitura__check-item[aria-pressed="true"] i{background:var(--intelbras-verde);border-color:var(--intelbras-verde);color:#fff}
+.leitura__fim{margin:0;color:var(--intelbras-cinza)}
+.leitura__acoes{align-items:center;flex-wrap:wrap}
+.leitura__voltar,.leitura__proxima{font-size:14px;font-weight:700;color:var(--intelbras-verde-escuro);text-decoration:none;transition:color .15s ease}
+.leitura__voltar:hover,.leitura__proxima:hover{color:var(--intelbras-verde);text-decoration:underline}
+.leitura__concluir:not(:disabled):hover{box-shadow:var(--mv-brilho-verde,0 3px 8px rgba(0,168,89,.28))}
+.modulo-principal{padding:0;background:transparent;box-shadow:none}
+.leitura__acoes{padding:18px 4px 0;border-top:0}
+@media (max-width:640px){.leitura__corpo{padding:20px 18px 24px}.leitura__titulo{font-size:22px}.leitura__cabecalho{padding:14px 18px}}
+@media (prefers-reduced-motion:reduce){.leitura__corpo>*{animation:none}}
+
+/* ---- Leitura rica (módulos longos) ---- */
+.leitura__intro+.leitura__intro{margin-top:-4px}
+.leitura__sec-num{display:inline-flex;align-items:center;justify-content:center;width:28px;height:28px;margin-right:10px;border-radius:50%;background:var(--intelbras-verde);color:#fff;font-size:14px;font-weight:700;vertical-align:middle}
+.leitura__lista{margin:0 0 18px;padding-left:22px}
+.leitura__lista li{margin-bottom:6px}
+.leitura__lista li::marker{color:var(--intelbras-verde)}
+.leitura__alerta{margin:0 0 24px;padding:16px 20px;border-radius:10px;background:#FFF8EC;border-left:4px solid #F59E0B}
+.leitura__alerta strong{display:block;margin-bottom:6px;font-family:'Poppins','Segoe UI',Arial,sans-serif;color:#B45309}
+.leitura__alerta ul{margin:0;padding-left:22px}
+.leitura__alerta li{margin-bottom:4px}
+.leitura__resumo{margin:0 0 24px}

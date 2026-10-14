@@ -16,10 +16,27 @@ $inicioEquipesFav = [];
 $inicioEquipeSlug = '';
 $inicioReunioesCanais = [];
 $inicioAtividadesEquipes = [];
+// Administrador Intelbras (id 1) não aparece para os outros usuários (nem nas atividades).
+$inicioSemAdmin = $inicioUid !== 1;
 
 try {
     require_once __DIR__ . '/../../../../api/conexao.php';
     $pdoInicio = conectar();
+
+    // Toda pessoa começa com a própria equipe favoritada. INSERT IGNORE só cria a linha
+    // se ela ainda não existe: quem já desfavoritou continua sem a equipe nos favoritos.
+    try {
+        $st = $pdoInicio->prepare(
+            'INSERT IGNORE INTO tb_equipes_membros (equipe_slug, usuario_id, origem, favorita)
+             SELECT u.equipe_slug, u.id, \'principal\', 1
+               FROM tb_usuarios u
+              WHERE u.id = :u AND u.status = \'ativo\'
+                AND u.equipe_slug IN (SELECT slug FROM tb_equipes)'
+        );
+        $st->execute([':u' => $inicioUid]);
+    } catch (Throwable $e) {
+        error_log('[inicio] favoritar equipe do usuário: ' . $e->getMessage());
+    }
 
     try {
         $st = $pdoInicio->prepare(
@@ -31,7 +48,8 @@ try {
               LIMIT 5'
         );
         $st->execute([':u' => $inicioUid]);
-        $inicioEquipesFav = $st->fetchAll();
+        require_once __DIR__ . '/../../../../api/equipes/_visibilidade.php';
+        $inicioEquipesFav = eqv_filtrar(eqv_slugs_visiveis($pdoInicio, $inicioUid), $st->fetchAll());
     } catch (Throwable $e) {
         error_log('[inicio] equipes favoritas: ' . $e->getMessage());
     }
@@ -52,6 +70,7 @@ try {
             'SELECT r.titulo, r.data_reuniao, r.hora_inicio, r.hora_fim, r.equipe_slug
                FROM tb_reunioes r
               WHERE r.status = \'agendada\'
+                AND (r.organizador_id <> 1 OR :ocultar = 0)
                 AND r.data_reuniao >= (CURDATE() - INTERVAL 7 DAY)
                 AND (r.organizador_id = :u1
                      OR EXISTS (SELECT 1 FROM tb_reunioes_participantes p
@@ -60,7 +79,7 @@ try {
               ORDER BY r.data_reuniao ASC, r.hora_inicio ASC
               LIMIT 20'
         );
-        $st->execute([':u1' => $inicioUid, ':u2' => $inicioUid, ':eq' => $inicioEquipeSlug]);
+        $st->execute([':u1' => $inicioUid, ':u2' => $inicioUid, ':eq' => $inicioEquipeSlug, ':ocultar' => $inicioSemAdmin ? 1 : 0]);
         foreach ($st->fetchAll() as $r) {
             $ini = new DateTimeImmutable($r['data_reuniao'] . ' ' . $r['hora_inicio']);
             $fim = new DateTimeImmutable($r['data_reuniao'] . ' ' . $r['hora_fim']);
@@ -113,7 +132,8 @@ try {
                     "SELECT m.equipe_slug, m.usuario_id, m.criada_em, u.nome
                        FROM tb_equipes_mensagens m
                        JOIN tb_usuarios u ON u.id = m.usuario_id
-                      WHERE m.excluida_em IS NULL AND m.equipe_slug IN ($ph)
+                      WHERE m.excluida_em IS NULL AND m.equipe_slug IN ($ph)"
+                    . ($inicioSemAdmin ? ' AND m.usuario_id <> 1' : '') . "
                       ORDER BY m.criada_em DESC
                       LIMIT 12"
                 );
@@ -139,7 +159,8 @@ try {
                     "SELECT c.equipe_slug, c.iniciador_id, c.midia, c.iniciada_em, u.nome
                        FROM tb_chamadas c
                        JOIN tb_usuarios u ON u.id = c.iniciador_id
-                      WHERE c.tipo = 'equipe' AND c.equipe_slug IN ($ph)
+                      WHERE c.tipo = 'equipe' AND c.equipe_slug IN ($ph)"
+                      . ($inicioSemAdmin ? ' AND c.iniciador_id <> 1' : '') . "
                       ORDER BY c.iniciada_em DESC
                       LIMIT 6"
                 );
@@ -165,7 +186,8 @@ try {
                     "SELECT r.titulo, r.equipe_slug, r.organizador_id, r.criado_em, u.nome
                        FROM tb_reunioes r
                        JOIN tb_usuarios u ON u.id = r.organizador_id
-                      WHERE r.status = 'agendada' AND r.equipe_slug IN ($ph)
+                      WHERE r.status = 'agendada' AND r.equipe_slug IN ($ph)"
+                      . ($inicioSemAdmin ? ' AND r.organizador_id <> 1' : '') . "
                       ORDER BY r.criado_em DESC
                       LIMIT 6"
                 );
@@ -193,6 +215,11 @@ try {
 }
 
 $inicioH = static fn($v): string => htmlspecialchars((string)$v, ENT_QUOTES, 'UTF-8');
+// Token do endpoint api/equipes/favorita.php ("Remover dos favoritos" no botão direito)
+if (empty($_SESSION['csrf_equipes'])) {
+    $_SESSION['csrf_equipes'] = bin2hex(random_bytes(32));
+}
+$inicioCsrfEquipes = (string)$_SESSION['csrf_equipes'];
 // Cursos (módulos de estudo) por equipe — mesmo catálogo da página Cursos: [título, minutos]
 $inicioEstudoCatalogo = [
     'ti' => [['Fundamentos de Redes e Infraestrutura', 65], ['Segurança da Informação', 50], ['Cloud Computing', 60], ['Suporte Técnico e Help Desk', 50]],
@@ -234,10 +261,10 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
      (linha 1) e Equipes favoritas / Atalhos rápidos / Estudo
      (linha 2).
 ============================================================= -->
-<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261009">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261018">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
 
-<div class="inicio" id="inicioRaiz" data-usuario-id="<?php echo $inicioUid; ?>">
+<div class="inicio" id="inicioRaiz" data-usuario-id="<?php echo $inicioUid; ?>" data-csrf-equipes="<?php echo $inicioH($inicioCsrfEquipes); ?>">
 
   <!-- ===================== MENU LATERAL (largura 0 por padrão; abre ao clicar em "Todas categorias" no cabeçalho, empurrando o conteúdo) ===================== -->
   <aside class="inicio__sidebar" id="sidebar">
@@ -280,9 +307,9 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
         <span>Loja</span>
       </a>
       <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
-      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>Usuários</span>
+      <a href="index.php?pagina=dashboard" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="15" width="7" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Dashboard</span>
       </a>
       <?php endif; ?>
     </nav>
@@ -290,41 +317,55 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">EQUIPES</span>
       <div class="inicio__channel-list">
+        <?php if (eqv_visivel('geral')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
           <span class="inicio__channel-dot" style="background:#00A859"></span>
           <span>Geral</span>
           <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('projetos')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
           <span class="inicio__channel-dot" style="background:#3B82F6"></span>
           <span>Projetos</span>
           <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('marketing')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
           <span class="inicio__channel-dot" style="background:#F59E0B"></span>
           <span>Marketing</span>
           <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('rh')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
           <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
           <span>RH</span>
           <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('financeiro')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
           <span class="inicio__channel-dot" style="background:#EC4899"></span>
           <span>Financeiro</span>
           <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('ti')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
           <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
           <span>TI</span>
           <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('sac')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
           <span class="inicio__channel-dot" style="background:#EF4444"></span>
           <span>SAC / Ouvidoria</span>
           <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
         </a>
+        <?php endif; ?>
       </div>
     </div>
 
@@ -355,7 +396,7 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
       </div>
       <div class="inicio__actions">
         <button class="inicio__btn inicio__btn--primary" id="btnNovaConversa">
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/></svg>
+          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           Nova conversa
         </button>
         <button class="inicio__btn inicio__btn--outline" id="btnAgendarReuniao">
@@ -366,27 +407,27 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
     </div>
 
     <!-- Banner (mesmo componente/lógica de carrossel da área não-cadastrada) -->
-    <section class="inicio__banner">
-      <div class="inicio__banner-text">
-        <span class="inicio__banner-logo">intelbras</span>
-        <h2>Conectados para transformar o futuro</h2>
-        <p>Colaboração, inovação e tecnologia<br>para seguirmos mais juntos do que nunca.</p>
-      </div>
-      <div class="inicio__banner-art" aria-hidden="true">
-        <svg viewBox="0 0 420 260" preserveAspectRatio="xMidYMax slice" xmlns="http://www.w3.org/2000/svg">
-          <rect x="230" y="40" width="150" height="200" rx="4" fill="#1c4a30"/>
-          <g fill="#3a7a54" opacity="0.9">
-            <rect x="242" y="55" width="18" height="18"/><rect x="266" y="55" width="18" height="18"/><rect x="290" y="55" width="18" height="18"/><rect x="314" y="55" width="18" height="18"/><rect x="338" y="55" width="18" height="18"/><rect x="362" y="55" width="10" height="18"/>
-            <rect x="242" y="79" width="18" height="18"/><rect x="266" y="79" width="18" height="18"/><rect x="290" y="79" width="18" height="18"/><rect x="314" y="79" width="18" height="18"/><rect x="338" y="79" width="18" height="18"/><rect x="362" y="79" width="10" height="18"/>
-            <rect x="242" y="103" width="18" height="18"/><rect x="266" y="103" width="18" height="18"/><rect x="290" y="103" width="18" height="18"/><rect x="314" y="103" width="18" height="18"/><rect x="338" y="103" width="18" height="18"/><rect x="362" y="103" width="10" height="18"/>
-            <rect x="242" y="127" width="18" height="18"/><rect x="266" y="127" width="18" height="18"/><rect x="290" y="127" width="18" height="18"/><rect x="314" y="127" width="18" height="18"/><rect x="338" y="127" width="18" height="18"/><rect x="362" y="127" width="10" height="18"/>
-            <rect x="242" y="151" width="18" height="18"/><rect x="266" y="151" width="18" height="18"/><rect x="290" y="151" width="18" height="18"/><rect x="314" y="151" width="18" height="18"/><rect x="338" y="151" width="18" height="18"/><rect x="362" y="151" width="10" height="18"/>
-            <rect x="242" y="175" width="18" height="18"/><rect x="266" y="175" width="18" height="18"/><rect x="290" y="175" width="18" height="18"/><rect x="314" y="175" width="18" height="18"/><rect x="338" y="175" width="18" height="18"/><rect x="362" y="175" width="10" height="18"/>
-          </g>
-          <rect x="150" y="150" width="90" height="90" fill="#153c26"/>
-          <rect x="60" y="190" width="80" height="50" fill="#122f1f"/>
-        </svg>
-      </div>
+    <section class="inicio__banner" aria-roledescription="carrossel" aria-label="Destaques">
+      <!-- O texto está desenhado nas imagens; este título fica só para leitores de tela -->
+      <h2 class="inicio__banner-sr">Conectados para transformar o futuro. Colaboração, inovação e tecnologia para seguirmos mais juntos do que nunca.</h2>
+      <picture class="inicio__banner-slide inicio__banner-slide--ativo" data-slide="0">
+        <source media="(max-width: 767px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-1x1-1.webp">
+        <source media="(max-width: 1199px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-3x1-1.webp">
+        <source media="(max-width: 1599px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-4x1-1.webp">
+        <img src="conteudo/cadastrado/inicio/img/banner/banner-8x1-1.webp" alt="" loading="eager" decoding="async" draggable="false">
+      </picture>
+      <picture class="inicio__banner-slide" data-slide="1">
+        <source media="(max-width: 767px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-1x1-2.webp">
+        <source media="(max-width: 1199px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-3x1-2.webp">
+        <source media="(max-width: 1599px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-4x1-2.webp">
+        <img src="conteudo/cadastrado/inicio/img/banner/banner-8x1-2.webp" alt="" loading="lazy" decoding="async" draggable="false">
+      </picture>
+      <picture class="inicio__banner-slide" data-slide="2">
+        <source media="(max-width: 767px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-1x1-3.webp">
+        <source media="(max-width: 1199px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-3x1-3.webp">
+        <source media="(max-width: 1599px)" srcset="conteudo/cadastrado/inicio/img/banner/banner-4x1-3.webp">
+        <img src="conteudo/cadastrado/inicio/img/banner/banner-8x1-3.webp" alt="" loading="lazy" decoding="async" draggable="false">
+      </picture>
       <button class="inicio__banner-arrow inicio__banner-arrow--left" aria-label="Anterior">
         <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 5l-7 7 7 7" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
       </button>
@@ -416,19 +457,17 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
           </ul>
         </div>
 
-        <!-- Equipes favoritas: cada uma abre o canal da equipe -->
-        <div class="inicio__card inicio__card--compact">
-          <h3 class="inicio__card-title">Equipes favoritas</h3>
+        <!-- Equipes favoritas: cada uma abre o canal da equipe. Sem nenhuma favorita, o card não aparece. -->
 <?php if ($inicioEquipesFav): ?>
+        <div class="inicio__card inicio__card--compact" id="cardFavoritas">
+          <h3 class="inicio__card-title">Equipes favoritas</h3>
           <div class="inicio__chip-row">
 <?php foreach ($inicioEquipesFav as $eqFav): ?>
-            <a href="index.php?pagina=equipes&amp;equipe=<?php echo urlencode((string)$eqFav['slug']); ?>" class="inicio__chip"># <?php echo $inicioH($eqFav['nome']); ?></a>
+            <a href="index.php?pagina=equipes&amp;equipe=<?php echo urlencode((string)$eqFav['slug']); ?>" class="inicio__chip" data-equipe-slug="<?php echo $inicioH($eqFav['slug']); ?>"># <?php echo $inicioH($eqFav['nome']); ?></a>
 <?php endforeach; ?>
           </div>
-<?php else: ?>
-          <p class="inicio__vazio inicio__vazio--solto">Você ainda não favoritou nenhuma equipe. <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__vazio-link">Abrir equipes</a></p>
-<?php endif; ?>
         </div>
+<?php endif; ?>
       </div>
 
       <!-- Coluna 2 -->
@@ -479,12 +518,12 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
         </div>
 
         <!-- Estudos: módulos (cursos) da equipe do usuário -->
+<?php if ($inicioEstudo): ?>
         <div class="inicio__card" id="cardEstudo">
           <h3 class="inicio__card-title">Estudos</h3>
-<?php if ($inicioEstudoVisiveis): ?>
           <ul class="inicio__estudo-list">
-<?php foreach ($inicioEstudoVisiveis as $est): ?>
-            <li>
+<?php foreach ($inicioEstudo as $est): ?>
+            <li data-curso="<?php echo $inicioH($inicioEstudoSlug($est[0])); ?>">
               <a href="index.php?pagina=cursos&amp;curso=<?php echo $inicioH($inicioEstudoSlug($est[0])); ?>" class="inicio__estudo-item">
                 <span class="inicio__estudo-icone" aria-hidden="true">
                   <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M2.5 8.5L12 4l9.5 4.5L12 13 2.5 8.5z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><path d="M6 10.7v4.3c0 1.4 2.7 2.5 6 2.5s6-1.1 6-2.5v-4.3" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
@@ -503,13 +542,9 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
             </li>
 <?php endforeach; ?>
           </ul>
-<?php if ($inicioEstudoExtras > 0): ?>
-          <a href="index.php?pagina=cursos" class="inicio__estudo-mais">+ Mais <?php echo $inicioEstudoExtras; ?> módulo<?php echo $inicioEstudoExtras === 1 ? '' : 's'; ?></a>
-<?php endif; ?>
-<?php else: ?>
-          <p class="inicio__vazio inicio__vazio--solto">Nenhum módulo de estudo para a sua equipe no momento.</p>
-<?php endif; ?>
+          <a href="index.php?pagina=cursos" class="inicio__estudo-mais" style="display:none"></a>
         </div>
+<?php endif; ?>
 
         <!-- Reuniões semanais: popout logo abaixo de Estudos (preenchido pelo inicio.js) -->
         <div class="inicio__card inicio__semana" id="cardSemana" data-equipe="<?php echo $inicioH($inicioEquipeSlug); ?>" data-todas="<?php echo $inicioUid === 1 ? '1' : '0'; ?>">
@@ -537,4 +572,4 @@ $inicioEstudoExtras = count($inicioEstudo) - count($inicioEstudoVisiveis);
   </main>
 </div>
 
-<script src="conteudo/cadastrado/inicio/js/inicio.js?v=5"></script>
+<script src="conteudo/cadastrado/inicio/js/inicio.js?v=11"></script>

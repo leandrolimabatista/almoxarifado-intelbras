@@ -116,10 +116,11 @@ function eq_e_admin(PDO $pdo, int $usuarioId): bool
 /** Garante que existe uma linha de preferências (favorita/silenciada/leitura) para o membro nesta equipe. */
 function eq_garantir_membro(PDO $pdo, int $usuarioId, string $slug, string $origem = 'principal'): void
 {
+    // A equipe principal já nasce favoritada (INSERT IGNORE: quem desfavoritou continua sem).
     $stmt = $pdo->prepare(
-        'INSERT IGNORE INTO tb_equipes_membros (equipe_slug, usuario_id, origem) VALUES (:slug, :uid, :origem)'
+        'INSERT IGNORE INTO tb_equipes_membros (equipe_slug, usuario_id, origem, favorita) VALUES (:slug, :uid, :origem, :fav)'
     );
-    $stmt->execute(['slug' => $slug, 'uid' => $usuarioId, 'origem' => $origem]);
+    $stmt->execute(['slug' => $slug, 'uid' => $usuarioId, 'origem' => $origem, 'fav' => $origem === 'principal' ? 1 : 0]);
 }
 
 /** Lista de membros reais da equipe (para o painel direito), com presença calculada. */
@@ -130,7 +131,7 @@ function eq_listar_membros(PDO $pdo, string $slug): array
                 p.status AS presenca_status, p.visto_em
          FROM tb_usuarios u
          LEFT JOIN tb_usuarios_presenca p ON p.usuario_id = u.id
-         WHERE u.status = "ativo" AND (
+         WHERE u.status = "ativo" AND u.id <> 1 AND (
                u.equipe_slug = :slug1
             OR u.id IN (SELECT usuario_id FROM tb_equipes_membros WHERE equipe_slug = :slug2 AND origem = "solicitacao")
          )
@@ -194,6 +195,7 @@ function eq_quem_digitando(PDO $pdo, string $slug, int $usuarioId): array
          JOIN tb_usuarios u ON u.id = p.usuario_id
          WHERE p.digitando_equipe = :slug
            AND p.usuario_id <> :uid
+           AND p.usuario_id <> 1
            AND p.digitando_em >= DATE_SUB(NOW(), INTERVAL ' . EQ_JANELA_DIGITANDO . ' SECOND)'
     );
     $stmt->execute(['slug' => $slug, 'uid' => $usuarioId]);
@@ -246,16 +248,19 @@ function eq_iso(string $datahora): string
  */
 function eq_listar_mensagens(PDO $pdo, string $slug, int $usuarioAtualId, int $depoisDeId = 0, int $limite = 60): array
 {
+    // Administrador Intelbras (id 1) não aparece para os outros usuários: nem as mensagens dele.
+    $semAdmin = $usuarioAtualId !== 1 ? ' AND m.usuario_id <> 1' : '';
     if ($depoisDeId > 0) {
         $stmt = $pdo->prepare(
             'SELECT m.id, m.usuario_id, u.nome AS autor_nome, m.conteudo, m.resposta_a,
                     m.editada_em, m.excluida_em, m.criada_em,
-                    r.id AS resposta_a_id, ru.nome AS resposta_a_autor, r.conteudo AS resposta_a_conteudo
+                    r.id AS resposta_a_id, ru.nome AS resposta_a_autor, r.conteudo AS resposta_a_conteudo,
+                    r.usuario_id AS resposta_a_usuario_id
              FROM tb_equipes_mensagens m
              JOIN tb_usuarios u ON u.id = m.usuario_id
              LEFT JOIN tb_equipes_mensagens r ON r.id = m.resposta_a
              LEFT JOIN tb_usuarios ru ON ru.id = r.usuario_id
-             WHERE m.equipe_slug = :slug AND m.id > :depois
+             WHERE m.equipe_slug = :slug AND m.id > :depois' . $semAdmin . '
              ORDER BY m.id ASC
              LIMIT ' . (int)$limite
         );
@@ -264,12 +269,13 @@ function eq_listar_mensagens(PDO $pdo, string $slug, int $usuarioAtualId, int $d
         $stmt = $pdo->prepare(
             'SELECT m.id, m.usuario_id, u.nome AS autor_nome, m.conteudo, m.resposta_a,
                     m.editada_em, m.excluida_em, m.criada_em,
-                    r.id AS resposta_a_id, ru.nome AS resposta_a_autor, r.conteudo AS resposta_a_conteudo
+                    r.id AS resposta_a_id, ru.nome AS resposta_a_autor, r.conteudo AS resposta_a_conteudo,
+                    r.usuario_id AS resposta_a_usuario_id
              FROM tb_equipes_mensagens m
              JOIN tb_usuarios u ON u.id = m.usuario_id
              LEFT JOIN tb_equipes_mensagens r ON r.id = m.resposta_a
              LEFT JOIN tb_usuarios ru ON ru.id = r.usuario_id
-             WHERE m.equipe_slug = :slug
+             WHERE m.equipe_slug = :slug' . $semAdmin . '
              ORDER BY m.id DESC
              LIMIT ' . (int)$limite
         );
@@ -278,6 +284,17 @@ function eq_listar_mensagens(PDO $pdo, string $slug, int $usuarioAtualId, int $d
     $linhas = array_reverse($stmt->fetchAll());
     if (!$linhas) {
         return ['mensagens' => [], 'ultimo_id' => $depoisDeId];
+    }
+    if ($usuarioAtualId !== 1) { // resposta a uma mensagem do Administrador: não cita o autor
+        foreach ($linhas as &$linhaResp) {
+            if ((int)($linhaResp['resposta_a_usuario_id'] ?? 0) === 1) {
+                $linhaResp['resposta_a'] = null;
+                $linhaResp['resposta_a_id'] = null;
+                $linhaResp['resposta_a_autor'] = null;
+                $linhaResp['resposta_a_conteudo'] = null;
+            }
+        }
+        unset($linhaResp);
     }
 
     $ids = array_map(static fn(array $l) => (int)$l['id'], $linhas);
@@ -305,7 +322,7 @@ function eq_listar_mensagens(PDO $pdo, string $slug, int $usuarioAtualId, int $d
     $stmt = $pdo->prepare(
         "SELECT mensagem_id, emoji, COUNT(*) AS total,
                 SUM(usuario_id = ?) AS minha
-         FROM tb_equipes_reacoes WHERE mensagem_id IN ($marcadores)
+         FROM tb_equipes_reacoes WHERE mensagem_id IN ($marcadores)" . ($usuarioAtualId !== 1 ? ' AND usuario_id <> 1' : '') . "
          GROUP BY mensagem_id, emoji
          ORDER BY MIN(criado_em)"
     );
@@ -520,13 +537,16 @@ function eq_alternar_fixado(PDO $pdo, string $slug, int $usuarioId, int $mensage
 }
 
 /** Arquivos fixados no painel direito, mais recentes primeiro. */
-function eq_listar_fixados(PDO $pdo, string $slug): array
+function eq_listar_fixados(PDO $pdo, string $slug, int $usuarioId = 0): array
 {
+    // Arquivos enviados pelo Administrador (id 1) só aparecem para ele mesmo.
+    $semAdmin = $usuarioId !== 1 ? ' AND mm.usuario_id <> 1' : '';
     $stmt = $pdo->prepare(
         'SELECT a.id, a.nome_original, a.extensao, a.tamanho, a.documento_id, f.fixado_em
          FROM tb_equipes_fixados f
          JOIN tb_equipes_anexos a ON a.id = f.anexo_id
-         WHERE f.equipe_slug = :slug
+         JOIN tb_equipes_mensagens mm ON mm.id = a.mensagem_id
+         WHERE f.equipe_slug = :slug' . $semAdmin . '
          ORDER BY f.fixado_em DESC
          LIMIT 20'
     );
@@ -545,7 +565,7 @@ function eq_listar_fixados(PDO $pdo, string $slug): array
 function eq_listar_links(PDO $pdo, string $slug): array
 {
     $stmt = $pdo->prepare(
-        'SELECT rotulo, url, icone FROM tb_equipes_links WHERE equipe_slug = :slug ORDER BY ordem'
+        "SELECT rotulo, url, icone FROM tb_equipes_links WHERE equipe_slug = :slug AND rotulo NOT IN ('Planejamento 2026', 'Diretrizes Intelbras') ORDER BY ordem"
     );
     $stmt->execute(['slug' => $slug]);
     return $stmt->fetchAll();
@@ -583,9 +603,10 @@ function eq_solicitar_acesso(PDO $pdo, string $slug, int $usuarioId): void
 /** Total de mensagens não lidas de uma equipe pra este usuário (badge da sidebar). */
 function eq_nao_lidas(PDO $pdo, string $slug, int $usuarioId): int
 {
+    $semAdmin = $usuarioId !== 1 ? ' AND m.usuario_id <> 1' : ''; // mensagens do Administrador não contam
     $stmt = $pdo->prepare(
         'SELECT COUNT(*) FROM tb_equipes_mensagens m
-         WHERE m.equipe_slug = :slug AND m.excluida_em IS NULL
+         WHERE m.equipe_slug = :slug AND m.excluida_em IS NULL' . $semAdmin . '
            AND m.id > (
              SELECT COALESCE(ultima_leitura_id, 0) FROM tb_equipes_membros
              WHERE equipe_slug = :slug2 AND usuario_id = :uid

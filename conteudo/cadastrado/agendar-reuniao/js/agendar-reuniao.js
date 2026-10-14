@@ -1172,4 +1172,26 @@
   pintarTudo();
   if (modoDemo) refs.aviso.hidden = false;
   sugerirEquipe();
+
+  // Botão direito num participante (menu padronizado do site, assets/js/menu-contexto.js)
+  refs.chips.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    const chip = e.target.closest('.reuniao__chip');
+    if (!M || !chip || e.shiftKey || M.temSelecao()) return;
+    const remover = chip.querySelector('.reuniao__chip-remover');
+    const nomeEl = chip.querySelector('span');
+    const nome = nomeEl ? nomeEl.textContent.trim() : 'Participante';
+    e.preventDefault();
+    const pos = M.posicao(e, chip);
+    M.mostrar({
+      x: pos.x, y: pos.y, alvo: null,
+      aria: 'Opções de ' + nome,
+      cabeca: M.cabeca('pessoa', nome),
+      opcoes: [
+        { rotulo: 'Copiar nome', icone: 'copiar', destaque: true, acao: () => M.copiar(nome, 'Nome copiado') },
+        'sep',
+        { rotulo: 'Remover da reunião', icone: 'lixeira', perigo: true, desabilitado: !remover, acao: () => remover.click() },
+      ],
+    });
+  });
 })();

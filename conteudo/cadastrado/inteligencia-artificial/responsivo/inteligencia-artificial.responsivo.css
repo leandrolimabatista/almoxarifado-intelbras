@@ -8,6 +8,12 @@
   .inteligencia-artificial__main {
     grid-template-columns: minmax(0, 1fr);
   }
+
+  /* Coluna única: o painel fica abaixo do chat e rola junto com a área principal */
+  .inteligencia-artificial__painel {
+    max-height: none;
+    overflow-y: visible;
+  }
 }
 
 @media (max-width: 860px) {

@@ -40,6 +40,45 @@
     if (el) el.querySelector('[data-ic]').innerHTML = ic(nome);
   }
 
+  function nomeDe(id) {
+    const info = S && S.chamada.participantes.find((x) => x.id === id);
+    return info ? info.nome : 'Participante';
+  }
+
+  /** Aviso rápido dentro da sala (mão levantada, etc.). */
+  function salaToast(msg, icone) {
+    if (!S) return;
+    const box = $('salaToasts');
+    const t = document.createElement('div');
+    t.className = 'sala__toast';
+    t.setAttribute('role', 'status');
+    if (icone) t.insertAdjacentHTML('afterbegin', ic(icone));
+    const tx = document.createElement('span');
+    tx.textContent = msg;
+    t.appendChild(tx);
+    box.appendChild(t);
+    while (box.children.length > 3) box.firstChild.remove();
+    setTimeout(() => { t.classList.add('sala__toast--saindo'); setTimeout(() => t.remove(), 320); }, 3500);
+  }
+
+  /** Quem está com a mão levantada, na ordem em que levantou (fila). */
+  function maosLevantadas() {
+    const l = [];
+    if (S.mao) l.push({ id: S.eu.id, nome: 'Você', em: S.maoEm || 0 });
+    S.peers.forEach((p) => { if (p.estado.mao) l.push({ id: p.id, nome: C.primeiroNome(nomeDe(p.id)), em: p.maoEm || 0 }); });
+    return l.sort((a, b) => a.em - b.em);
+  }
+
+  function renderMaos() {
+    const b = $('salaMaos');
+    if (!S) return;
+    const l = maosLevantadas();
+    b.hidden = !l.length;
+    if (l.length) {
+      b.innerHTML = ic('hand') + '<span>' + l.length + (l.length === 1 ? ' mão levantada: ' : ' mãos levantadas: ') + esc(l.map((x) => x.nome).join(', ')) + '</span>';
+    }
+  }
+
   // ------------------------------------------------------------
   // Mídia local
   // ------------------------------------------------------------
@@ -126,7 +165,13 @@
     p.dc = pc.createDataChannel('estado', { negotiated: true, id: 0 });
     p.dc.onopen = () => enviarEstado();
     p.dc.onmessage = (e) => {
-      try { p.estado = Object.assign(p.estado, JSON.parse(e.data)); renderGrade(); renderParticipantes(); } catch (x) { /* ignora */ }
+      try {
+        const tinha = !!p.estado.mao;
+        p.estado = Object.assign(p.estado, JSON.parse(e.data));
+        if (p.estado.mao && !tinha) { p.maoEm = Date.now(); salaToast(nomeDe(id) + ' levantou a mão', 'hand'); }
+        else if (!p.estado.mao && tinha) { p.maoEm = 0; }
+        renderGrade(); renderParticipantes();
+      } catch (x) { /* ignora */ }
     };
 
     pc.ontrack = (e) => {
@@ -343,13 +388,15 @@
       el.querySelector('.sala__avatar-tile span').textContent = t.inicial;
       el.querySelector('.sala__tile-nome').textContent = t.nome + (tela ? ' — compartilhando a tela' : '');
       el.querySelector('.sala__tile-mic').innerHTML = mic ? '' : ic('mic-off', 'sala__ic-off');
-      el.querySelector('.sala__tile-mao').innerHTML = mao ? ic('hand', 'sala__ic-mao') : '';
+      el.classList.toggle('sala__tile--mao', !!mao);
+      el.querySelector('.sala__tile-mao').innerHTML = mao ? ic('hand', 'sala__ic-mao') + '<span>Mão levantada</span>' : '';
       const st = el.querySelector('.sala__tile-status');
       st.textContent = status;
       st.hidden = !status;
       el.setAttribute('aria-label', t.nome + (mic ? '' : ', microfone desligado') + (mao ? ', mão levantada' : ''));
     });
 
+    renderMaos();
     $('salaPager').hidden = paginas <= 1;
     $('salaPagInfo').textContent = (S.pagina + 1) + ' / ' + paginas;
     $('salaPagAnt').disabled = S.pagina === 0;
@@ -359,16 +406,21 @@
   function renderParticipantes() {
     if (!S) return;
     const rot = { na_chamada: 'Na chamada', tocando: 'Chamando…', convidado: 'Convidado', recusou: 'Recusou', saiu: 'Saiu', perdeu: 'Não atendeu' };
-    const parts = S.chamada.participantes.slice().sort((a, b) => (b.estado === 'na_chamada') - (a.estado === 'na_chamada') || a.nome.localeCompare(b.nome));
+    const fila = {};
+    maosLevantadas().forEach((x, i) => { fila[x.id] = i + 1; });
+    const parts = S.chamada.participantes.slice().sort((a, b) =>
+      (fila[a.id] ? fila[a.id] : 999) - (fila[b.id] ? fila[b.id] : 999) ||
+      (b.estado === 'na_chamada') - (a.estado === 'na_chamada') || a.nome.localeCompare(b.nome));
     $('abaPartN').textContent = String(parts.filter((x) => x.estado === 'na_chamada').length);
     $('salaParts').innerHTML = parts.map((x) => {
       const eu = x.id === S.eu.id;
-      const p = S.peers.get(x.id);
-      const mao = eu ? S.mao : !!(p && p.estado.mao);
-      return '<li class="sala__part' + (x.estado === 'na_chamada' ? '' : ' sala__part--off') + '"><span class="chamadas__avatar chamadas__avatar--pequeno" aria-hidden="true">' + esc(x.inicial) + '</span>' +
+      const n = fila[x.id];
+      return '<li class="sala__part' + (x.estado === 'na_chamada' ? '' : ' sala__part--off') + (n ? ' sala__part--mao' : '') + '"><span class="chamadas__avatar chamadas__avatar--pequeno" aria-hidden="true">' + esc(x.inicial) + '</span>' +
         '<span class="sala__part-info"><strong>' + esc(x.nome) + (eu ? ' (você)' : '') + '</strong><span>' + esc(x.cargo_nome) + ' · ' + rot[x.estado] + '</span></span>' +
-        (mao ? '<span class="sala__part-mao" title="Mão levantada">' + ic('hand') + '</span>' : '') + '</li>';
+        (n ? '<span class="sala__part-fila" title="Posição na fila de mãos levantadas">' + ic('hand') + ' ' + n + '</span>' : '') +
+        (n && eu ? '<button type="button" class="sala__part-baixar" data-baixar="1">Baixar</button>' : '') + '</li>';
     }).join('');
+    renderMaos();
   }
 
   function atualizarEstadoGeral() {
@@ -411,6 +463,7 @@
     $('ctlTela').setAttribute('aria-pressed', S.tela ? 'true' : 'false');
     $('ctlTela').classList.toggle('sala__ctl--ativo', S.tela);
     $('ctlTela').querySelector('.sala__ctl-rot').textContent = S.tela ? 'Parar' : 'Compartilhar';
+    $('ctlMao').querySelector('.sala__ctl-rot').textContent = S.mao ? 'Baixar a mão' : 'Levantar a mão';
     $('ctlMao').setAttribute('aria-pressed', S.mao ? 'true' : 'false');
     $('ctlMao').classList.toggle('sala__ctl--ativo', S.mao);
     $('ctlChat').setAttribute('aria-pressed', S.aba === 'chat' ? 'true' : 'false');
@@ -454,17 +507,31 @@
     b.textContent = String(S.naoLidas);
   }
 
+  function pertoDoFim(box) { return box.scrollHeight - box.scrollTop - box.clientHeight < 60; }
+
   function addMensagem(m) {
     const eu = m.usuario_id === S.eu.id;
-    const d = document.createElement('div');
-    d.className = 'sala__msg' + (eu ? ' sala__msg--eu' : '');
-    const hora = new Date(m.criada_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
-    d.innerHTML = '<span class="sala__msg-autor">' + esc(eu ? 'Você' : C.primeiroNome(m.nome)) + ' · ' + hora + '</span><span class="sala__msg-texto"></span>';
-    d.querySelector('.sala__msg-texto').textContent = m.texto;
     const box = $('salaMsgs');
-    const noFim = box.scrollHeight - box.scrollTop - box.clientHeight < 60;
+    const t = new Date(m.criada_em).getTime();
+    const ult = box.lastElementChild;
+    const seq = !!ult && ult.getAttribute('data-uid') === String(m.usuario_id) && (t - Number(ult.getAttribute('data-t'))) < 180000;
+    const hora = new Date(m.criada_em).toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+    const info = S.chamada.participantes.find((x) => x.id === m.usuario_id);
+    const inicial = info ? info.inicial : String(m.nome || '?').charAt(0).toUpperCase();
+    const d = document.createElement('div');
+    d.className = 'sala__msg' + (eu ? ' sala__msg--eu' : '') + (seq ? ' sala__msg--seq' : '');
+    d.setAttribute('data-uid', String(m.usuario_id));
+    d.setAttribute('data-t', String(t));
+    d.innerHTML = '<span class="sala__msg-av" aria-hidden="true">' + esc(inicial) + '</span>' +
+      '<div class="sala__msg-bloco">' +
+      (seq ? '' : '<span class="sala__msg-autor"><b>' + esc(eu ? 'Você' : C.primeiroNome(m.nome)) + '</b> · ' + hora + '</span>') +
+      '<span class="sala__msg-texto" title="' + hora + '"></span></div>';
+    d.querySelector('.sala__msg-texto').textContent = m.texto;
+    const noFim = pertoDoFim(box);
     box.appendChild(d);
-    if (noFim || eu) box.scrollTop = box.scrollHeight;
+    $('salaChatVazio').hidden = true;
+    if (noFim || eu) { box.scrollTop = box.scrollHeight; $('salaChatNovas').hidden = true; }
+    else if (S.aba === 'chat') { $('salaChatNovas').hidden = false; }
   }
 
   // ------------------------------------------------------------
@@ -481,13 +548,19 @@
       local: { audio: null, video: null, tela: null },
       mic: !opcoes.mudo, cam: false, tela: false, mao: false,
       peers: new Map(), analises: {}, falando: {}, ctx: null,
-      ultimoSinal: 0, ultimaMsg: 0, pagina: 0, aba: null, naoLidas: 0,
+      ultimoSinal: 0, ultimaMsg: 0, maoEm: 0, pagina: 0, aba: null, naoLidas: 0,
       inicio: Date.now(), encerrando: false, servidorOk: true, minimizada: false,
       timer: null, analiseTimer: null,
     };
 
     $('salaGrade').innerHTML = '';
     $('salaMsgs').innerHTML = '';
+    $('salaChatVazio').hidden = false;
+    $('salaChatNovas').hidden = true;
+    $('salaToasts').innerHTML = '';
+    $('salaMaos').hidden = true;
+    $('salaMsgInput').value = '';
+    $('salaMsgEnviar').disabled = true;
     $('salaAudios').innerHTML = '';
     $('salaTitulo').textContent = tituloDaChamada();
     $('miniTitulo').textContent = tituloDaChamada();
@@ -558,6 +631,7 @@
     if (S.ctx) { try { S.ctx.close(); } catch (e) { /* ok */ } }
     $('chSala').hidden = true;
     $('chMini').hidden = true;
+    $('salaCompart').hidden = true;
     $('salaGrade').innerHTML = '';
     $('salaAudios').innerHTML = '';
     document.body.classList.remove('chamada-ativa');
@@ -579,13 +653,23 @@
     C.recarregar();
 
     if (!fuiEu && !conectou && tipo === 'individual' && (motivo === 'recusada' || motivo === 'perdida')) {
+      if (C.modoDireto()) {
+        C.aposChamadaIndividual({ tipo: 'aviso', titulo: 'Usuário indisponível',
+          texto: motivo === 'recusada' ? nomeAlvo + ' recusou a chamada.' : nomeAlvo + ' não atendeu. Tente novamente mais tarde ou envie uma mensagem.' });
+        return;
+      }
       C.aviso('user-x', 'Usuário indisponível',
         motivo === 'recusada' ? nomeAlvo + ' recusou a chamada.' : nomeAlvo + ' não atendeu. Tente novamente mais tarde ou envie uma mensagem.',
-        [{ rotulo: 'Voltar para Chamadas', tipo: 'primario' }]);
+        [{ rotulo: C.modoDireto() ? 'Voltar para o Chat' : 'Voltar para Chamadas', tipo: 'primario', acao: () => C.aposChamadaIndividual() }]);
+      return;
+    }
+    if (C.modoDireto()) { // vem do Chat: o resumo aparece sobre a própria tela do Chat
+      C.aposChamadaIndividual({ tipo: 'fim', duracao: fmtTempo(duracao), partes: nomes.length ? nomes.join(', ') : 'Você' });
       return;
     }
     $('posDuracao').textContent = fmtTempo(duracao);
     $('posPartes').textContent = nomes.length ? nomes.join(', ') : 'Você';
+    $('posVoltar').textContent = C.modoDireto() ? 'Voltar para o Chat' : 'Voltar para Chamadas';
     C.abrirModal('chPos');
   }
 
@@ -631,24 +715,82 @@
     enviarEstado(); atualizarControles(); renderGrade();
   }
 
-  async function alternarTela() {
+  let superficie = 'monitor';
+
+  function marcarSuperficie(v) {
+    superficie = v;
+    document.querySelectorAll('#mdTela [data-superficie]').forEach((b2) => {
+      const ativo = b2.getAttribute('data-superficie') === v;
+      b2.classList.toggle('tela__op--sel', ativo);
+      b2.setAttribute('aria-checked', ativo ? 'true' : 'false');
+    });
+  }
+
+  /** Abre o pop-out do site; o seletor do navegador só aparece depois de confirmar. */
+  function alternarTela() {
     if (!S) return;
     if (S.tela) { pararTela(); return; }
     if (!navigator.mediaDevices || !navigator.mediaDevices.getDisplayMedia) {
-      C.aviso('alert', 'Compartilhamento indisponível', 'Seu navegador não permite compartilhar a tela nesta conexão.');
+      C.aviso('alert', 'Compartilhamento indisponível', 'Seu navegador não permite compartilhar a tela nesta conexão (use HTTPS ou localhost).');
       return;
     }
+    marcarSuperficie('monitor');
+    C.abrirModal('mdTela');
+  }
+
+  function atualizarAvisoCompart() {
+    const el = $('salaCompart');
+    if (!S || !S.tela) { el.hidden = true; return; }
+    el.hidden = false;
+    $('salaCompartVoltar').hidden = !S.minimizada;
+  }
+
+  let abrindoSeletor = false;
+
+  /** Rótulo do que o navegador realmente compartilhou (a pessoa pode trocar de aba no seletor). */
+  function superficieReal(track) {
+    try { const s = track.getSettings && track.getSettings().displaySurface; if (s) return s; } catch (e) { /* sem suporte */ }
+    return superficie;
+  }
+
+  async function iniciarTela() {
+    if (!S || abrindoSeletor) return;
+    abrindoSeletor = true;
+    C.fecharModal('mdTela');
+    const escolha = superficie;
+    // Pistas para o seletor do navegador: já abre na guia escolhida e não oferece a própria aba da
+    // sala (evita o "espelho infinito"). Navegadores sem suporte ignoram as chaves desconhecidas.
+    const opcoes = {
+      video: { displaySurface: escolha },
+      audio: false,
+      selfBrowserSurface: 'exclude',
+      surfaceSwitching: 'include',
+      monitorTypeSurfaces: escolha === 'monitor' ? 'include' : 'exclude',
+    };
+    let st = null;
     try {
-      const st = await navigator.mediaDevices.getDisplayMedia({ video: true });
-      if (!S) { st.getTracks().forEach((t) => t.stop()); return; }
-      S.local.tela = st.getVideoTracks()[0];
-      S.local.tela.onended = () => pararTela();
-      S.tela = true;
-      S.peers.forEach(aplicarTrilhas);
-      enviarEstado(); atualizarControles(); renderGrade(); atualizarEstadoGeral();
+      st = await navigator.mediaDevices.getDisplayMedia(opcoes);
     } catch (e) {
-      if (e && e.name !== 'NotAllowedError') C.toast('Não foi possível compartilhar a tela.', 'erro');
+      if (e && (e.name === 'NotAllowedError' || e.name === 'AbortError')) { abrindoSeletor = false; return; } // cancelou no seletor
+      try { st = await navigator.mediaDevices.getDisplayMedia({ video: true }); }
+      catch (e2) { abrindoSeletor = false; if (e2 && e2.name !== 'NotAllowedError') C.toast('Não foi possível compartilhar a tela.', 'erro'); return; }
     }
+    abrindoSeletor = false;
+    if (!S) { st.getTracks().forEach((t) => t.stop()); return; }
+    if (S.tela) pararTela(); // já havia um compartilhamento: troca pelo novo
+    S.local.tela = st.getVideoTracks()[0];
+    S.local.tela.onended = () => pararTela();
+    S.tela = true;
+    const real = superficieReal(S.local.tela);
+    S.peers.forEach(aplicarTrilhas);
+    enviarEstado(); atualizarControles(); renderGrade(); atualizarEstadoGeral();
+    // Compartilhando a tela inteira ou uma janela: a sala sai da frente (evita o "espelho infinito").
+    if (real !== 'browser') {
+      S.minimizadaPorTela = true;
+      minimizar();
+      C.toast('Você está compartilhando a tela. Use o aviso verde para voltar ou parar.');
+    }
+    atualizarAvisoCompart();
   }
 
   function pararTela() {
@@ -658,30 +800,39 @@
     S.tela = false;
     S.peers.forEach(aplicarTrilhas);
     enviarEstado(); atualizarControles(); renderGrade(); atualizarEstadoGeral();
+    // Se a sala saiu da frente só por causa do compartilhamento, ela volta sozinha ao parar.
+    if (S.minimizadaPorTela) { S.minimizadaPorTela = false; if (S.minimizada) restaurar(); }
+    atualizarAvisoCompart();
   }
 
   function alternarMao() {
     if (!S) return;
     S.mao = !S.mao;
+    S.maoEm = S.mao ? Date.now() : 0;
+    salaToast(S.mao ? 'Você levantou a mão' : 'Você baixou a mão', 'hand');
     enviarEstado(); atualizarControles(); renderGrade(); renderParticipantes();
   }
 
   function minimizar() {
     if (!S) return;
+    C.sairModoDireto(); // a mini-janela precisa da página Chamadas atrás
     S.minimizada = true;
     $('chSala').hidden = true;
     $('chMini').hidden = false;
     document.body.classList.remove('chamada-ativa');
+    atualizarAvisoCompart();
     $('miniVoltar').focus();
   }
 
   function restaurar() {
     if (!S) return;
     S.minimizada = false;
+    S.minimizadaPorTela = false;
     $('chMini').hidden = true;
     $('chSala').hidden = false;
     document.body.classList.add('chamada-ativa');
     renderGrade();
+    atualizarAvisoCompart();
     $('ctlEncerrar').focus();
   }
 
@@ -720,22 +871,67 @@
   });
   document.addEventListener('click', (e) => { if (!e.target.closest('.sala__mais-wrap')) fecharMenu(); });
 
+  // ---- chat da chamada
+  const inpMsg = $('salaMsgInput');
+  function ajustarCampo() {
+    inpMsg.style.height = 'auto';
+    inpMsg.style.height = Math.min(inpMsg.scrollHeight, 120) + 'px';
+    $('salaMsgEnviar').disabled = !inpMsg.value.trim();
+  }
+  inpMsg.addEventListener('input', ajustarCampo);
+  inpMsg.addEventListener('keydown', (e) => {
+    if (e.key === 'Enter' && !e.shiftKey && !e.isComposing) { e.preventDefault(); $('salaMsgForm').requestSubmit(); }
+  });
+  $('salaMsgs').addEventListener('scroll', () => { if (pertoDoFim($('salaMsgs'))) $('salaChatNovas').hidden = true; });
+  $('salaChatNovas').addEventListener('click', () => { const m = $('salaMsgs'); m.scrollTop = m.scrollHeight; $('salaChatNovas').hidden = true; inpMsg.focus(); });
+
   $('salaMsgForm').addEventListener('submit', async (e) => {
     e.preventDefault();
     if (!S) return;
-    const inp = $('salaMsgInput');
-    const texto = inp.value.trim();
+    const texto = inpMsg.value.trim();
     if (!texto) return;
-    inp.value = '';
+    inpMsg.value = '';
+    ajustarCampo();
     const r = await C.api('mensagem.php', { corpo: { chamada_id: S.chamada.id, texto: texto } });
-    if (!r.ok) { C.toast(r.dados.erro || 'Não foi possível enviar a mensagem.', 'erro'); inp.value = texto; return; }
+    if (!r.ok) { C.toast(r.dados.erro || 'Não foi possível enviar a mensagem.', 'erro'); inpMsg.value = texto; ajustarCampo(); return; }
     C.tickAgora();
   });
 
+  // ---- compartilhar tela (pop-out)
+  document.querySelectorAll('#mdTela [data-superficie]').forEach((b2) => b2.addEventListener('click', () => marcarSuperficie(b2.getAttribute('data-superficie'))));
+  $('telaConfirmar').addEventListener('click', iniciarTela);
+  $('salaCompartParar').addEventListener('click', pararTela);
+  $('salaCompartVoltar').addEventListener('click', restaurar);
+
+  // ---- mão levantada: chip e botão "Baixar" na lista de participantes
+  $('salaMaos').addEventListener('click', () => abrirPainel('part'));
+  $('salaParts').addEventListener('click', (e) => { if (e.target.closest('[data-baixar]') && S && S.mao) alternarMao(); });
+
+  // ---- minimizar clicando na logo da Intelbras (capturado antes de navegar)
+  document.addEventListener('click', (e) => {
+    const logo = e.target.closest && e.target.closest('.header__logo');
+    if (logo && S && !S.encerrando && !S.minimizada) {
+      e.preventDefault();
+      e.stopPropagation();
+      minimizar();
+    }
+  }, true);
+  // clicar na mini-janela também volta para a chamada
+  document.querySelector('.chamadas__mini-info').addEventListener('click', restaurar);
+  document.querySelector('.chamadas__mini-info').setAttribute('title', 'Voltar à chamada');
+
   // Sair da página derruba a chamada (WebRTC vive na página): avisa e libera o servidor.
-  window.addEventListener('beforeunload', (e) => {
-    if (S && !S.encerrando) { e.preventDefault(); e.returnValue = ''; }
-  });
+  if (window.IBDialogo) {
+    window.IBDialogo.protegerSaida(() => !!(S && !S.encerrando), {
+      titulo: 'Sair da chamada?',
+      texto: 'Se sair desta página, você será desconectado da chamada.',
+      confirmar: 'Sair da chamada',
+      cancelar: 'Continuar na chamada',
+      tituloRecarregar: 'Recarregar a página?',
+      textoRecarregar: 'Se recarregar agora, você será desconectado da chamada.',
+      confirmarRecarregar: 'Recarregar',
+    });
+  }
   window.addEventListener('pagehide', () => {
     if (S && !S.encerrando && navigator.sendBeacon) {
       const corpo = JSON.stringify({ acao: 'sair', chamada_id: S.chamada.id, csrf: C.csrf });

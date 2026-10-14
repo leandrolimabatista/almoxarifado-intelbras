@@ -25,12 +25,16 @@ intelbras/
 │   │   ├── loja/                      → html/css/js/responsivo/img → loja.*
 │   │   └── agendar-reuniao/           → html/css/js/responsivo/img → agendar-reuniao.*  (módulo pronto, ver abaixo)
 │   │
+│   ├── legal/                        → Política de Privacidade e Termos de Uso (públicas; abrem em nova aba pelo rodapé)
+│   │   ├── html/politica-de-privacidade.html · termos-de-uso.html
+│   │   ├── css/legal.css · js/legal.js · responsivo/legal.responsivo.css · img/
+│   │
 │   └── nao-cadastrado/               → páginas exibidas para usuário NÃO LOGADO
 │       └── inicio/                   → tela inicial atual (visitante)
-│           ├── html/conteudo.html
-│           ├── css/conteudo.css
-│           ├── js/conteudo.js
-│           ├── responsivo/conteudo.responsivo.css
+│           ├── html/inicio.html
+│           ├── css/inicio.css
+│           ├── js/inicio.js
+│           ├── responsivo/inicio.responsivo.css
 │           └── img/                  → banners e cards da home
 │
 ├── rodape/
@@ -178,7 +182,7 @@ Tela de preferências e informações da conta (Figma: `prompt-figma-configuraco
 **Pasta:** `conteudo/cadastrado/configuracoes/` (`html/`, `css/`, `js/`, `responsivo/`, `img/`), no mesmo padrão das demais seções. Abas (Meu perfil, Notificações, Privacidade, Aparência, Dispositivos, Segurança, Integrações, Sobre) trocam só visualmente, via JS, sem recarregar a página; a coluna direita (Sua conta, Segurança, Ajuda e suporte) fica fixa.
 
 **Banco** (`database/configuracoes.sql` — rodar depois de `schema.sql`, `usuarios_admin.sql` e `usuarios_cargo.sql`; isolado a este módulo):
-- Acrescenta `foto_arquivo`, `idioma` e `fuso_horario` a `tb_usuarios`.
+- Acrescenta `foto_arquivo`, `idioma` e `fuso_horario` a `tb_usuarios` (`idioma` e `fuso_horario` ficaram sem uso: a seção "Preferências" de Idioma/Fuso horário foi removida da aba Meu perfil).
 - `tb_usuario_preferencias` — 1 linha por usuário, com as preferências das demais abas guardadas em JSON.
 - `tb_usuario_sessoes` — dispositivos/sessões ativas (abas Dispositivos e Segurança); alimentada automaticamente pelo módulo a cada página logada.
 
@@ -186,10 +190,73 @@ Tela de preferências e informações da conta (Figma: `prompt-figma-configuraco
 
 | Arquivo | Método | Função |
 |---|---|---|
-| `perfil.php` | GET / POST | Lê e atualiza nome/telefone/idioma/fuso (e-mail e cargo são somente leitura) + devolve as preferências |
+| `perfil.php` | GET / POST | Lê e atualiza nome/telefone (e-mail e cargo são somente leitura) + devolve as preferências |
 | `preferencias.php` | POST | Salva um grupo de preferências (notificações, privacidade, aparência, segurança, integrações) |
 | `senha.php` | POST | Troca de senha (valida a atual, força mínima, limite de 5 tentativas/10min) |
 | `foto.php` | GET / POST | Serve, envia (JPG/PNG até 5MB) ou remove a foto do próprio usuário; arquivo fica fora do htdocs |
 | `sessoes.php` | GET / POST | Lista sessões ativas e permite encerrar uma ou "todas as outras" |
 
 **Modo demonstração:** se a API/banco ainda não estiverem prontos (SQL não executado), a tela entra sozinha em modo demonstração — nada é salvo de verdade — e avisa com uma faixa amarela. Também dá para forçar com `?demo=1`.
+
+
+## Módulo "Chat" (área logada)
+
+Chat pessoal 1-para-1 entre usuários cadastrados. Página: `index.php?pagina=chat` (atalho **Chat** no menu lateral, em ATALHOS — substitui o antigo "Nova conversa"). Lista de conversas à esquerda, conversa aberta à direita, botão "+" abre a busca de contatos. Backend em `api/chat/*.php` (tabelas em `database/chat.sql`); mensagens novas por polling. Parâmetros: `&id=<conversa>` abre a conversa; `&novo=1` abre o painel "Nova conversa". Usa as mesmas animações/padronização de `assets/css/movimento.css` + `assets/js/movimento.js`.
+
+A conversa aberta segue o **padrão visual da página Equipes**: cabeçalho, mensagens agrupadas por autor com bolha e cartão de anexo, estado vazio "Inicie a conversa com…" e o campo de envio (anexar, "A" com barra de formatação, seletor de emoji, enviar). O CSS/JS desse trecho é o de Equipes com o prefixo `chat__`. A formatação vai como marcadores no texto (`**negrito**`, `*itálico*`, `__sublinhado__`, `~~tachado~~`, `` `código` ``, `[texto](link)`), então o backend continua guardando só texto. A lista de emojis e a fonte de emoji colorido são compartilhadas com Equipes (`conteudo/cadastrado/equipes/js/emojis-dados.js` e `equipes/fonts/`) — não apague essas pastas.
+
+## Menu de contexto do menu lateral (botão direito)
+
+Clique com o botão direito em qualquer categoria do menu lateral (Início, Serviços, Equipes, Atalhos...) para abrir o menu: ação principal, abrir em nova aba, copiar link, silenciar canal (equipes), mover para cima/baixo, desafixar (com "Desfazer") e personalizar. Ordem e itens fixados ficam no `localStorage` (`menuLateralPrefs`).
+
+- `assets/js/menu-contexto.js` → comportamento (carregado no `index.php`, vale para todas as páginas)
+- `assets/css/menu-contexto.css` → visual
+- Para mudar a ação principal de cada categoria, edite o objeto `PRINCIPAL` no JS.
+
+### Texto selecionado (mesmo menu, mesmo visual)
+
+Selecione um trecho de texto e clique com o botão direito **em cima dele**: em vez do menu nativo do navegador aparece o mesmo menu padronizado, com **Copiar** (`Ctrl+C`), **Copiar link para o destaque** (`#:~:text=…`; o Chrome/Edge abrem a página já destacando o trecho), **Pesquisar no Google por “…”** e **Imprimir…** (`Ctrl+P`).
+
+- Fica no mesmo `assets/js/menu-contexto.js`: o menu dos itens do menu lateral e o de texto selecionado usam o mesmo núcleo (`mostrarMenu`), então têm o mesmo visual, animação e teclado. Para mudar as opções do menu de texto, edite `menuSelecao()`.
+- Mantêm o menu nativo do navegador: campos de texto/`textarea`/áreas editáveis (colar, recortar, corretor), clique **fora** do trecho selecionado e **Shift + botão direito**.
+
+## Módulo "Dashboard" (área logada — exclusivo do Administrador Intelbras, id 1)
+
+Substitui o antigo item **Usuários** do menu lateral. Página: `index.php?pagina=dashboard` (a rota antiga `?pagina=usuarios` redireciona para ela). Pasta: `conteudo/cadastrado/dashboard/` (as classes CSS continuam com o prefixo `usuarios__`, para não quebrar estilos/animações).
+
+- **Usuários (igual a antes):** Solicitações de acesso, Usuários cadastrados e Editar usuário — `api/dashboard/*.php`, sem alteração.
+- **Compras (novo):** aba/tile "Monitoramento de Compras" com pedidos da Loja: quem comprou, o quê (itens e quantidades), valores (subtotal, desconto, frete, total), pagamento, entrega, status e data. Cartões de resumo (pedidos, receita confirmada, ticket médio, aguardando pagamento), "Produtos mais comprados", busca (usuário / pedido / produto), filtro de status e de período, e "Ver detalhes" por pedido. Backend: `api/dashboard/compras.php`.
+- **Acesso:** só o usuário id 1. O endpoint responde `401` sem sessão e `403` para qualquer outro usuário (mesmo bootstrap de `api/dashboard/_bootstrap.php`); a página mostra "Acesso restrito" e o item some do menu para os demais.
+- **Banco:** nenhuma tabela nova. Lê `tb_loja_pedidos` (+ `tb_loja_pedido_itens` e `tb_loja_pagamentos`, se existirem) e `tb_usuarios`. Também entende o formato JSON de `database/loja_pedidos.sql` (colunas `codigo`/`itens`).
+- **Pedido pago automaticamente:** ao abrir Compras, os pedidos "iniciado" são conferidos no Mercado Pago e viram "pago" quando aprovados (precisa de `database/loja_pagamento_mp.sql` e `MP_ACCESS_TOKEN` — ver `api/loja/LEIA-ME.md`). Essa conferência vale para o formato de pedidos do zip (coluna `itens` JSON).
+- A escolha de ordem/fixação do menu lateral que o usuário já tinha salva para "Usuários" é aproveitada para "Dashboard" (`assets/js/barra-app.js`).
+
+## Esqueci minha senha (Brevo)
+
+Fluxo: popout de login → "Esqueci minha senha" → email → link por e-mail (Brevo) → `index.php?redefinir_senha=TOKEN` abre o popout na etapa "nova senha".
+
+1. Rode `database/redefinicao_senha.sql` (tabela `tb_redefinicao_senha`; guarda só o hash do token).
+2. Na Brevo: crie uma chave de API (SMTP e API → Chaves de API) e valide o remetente (Remetentes, domínios e IPs).
+3. Em `api/config.local.php` preencha `BREVO_API_KEY`, `BREVO_REMETENTE_EMAIL`, `BREVO_REMETENTE_NOME` e, em produção, `APP_URL` (ex.: `https://meusite.com.br/intelbras`).
+
+| Arquivo | Método | O que faz |
+|---|---|---|
+| `api/esqueci_senha.php` | POST | Gera o token (30 min, uso único) e envia o e-mail. Resposta sempre igual (não revela se o email existe). Limites: 3/15 min por usuário, 10/h por IP |
+| `api/redefinir_senha.php` | GET / POST | GET confere o link; POST grava a nova senha (mín. 8, letras e números), invalida os links pendentes e encerra as sessões do usuário |
+| `api/_brevo.php` | — | Envio pela API da Brevo + modelo do e-mail |
+
+## Tema do site (Claro / Escuro / Automático)
+
+O site inteiro tem os três temas, escolhidos em **Configurações > Aparência** (valem para todas as telas, cabeçalho, rodapé e páginas legais). O **claro é a base e o padrão**: os CSS de cada módulo continuam sendo o tema claro; o escuro é uma camada por cima.
+
+| Arquivo | Papel |
+|---|---|
+| `assets/js/tema.js` | Decide o tema, põe `data-tema="claro\|escuro"` no `<html>`, troca as imagens com versão escura e dispara o evento `ib:tema`. API: `IBTema.definir()`, `.pref()`, `.efetivo()`, `.imagem(url)` |
+| `assets/css/tema-escuro.css` | Tokens + sobreposições do escuro. **Todo** seletor começa com `html[data-tema="escuro"]`, então no claro não muda nada. Cada bloco traz o nome do CSS claro que ele sobrepõe — para ajustar o escuro, mexa só aqui |
+
+- **Onde a escolha fica:** `tb_usuario_preferencias` (`aparencia.tema`; já existia, sem tabela nova). O `index.php` lê o valor da conta e grava em `data-tema-pref` no `<html>` (sem piscar e igual em qualquer aparelho). Sem login (visitante e páginas legais), vale o último valor guardado no navegador (`localStorage` `ibTema`). Sem nada salvo: claro.
+- **Automático:** segue o tema do sistema operacional e reage se ele mudar com a página aberta.
+- **Carregamento:** `tema.js` (síncrono) e `tema-escuro.css` são os primeiros itens do `<head>` em `index.php`, `index.html` e nas páginas legais.
+- **Imagens com versão escura** (mesmo nome + `-escuro`): logo (`Logo.png` / `Logo-escuro.png`, duas `<img>` com as classes `logo-claro` / `logo-escuro`), banners do Início (cadastrado e não cadastrado) e capas dos cursos (`capa-….webp` / `capa-…-escuro.webp`, também `-640`). Se criar uma imagem nova com variante escura, siga o mesmo padrão de nome.
+- **Mapa da Unidade:** usa o estilo `positron` no claro e `dark` no escuro (troca ao vivo).
+- **Banco de dados:** nenhuma alteração.

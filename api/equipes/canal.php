@@ -11,6 +11,7 @@
 declare(strict_types=1);
 
 require_once __DIR__ . '/_bootstrap.php';
+require_once __DIR__ . '/_visibilidade.php';
 
 $usuarioId = eq_iniciar(['GET']);
 
@@ -21,7 +22,8 @@ try {
 
     eq_marcar_visto($pdo, $usuarioId);
 
-    $todasEquipes = eq_listar_equipes($pdo);
+    // Sidebar: só as equipes que o usuário pode ver (admin id 1 vê todas).
+    $todasEquipes = eqv_filtrar(eqv_slugs_visiveis($pdo, $usuarioId), eq_listar_equipes($pdo));
     $sidebar = array_map(static function (array $e) use ($pdo, $usuarioId) {
         return [
             'slug'       => $e['slug'],
@@ -73,10 +75,13 @@ try {
             'id'      => $usuarioId,
             'nome'    => (string)$euRow['nome'],
             'inicial' => mb_strtoupper(mb_substr((string)$euRow['nome'], 0, 1)),
+            // Só Gerente, Diretor, CEO (e o Administrador, id 1) chamam a equipe toda.
+            'pode_chamar' => $usuarioId === 1 || $ehAdmin
+                || in_array((string)$euRow['cargo'], ['gerente', 'diretor', 'ceo'], true),
         ],
         'membros'          => $membros,
         'membros_total'    => count($membros),
-        'arquivos_fixados' => eq_listar_fixados($pdo, $slug),
+        'arquivos_fixados' => eq_listar_fixados($pdo, $slug, $usuarioId),
         'links'            => eq_listar_links($pdo, $slug),
         'sidebar'          => $sidebar,
     ]);

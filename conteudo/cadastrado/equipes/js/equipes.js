@@ -166,17 +166,54 @@
     $('equipesCanalIcone').style.background = equipe.cor;
     $('equipesCanalTitulo').textContent = equipe.nome;
     $('equipesCanalSubtitulo').textContent = 'Conversas da equipe ' + equipe.nome;
-    document.title = equipe.nome + ' · Equipes · Intelbras';
+    document.title = equipe.nome + ' — Intelbras';
 
     const btnFav = $('equipesBtnFavorito');
     btnFav.setAttribute('aria-pressed', String(equipe.favorita));
 
     $('equipesMembrosCount').textContent = String(dados.membros_total);
 
+    const podeChamar = !!(dados.eu && dados.eu.pode_chamar);
+    ['equipesBtnVoz', 'equipesBtnVideo'].forEach((id) => {
+      const b = $(id);
+      b.style.opacity = podeChamar ? '' : '0.45';
+      b.setAttribute('aria-disabled', podeChamar ? 'false' : 'true');
+      if (!podeChamar) b.title = 'Apenas Diretores, Gerentes e CEO podem chamar a equipe toda.';
+    });
+
     if (equipe.somente_leitura && !dados.eh_admin) {
       $('equipesSomenteLeitura').hidden = false;
       $('equipesComposer').hidden = true;
     }
+  }
+
+  // Membros do painel direito: mostra 5 e expande para todos ("Ver todos" / "+ N membros").
+  let membrosPainel = [];
+  let membrosExpandido = false;
+
+  function renderizarMembrosPainel() {
+    const listaMembros = $('equipesMembrosLista');
+    const limite = 5;
+    const visiveis = membrosExpandido ? membrosPainel : membrosPainel.slice(0, limite);
+    listaMembros.innerHTML = visiveis.map(membroHtml).join('') || '<p style="font-size:12.5px;color:var(--eq-cinza)">Ainda não há outros membros nesta equipe.</p>';
+
+    const maisBtn = $('equipesMaisMembros');
+    const resto = membrosPainel.length - limite;
+    if (!membrosExpandido && resto > 0) {
+      maisBtn.hidden = false;
+      maisBtn.textContent = '+ ' + resto + ' membro' + (resto > 1 ? 's' : '');
+    } else {
+      maisBtn.hidden = true;
+    }
+
+    const verTodos = $('equipesVerTodosMembros');
+    verTodos.hidden = membrosPainel.length <= limite;
+    verTodos.textContent = membrosExpandido ? 'Ver menos' : 'Ver todos';
+  }
+
+  function alternarMembrosPainel(expandir) {
+    membrosExpandido = typeof expandir === 'boolean' ? expandir : !membrosExpandido;
+    renderizarMembrosPainel();
   }
 
   function renderizarPainel(dados) {
@@ -185,32 +222,162 @@
 
     renderizarFixados(dados.arquivos_fixados);
 
-    const listaMembros = $('equipesMembrosLista');
-    const amostra = dados.membros.slice(0, 5);
-    listaMembros.innerHTML = amostra.map(membroHtml).join('') || '<p style="font-size:12.5px;color:var(--eq-cinza)">Ainda não há outros membros nesta equipe.</p>';
-
-    const maisBtn = $('equipesMaisMembros');
-    const resto = dados.membros_total - amostra.length;
-    if (resto > 0) {
-      maisBtn.hidden = false;
-      maisBtn.textContent = '+ ' + resto + ' membro' + (resto > 1 ? 's' : '');
-    } else {
-      maisBtn.hidden = true;
-    }
+    membrosPainel = dados.membros;
+    renderizarMembrosPainel();
 
     const listaLinks = $('equipesLinksLista');
     listaLinks.innerHTML = dados.links.map((l) => {
       const conteudo = `<span class="equipes__link-icone">${ICONE_LINK[l.icone] || '📄'}</span><span>${escapeHtml(l.rotulo)}</span><span aria-hidden="true">›</span>`;
+      if (l.icone === 'calendario' && !l.url) {
+        return `<button type="button" class="equipes__link-item equipes__link-item--btn" data-acao="calendario" aria-haspopup="dialog" aria-expanded="false">${conteudo}</button>`;
+      }
       return l.url
         ? `<a class="equipes__link-item" href="${escapeHtml(l.url)}">${conteudo}</a>`
         : `<span class="equipes__link-item" style="cursor:default;opacity:.7">${conteudo}</span>`;
     }).join('');
+
+    const btnCal = listaLinks.querySelector('[data-acao="calendario"]');
+    if (btnCal) iniciarCalendarioEquipe(listaLinks, btnCal);
+  }
+
+  // ============================================================
+  // CALENDÁRIO DA EQUIPE (popup do link "Calendário da equipe")
+  // ============================================================
+  let calendarioLimpar = null;
+
+  function iniciarCalendarioEquipe(wrap, btn) {
+    if (calendarioLimpar) calendarioLimpar();
+    const MESES = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+    const SEMANA = ['D', 'S', 'T', 'Q', 'Q', 'S', 'S'];
+    const hoje = new Date();
+    let ano = hoje.getFullYear();
+    let mes = hoje.getMonth();
+    let selecionado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+
+    const pop = document.createElement('div');
+    pop.className = 'equipes__cal';
+    pop.setAttribute('role', 'dialog');
+    pop.setAttribute('aria-label', 'Calendário da equipe');
+    pop.setAttribute('data-mv', 'menu');   // padrão do site: entrada animada + sombra de menu
+    pop.setAttribute('data-mv-anim', '');
+    pop.hidden = true;
+    // fica no <body> para não ser cortado pelo painel (overflow/transform) e abrir ao lado dele
+    document.body.appendChild(pop);
+
+    function posicionar() {
+      if (pop.hidden) return;
+      const painel = btn.closest('.equipes__painel') || wrap;
+      const rp = painel.getBoundingClientRect();
+      const rb = btn.getBoundingClientRect();
+      const larg = pop.offsetWidth;
+      const alt = pop.offsetHeight;
+      const margem = 8;
+      let esq = rp.left - larg - margem;               // ao lado (esquerda do painel)
+      if (esq < margem) esq = Math.max(margem, window.innerWidth - larg - margem); // sem espaço: encosta na direita
+      let topo = rb.top + rb.height / 2 - alt / 2;      // centralizado no link
+      topo = Math.min(Math.max(margem, topo), window.innerHeight - alt - margem);
+      pop.style.left = esq + 'px';
+      pop.style.top = topo + 'px';
+    }
+
+    const mesmoDia = (a, b) => a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+
+    function desenhar(animarGrade) {
+      const primeiro = new Date(ano, mes, 1);
+      const inicio = primeiro.getDay();
+      const diasNoMes = new Date(ano, mes + 1, 0).getDate();
+      const diasMesAnterior = new Date(ano, mes, 0).getDate();
+
+      let celulas = '';
+      for (let i = inicio - 1; i >= 0; i--) {
+        celulas += `<span class="equipes__cal-dia equipes__cal-dia--fora">${diasMesAnterior - i}</span>`;
+      }
+      for (let d = 1; d <= diasNoMes; d++) {
+        const data = new Date(ano, mes, d);
+        const cls = ['equipes__cal-dia'];
+        if (mesmoDia(data, hoje)) cls.push('equipes__cal-dia--hoje');
+        if (mesmoDia(data, selecionado)) cls.push('equipes__cal-dia--sel');
+        celulas += `<button type="button" class="${cls.join(' ')}" data-dia="${d}">${d}</button>`;
+      }
+      const restantes = (7 - ((inicio + diasNoMes) % 7)) % 7;
+      for (let d = 1; d <= restantes; d++) {
+        celulas += `<span class="equipes__cal-dia equipes__cal-dia--fora">${d}</span>`;
+      }
+
+      pop.innerHTML = `
+        <div class="equipes__cal-topo">
+          <button type="button" class="equipes__cal-nav" data-nav="-1" aria-label="Mês anterior">‹</button>
+          <strong class="equipes__cal-titulo">${MESES[mes]} de ${ano}</strong>
+          <button type="button" class="equipes__cal-nav" data-nav="1" aria-label="Próximo mês">›</button>
+        </div>
+        <div class="equipes__cal-grade${animarGrade ? ' equipes__cal-grade--troca' : ''}">
+          ${SEMANA.map((x) => `<span class="equipes__cal-sem">${x}</span>`).join('')}
+          ${celulas}
+        </div>
+        <div class="equipes__cal-rodape"><button type="button" class="equipes__cal-hoje" data-hoje>Hoje</button></div>`;
+    }
+
+    function abrir(aberto) {
+      pop.hidden = !aberto;
+      btn.setAttribute('aria-expanded', String(aberto));
+      if (aberto) { desenhar(); posicionar(); }
+    }
+
+    btn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      abrir(pop.hidden);
+    });
+
+    pop.addEventListener('click', (e) => {
+      e.stopPropagation();
+      const nav = e.target.closest('[data-nav]');
+      if (nav) {
+        const novo = new Date(ano, mes + Number(nav.dataset.nav), 1);
+        ano = novo.getFullYear();
+        mes = novo.getMonth();
+        desenhar(true);
+        return;
+      }
+      if (e.target.closest('[data-hoje]')) {
+        ano = hoje.getFullYear();
+        mes = hoje.getMonth();
+        selecionado = new Date(hoje.getFullYear(), hoje.getMonth(), hoje.getDate());
+        desenhar(true);
+        return;
+      }
+      const dia = e.target.closest('[data-dia]');
+      if (dia) {
+        selecionado = new Date(ano, mes, Number(dia.dataset.dia));
+        desenhar();
+      }
+      posicionar();
+    });
+
+    const aoClicarFora = () => { if (!pop.hidden) abrir(false); };
+    const aoTeclar = (e) => {
+      if (e.key === 'Escape' && !pop.hidden) { abrir(false); btn.focus(); }
+    };
+    const aoRedimensionar = () => posicionar();
+
+    document.addEventListener('click', aoClicarFora);
+    document.addEventListener('keydown', aoTeclar);
+    window.addEventListener('resize', aoRedimensionar);
+    // captura o scroll da página e de qualquer container (painel, etc.) para acompanhar o link
+    window.addEventListener('scroll', aoRedimensionar, { passive: true, capture: true });
+
+    calendarioLimpar = () => {
+      document.removeEventListener('click', aoClicarFora);
+      document.removeEventListener('keydown', aoTeclar);
+      window.removeEventListener('resize', aoRedimensionar);
+      window.removeEventListener('scroll', aoRedimensionar, true);
+      pop.remove();
+      calendarioLimpar = null;
+    };
   }
 
   function membroHtml(m) {
     const rotulos = { online: 'Online', reuniao: 'Em reunião', ausente: 'Ausente', offline: 'Offline' };
-    return `
-      <div class="equipes__membro">
+    const conteudo = `
         <span class="equipes__membro-avatar-wrap">
           <span class="equipes__membro-avatar">${escapeHtml(m.inicial)}</span>
           <span class="equipes__membro-presenca equipes__membro-presenca--${m.presenca}" title="${rotulos[m.presenca]}"></span>
@@ -218,8 +385,20 @@
         <span class="equipes__membro-info">
           <span class="equipes__membro-nome">${escapeHtml(m.nome)}</span>
           <span class="equipes__membro-status">${rotulos[m.presenca]}</span>
-        </span>
-      </div>`;
+        </span>`;
+
+    // Clicar na foto ou no nome abre o chat com essa pessoa
+    // (index.php?pagina=chat&usuario=<id> cria/abre a conversa).
+    // No próprio usuário, abre a edição do perfil (Configurações > Meu perfil).
+    const meuId = dadosCanal && dadosCanal.eu ? Number(dadosCanal.eu.id) : 0;
+    if (!m.id) {
+      return `<div class="equipes__membro">${conteudo}</div>`;
+    }
+    if (Number(m.id) === meuId) {
+      return `<a class="equipes__membro equipes__membro--link" href="index.php?pagina=configuracoes" title="Editar meu perfil">${conteudo}</a>`;
+    }
+    const href = 'index.php?pagina=chat&usuario=' + encodeURIComponent(m.id);
+    return `<a class="equipes__membro equipes__membro--link" href="${href}" title="Conversar com ${escapeHtml(m.nome)}">${conteudo}</a>`;
   }
 
   function renderizarFixados(lista) {
@@ -237,13 +416,23 @@
       const btn = $('equipesBtnFavorito');
       const novo = btn.getAttribute('aria-pressed') !== 'true';
       btn.setAttribute('aria-pressed', String(novo));
-      // Preferência é só de UI por enquanto (sem endpoint dedicado ainda).
+      // Grava no servidor (alimenta o card "Equipes favoritas" do Início).
+      // Se falhar, volta a estrela ao estado anterior.
+      fetch('api/equipes/favorita.php', {
+        method: 'POST', headers: jsonHeaders(), credentials: 'same-origin',
+        body: JSON.stringify({ slug: EQUIPE, favorita: novo }),
+      }).then((r) => r.json().catch(() => ({})).then((d) => {
+        if (!r.ok || d.sucesso === false) throw new Error(d.erro || 'Falha');
+      })).catch(() => {
+        btn.setAttribute('aria-pressed', String(!novo));
+        mostrarToast('Não foi possível atualizar o favorito.');
+      });
     });
 
     $('equipesBtnMembros').addEventListener('click', () => togglePainel());
     $('equipesPainelFechar').addEventListener('click', () => togglePainel(false));
-    $('equipesVerTodosMembros').addEventListener('click', () => togglePainel(true));
-    $('equipesMaisMembros').addEventListener('click', () => togglePainel(true));
+    $('equipesVerTodosMembros').addEventListener('click', () => alternarMembrosPainel());
+    $('equipesMaisMembros').addEventListener('click', () => alternarMembrosPainel(true));
 
     const btnMais = $('equipesBtnMais');
     const menuMais = $('equipesMenuMais');
@@ -256,14 +445,50 @@
     $('equipesMenuVerDocumentos').addEventListener('click', () => {
       window.location.href = 'index.php?pagina=documentos';
     });
-    $('equipesMenuSilenciar').addEventListener('click', () => {
+    // Silenciar canal: guardado neste navegador (localStorage). Canais
+    // silenciados não geram badge na lateral nem aparecem no sino do
+    // cabeçalho, e ganham um ícone de "silenciado" no menu lateral.
+    const CHAVE_SILENCIADAS = 'equipesSilenciadas';
+    const itemSilenciar = $('equipesMenuSilenciar');
+
+    function lerSilenciadas() {
+      try {
+        const v = JSON.parse(localStorage.getItem(CHAVE_SILENCIADAS) || '[]');
+        return Array.isArray(v) ? v.map(String) : [];
+      } catch (e) { return []; }
+    }
+
+    function atualizarRotuloSilenciar() {
+      itemSilenciar.textContent = lerSilenciadas().indexOf(EQUIPE) !== -1
+        ? 'Reativar notificações'
+        : 'Silenciar canal';
+    }
+
+    atualizarRotuloSilenciar();
+
+    itemSilenciar.addEventListener('click', () => {
       menuMais.hidden = true;
-      mostrarToast('Canal silenciado.');
+      const lista = lerSilenciadas();
+      const estavaMudo = lista.indexOf(EQUIPE) !== -1;
+      const nova = estavaMudo ? lista.filter((x) => x !== EQUIPE) : lista.concat(EQUIPE);
+      try { localStorage.setItem(CHAVE_SILENCIADAS, JSON.stringify(nova)); } catch (e) { /* sem storage */ }
+      atualizarRotuloSilenciar();
+      window.dispatchEvent(new Event('intelbras:silenciadas')); // atualiza o menu lateral
+      mostrarToast(estavaMudo ? 'Notificações reativadas.' : 'Canal silenciado.');
     });
 
-    $('equipesBtnVideo').addEventListener('click', () => mostrarToast('Chamadas de vídeo chegam em breve.'));
-    $('equipesBtnVoz').addEventListener('click', () => mostrarToast('Chamadas de voz chegam em breve.'));
-    $('equipesBtnNovaAba').addEventListener('click', () => mostrarToast('Adicionar novas abas chega em breve.'));
+    // A sala (WebRTC) vive na página Chamadas: abrimos ela já pedindo a chamada deste canal.
+    // Só Gerente, Diretor e CEO (e o Administrador) podem chamar a equipe.
+    function chamarEquipe(midia) {
+      if (!dadosCanal || !dadosCanal.eu || !dadosCanal.eu.pode_chamar) {
+        mostrarToast('Apenas Diretores, Gerentes e CEO podem chamar a equipe toda.');
+        return;
+      }
+      // &origem=equipes: a sala abre direto e, ao desligar, a volta cai neste canal (igual ao Chat).
+      window.location.href = 'index.php?pagina=chamadas&chamar_equipe=' + encodeURIComponent(EQUIPE) + '&midia=' + midia + '&origem=equipes';
+    }
+    $('equipesBtnVoz').addEventListener('click', () => chamarEquipe('voz'));
+    $('equipesBtnVideo').addEventListener('click', () => chamarEquipe('video'));
     $('equipesBtnFixados').addEventListener('click', () => {
       const l = $('equipesFixadosLista');
       l.hidden = !l.hidden;
@@ -557,6 +782,42 @@
     document.querySelectorAll('.equipes__reacao-picker, .equipes__msg-menu').forEach((el) => el.remove());
   }
 
+  // Botão direito numa mensagem: mesmas ações da barra "⋯", no menu padronizado do site
+  // (assets/js/menu-contexto.js). Links, imagens e a edição inline mantêm o menu do navegador.
+  listaEl.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    const el = e.target.closest('[data-msg-id]');
+    if (!M || !el || e.shiftKey || M.temSelecao()) return;
+    if (e.target.closest('a[href], img, textarea, input, button')) return;
+    const id = Number(el.getAttribute('data-msg-id'));
+    const m = mensagensPorId.get(id);
+    if (!m || m.apagada || id < 0) return; // apagada ou ainda sendo enviada
+    e.preventDefault();
+    fecharPopoversFlutuantes();
+    const pos = M.posicao(e, el);
+
+    const opcoes = [
+      { rotulo: 'Responder', icone: 'responder', destaque: true, acao: () => iniciarResposta(id) },
+      { rotulo: 'Copiar texto', icone: 'copiar', desabilitado: !m.conteudo,
+        acao: () => M.copiar(m.conteudo, 'Texto copiado') },
+    ];
+    if ((m.anexos || []).length > 0 && dadosCanal && dadosCanal.eh_admin) {
+      opcoes.push({ rotulo: m.fixada ? 'Desfixar' : 'Fixar no canal', icone: m.fixada ? 'unpin' : 'pin',
+        acao: () => alternarFixado(id, !m.fixada) });
+    }
+    if (m.minha) {
+      opcoes.push('sep');
+      opcoes.push({ rotulo: 'Editar', icone: 'editar', acao: () => iniciarEdicao(id) });
+      opcoes.push({ rotulo: 'Apagar', icone: 'lixeira', perigo: true, acao: () => apagarMensagem(id) });
+    }
+    M.mostrar({
+      x: pos.x, y: pos.y, alvo: null,
+      aria: 'Opções da mensagem',
+      cabeca: M.cabeca('mensagem', m.minha ? 'Você' : (m.autor || 'Mensagem')),
+      opcoes: opcoes,
+    });
+  });
+
   async function reagir(id, emoji) {
     try {
       const dados = await chamarApi('api/equipes/mensagem.php', {
@@ -627,7 +888,7 @@
   }
 
   async function apagarMensagem(id) {
-    if (!window.confirm('Apagar esta mensagem para todos os membros da equipe?')) return;
+    if (!(await window.IBDialogo.confirmar({ titulo: 'Apagar mensagem?', texto: 'Esta mensagem será apagada para todos os membros da equipe.', confirmar: 'Apagar', perigo: true }))) return;
     try {
       const dados = await chamarApi('api/equipes/mensagem.php', {
         method: 'POST', headers: jsonHeaders(),
@@ -1394,6 +1655,31 @@
       mostrarToast(e.message || 'Não foi possível enviar a mensagem.', true);
     }
   }
+
+  // Resumo de uma chamada feita a partir daqui: aparece sobre a própria tela da Equipe
+  // (mesma chave de sessionStorage e mesmo visual do Chat).
+  (function mostrarResumoChamada() {
+    let r = null;
+    try { r = JSON.parse(sessionStorage.getItem('equipesResumoChamada') || 'null'); sessionStorage.removeItem('equipesResumoChamada'); } catch (e) { r = null; }
+    const modal = $('equipesPos');
+    if (!r || !modal) return;
+    const aviso = r.tipo === 'aviso';
+    $('equipesPosTitulo').textContent = aviso ? r.titulo : 'Chamada encerrada';
+    $('equipesPosTexto').hidden = !aviso;
+    $('equipesPosTexto').textContent = aviso ? r.texto : '';
+    $('equipesPosResumo').hidden = aviso;
+    if (!aviso) { $('equipesPosDuracao').textContent = r.duracao || '00:00'; $('equipesPosPartes').textContent = r.partes || 'Você'; }
+    $('equipesPosIcone').className = 'equipes__pos-icone' + (aviso ? ' equipes__pos-icone--aviso' : '');
+    $('equipesPosIcone').innerHTML = aviso
+      ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 8v5M12 16.5v.01"/><circle cx="12" cy="12" r="9"/></svg>'
+      : '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12.5l4.5 4.5L19 7.5"/></svg>';
+    modal.hidden = false;
+    const fechar = () => { modal.hidden = true; };
+    $('equipesPosFechar').addEventListener('click', fechar);
+    modal.addEventListener('click', (e) => { if (e.target === modal) fechar(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') fechar(); });
+    $('equipesPosFechar').focus();
+  })();
 
   iniciar();
 

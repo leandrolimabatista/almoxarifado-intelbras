@@ -114,7 +114,7 @@
 
 .documentos__btn:disabled {
   opacity: 0.6;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .documentos__btn--primario {
@@ -1278,7 +1278,7 @@
   padding: 18px 20px;
   overflow: auto;
   background: #fff;
-  font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
   font-size: 12.5px;
   line-height: 1.55;
   white-space: pre-wrap;
@@ -1331,4 +1331,13 @@
   .documentos__tabela--carregando tbody {
     transition: none;
   }
+}
+
+/* Popout padronizado de Equipes no modal "Enviar documento".
+   A animação de entrada do modal (movimento.css) mantém translate/scale
+   aplicados ao final (fill-mode "both"), o que faz o <dialog> virar o
+   referencial do menu (position: fixed) e o recortar. Ao terminar a
+   animação, os valores voltam ao normal e o menu abre junto ao campo. */
+html body .documentos__dialogo[data-mv-anim] {
+  animation-fill-mode: backwards !important;
 }

@@ -37,6 +37,15 @@ const REU_MAX_PARTICIPANTES = 200;
 
 $usuarioId = reu_iniciar(['POST']);
 reu_exigir_csrf();
+
+// Só Gerente, Diretor e CEO (e o Administrador, id 1) agendam reuniões.
+if ($usuarioId !== 1) {
+    $stCargo = reu_pdo()->prepare('SELECT cargo FROM tb_usuarios WHERE id = ? LIMIT 1');
+    $stCargo->execute([$usuarioId]);
+    if (!in_array((string)$stCargo->fetchColumn(), ['gerente', 'diretor', 'ceo'], true)) {
+        reu_erro(403, 'Apenas Diretores, Gerentes e CEO podem agendar reuniões.');
+    }
+}
 $dados = reu_ler_json();
 
 $erros = [];

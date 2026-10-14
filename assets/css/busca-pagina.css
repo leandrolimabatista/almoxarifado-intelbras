@@ -1,0 +1,214 @@
+/* ============================================================
+   BUSCA NA PÁGINA (Ctrl+F) — Intelbras
+   Componente global (assets/): substitui a barra de busca nativa
+   do navegador por um popout no padrão do site (card branco,
+   cantos arredondados, blobs verdes suaves, campo em pílula).
+
+   Estrutura:
+   .bp-card
+     ├─ .bp-campo-wrap  (ícone + input + contador, tudo dentro do campo)
+     └─ .bp-acoes       (anterior · próximo · | · fechar)
+
+   Carregado em index.php / index.html.
+============================================================= */
+
+.bp-barra {
+  --bp-verde: var(--intelbras-verde, #00A859);
+  --bp-verde-suave: rgba(0, 168, 89, 0.10);
+  --bp-texto: var(--intelbras-preto, #1A1A1A);
+  --bp-texto-suave: #5F6368;
+  --bp-linha: var(--intelbras-cinza-claro, #E8E8E8);
+  --bp-erro: var(--intelbras-erro, #E5484D);
+
+  position: fixed;
+  top: 16px;
+  right: 24px;
+  z-index: 6500;
+  width: 420px;
+  max-width: calc(100vw - 24px);
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+  transform: translateY(-12px) scale(0.98);
+  transform-origin: top right;
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(.2, .8, .2, 1), visibility 0s linear 0.18s;
+}
+
+.bp-barra.is-open {
+  opacity: 1;
+  visibility: visible;
+  pointer-events: auto;
+  transform: translateY(0) scale(1);
+  transition: opacity 0.18s ease, transform 0.18s cubic-bezier(.2, .8, .2, 1), visibility 0s;
+}
+
+/* ---------- Card ---------- */
+.bp-card {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px;
+  background: var(--intelbras-branco, #FFFFFF);
+  border: 1px solid rgba(0, 0, 0, 0.05);
+  border-radius: 22px;
+  box-shadow:
+    0 1px 2px rgba(0, 0, 0, 0.06),
+    0 14px 36px rgba(0, 0, 0, 0.14);
+  overflow: hidden;
+  isolation: isolate;
+}
+
+/* Blobs: só decoração, bem suaves e sempre ATRÁS do conteúdo
+   (antes o blob inferior ficava sob o botão de fechar e poluía o ícone). */
+.bp-blob {
+  position: absolute;
+  z-index: -1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 50% 50%, rgba(0, 168, 89, 0.14), rgba(0, 168, 89, 0) 70%);
+  pointer-events: none;
+}
+.bp-blob--tl { width: 110px; height: 110px; top: -52px; left: -40px; }
+.bp-blob--br { width: 90px;  height: 90px;  bottom: -60px; right: -36px; opacity: 0.6; }
+
+/* ---------- Campo (ícone + input + contador) ---------- */
+.bp-campo-wrap {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 8px 0 14px;
+  margin: 0;
+  background: #FFFFFF;
+  border: 1px solid var(--bp-linha);
+  border-radius: 999px;
+  cursor: text;
+  transition: background-color 0.15s ease, border-color 0.15s ease, box-shadow 0.15s ease;
+}
+.bp-campo-wrap:hover { border-color: #CFE9DA; }
+.bp-campo-wrap:focus-within {
+  background: #FFFFFF;
+  border-color: var(--bp-verde);
+  box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.14);
+}
+
+.bp-icone {
+  flex: 0 0 auto;
+  display: inline-flex;
+  color: #8A9490;
+  transition: color 0.15s ease;
+}
+.bp-campo-wrap:focus-within .bp-icone { color: var(--bp-verde); }
+
+.bp-campo {
+  flex: 1 1 auto;
+  min-width: 0;
+  height: 100%;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--bp-texto);
+  font-family: inherit;
+  font-size: 14px;
+  outline: none;
+  box-shadow: none;
+}
+.bp-campo::placeholder { color: #8A8F8D; }
+
+/* Contador vira uma "pílula" dentro do campo e some quando vazio
+   (antes reservava 52px de espaço em branco). */
+.bp-contador {
+  flex: 0 0 auto;
+  padding: 3px 9px;
+  border-radius: 999px;
+  background: var(--bp-verde-suave);
+  color: #0B7A45;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 1.3;
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.bp-contador:empty { display: none; }
+.bp-contador.is-vazio {
+  background: rgba(229, 72, 77, 0.10);
+  color: var(--bp-erro);
+}
+
+/* ---------- Ações ---------- */
+.bp-acoes {
+  flex: 0 0 auto;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.bp-sep {
+  flex: 0 0 auto;
+  width: 1px;
+  height: 20px;
+  margin: 0 4px;
+  background: var(--bp-linha);
+}
+
+.bp-btn {
+  flex: 0 0 auto;
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: transparent;
+  color: var(--bp-texto-suave);
+  cursor: pointer;
+  transition: background-color 0.15s ease, color 0.15s ease, transform 0.1s ease;
+}
+.bp-btn:hover:not(:disabled) {
+  background: #EEF7F2;
+  color: var(--bp-verde);
+}
+.bp-btn:active:not(:disabled) { transform: scale(0.92); }
+.bp-btn:focus-visible {
+  outline: 2px solid var(--bp-verde);
+  outline-offset: 1px;
+}
+.bp-btn:disabled { opacity: 0.3; cursor: default; }
+
+/* Fechar: neutro (não compete com a navegação) */
+.bp-btn--fechar { color: var(--bp-texto); }
+.bp-btn--fechar:hover:not(:disabled) {
+  background: #F0F0F0;
+  color: var(--bp-texto);
+}
+
+/* ---------- Destaques dentro da página ---------- */
+mark.bp-marca {
+  background: rgba(0, 168, 89, 0.24);
+  color: inherit;
+  padding: 0;
+  border-radius: 3px;
+}
+mark.bp-marca.bp-atual {
+  background: var(--intelbras-verde, #00A859);
+  color: #fff;
+  box-shadow: 0 0 0 2px rgba(0, 168, 89, 0.35);
+}
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 480px) {
+  .bp-barra { top: 10px; right: 12px; left: 12px; width: auto; max-width: none; }
+  .bp-card { padding: 6px; gap: 4px; }
+  .bp-campo-wrap { height: 38px; padding-left: 12px; }
+  .bp-btn { width: 32px; height: 32px; }
+  .bp-sep { margin: 0 2px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .bp-barra, .bp-barra.is-open { transition: none; transform: none; }
+}

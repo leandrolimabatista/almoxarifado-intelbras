@@ -16,13 +16,14 @@
   --intelbras-cinza-claro: #E8E8E8;
   --content-bg: #F4F5F7;
   --content-border: #ECECEC;
-  --ch-perigo: #DC2626;
+  --ch-perigo: #E5484D;
   --ch-perigo-escuro: #B91C1C;
   --ch-laranja: #D97706;
   --ch-foco: #1A1A1A;
 }
 
 .chamadas {
+  --ch-anim: 0.15s ease; /* = --mv-t2 do movimento.css */
   display: flex;
   align-items: stretch;
   font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
@@ -51,8 +52,9 @@
 .chamadas__erro-conexao[hidden] { display: none; }
 .chamadas__erro-texto { flex: 1; }
 
-.chamadas__breadcrumb { font-size: 12px; color: var(--intelbras-cinza); margin-bottom: 14px; }
-.chamadas__title { font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; font-size: 26px; font-weight: 600; margin: 0 0 4px; }
+/* Título e subtítulo: mesmas fontes e posição do cabeçalho de Documentos
+   (o padding-top de 20px do main + 8px = 28px, igual ao Documentos) */
+.chamadas__title { font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; font-size: 24px; font-weight: 700; color: var(--intelbras-preto); margin: 8px 0 4px; }
 .chamadas__subtitle { margin: 0 0 20px; font-size: 14px; color: var(--intelbras-cinza); }
 
 /* ===================== BOTÕES ===================== */
@@ -60,11 +62,11 @@
   display: inline-flex; align-items: center; justify-content: center; gap: 8px;
   min-height: 40px; padding: 0 16px; border-radius: 8px; border: 1px solid transparent;
   font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; white-space: nowrap;
-  transition: background-color 0.15s, border-color 0.15s, color 0.15s;
+  transition: background-color var(--ch-anim), border-color var(--ch-anim), color var(--ch-anim);
 }
 .chamadas__btn .ch-ic { width: 16px; height: 16px; }
 .chamadas__btn--primario { background: var(--intelbras-verde); color: #fff; }
-.chamadas__btn--primario:hover:not(:disabled) { background: var(--intelbras-verde-escuro); }
+.chamadas__btn--primario:hover:not(:disabled):not([aria-disabled='true']) { background: var(--intelbras-verde-escuro); }
 .chamadas__btn--secundario { background: #fff; color: var(--intelbras-preto); border-color: #D1D5DB; }
 .chamadas__btn--secundario:hover:not(:disabled) { background: #F5F5F5; }
 .chamadas__btn--perigo { background: var(--ch-perigo); color: #fff; }
@@ -72,7 +74,7 @@
 .chamadas__btn--contorno { background: #fff; color: var(--intelbras-verde-escuro); border-color: var(--intelbras-verde); min-height: 34px; padding: 0 16px; }
 .chamadas__btn--contorno:hover:not(:disabled) { background: var(--intelbras-verde-100); }
 .chamadas__btn--icone { padding: 0; width: 44px; }
-.chamadas__btn:disabled { background: #E5E7EB; color: #6B7280; border-color: #E5E7EB; cursor: not-allowed; }
+.chamadas__btn[aria-disabled='true'], .chamadas__btn:disabled { background: #E5E7EB; color: #6B7280; border-color: #E5E7EB; cursor: default; }
 
 .chamadas__link-btn {
   display: inline-flex; align-items: center; gap: 6px; background: none; border: 0; padding: 6px 4px;
@@ -98,7 +100,7 @@
 .chamadas__acao-corpo { min-width: 0; }
 .chamadas__acao-titulo { font-size: 15px; font-weight: 700; margin: 0 0 4px; }
 .chamadas__acao-texto { margin: 0 0 12px; font-size: 12.5px; line-height: 1.4; color: var(--intelbras-cinza); }
-.chamadas__acao--bloqueada { background: #F9FAFB; cursor: not-allowed; }
+.chamadas__acao--bloqueada { background: #F9FAFB; cursor: pointer; }
 .chamadas__acao--bloqueada .chamadas__acao-icone { background: #ECEDEF; color: #6B7280; }
 .chamadas__acao--bloqueada .chamadas__acao-titulo { color: #4B5563; }
 .chamadas__acao--bloqueada:focus-visible { outline: 3px solid var(--ch-foco); outline-offset: 2px; }
@@ -121,11 +123,13 @@
   border-radius: 999px; border: 1px solid #D1D5DB; background: #fff; color: #374151;
   font-family: inherit; font-size: 12.5px; font-weight: 600; cursor: pointer;
 }
-.chamadas__chip[aria-disabled='true'] { background: #F9FAFB; color: #6B7280; cursor: not-allowed; }
+.chamadas__chip[aria-disabled='true'] { background: #F9FAFB; color: #6B7280; cursor: pointer; }
 .chamadas__chip--ativo { background: var(--intelbras-verde-100); color: var(--intelbras-verde-escuro); border-color: var(--intelbras-verde); }
 .chamadas__chip-lock { width: 13px; height: 13px; }
 
-.chamadas__filtros { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; flex-wrap: wrap; }
+/* Busca sozinha na 1ª linha; filtro de status + "Ver membros da equipe" na 2ª linha */
+.chamadas__filtros { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 12px; margin-bottom: 14px; }
+.chamadas__filtros .chamadas__busca { grid-column: 1 / -1; }
 .chamadas__busca {
   position: relative; display: flex; align-items: center; width: 240px;
 }
@@ -183,14 +187,13 @@
 .chamadas__icone-btn {
   display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px;
   border-radius: 8px; border: 1px solid #D1D5DB; background: #fff; color: #374151; cursor: pointer;
-  transition: background-color 0.15s, color 0.15s, border-color 0.15s;
+  transition: background-color var(--ch-anim), color var(--ch-anim), border-color var(--ch-anim);
 }
-.chamadas__icone-btn:hover:not(:disabled) { background: #F5F5F5; }
-.chamadas__icone-btn--voz, .chamadas__icone-btn--video { color: var(--intelbras-verde-escuro); border-color: var(--intelbras-verde); }
-.chamadas__icone-btn--video { background: var(--intelbras-verde); color: #fff; }
-.chamadas__icone-btn--video:hover:not(:disabled) { background: var(--intelbras-verde-escuro); }
-.chamadas__icone-btn--voz:hover:not(:disabled) { background: var(--intelbras-verde-100); }
-.chamadas__icone-btn:disabled { background: #F3F4F6; color: #9CA3AF; border-color: #E5E7EB; cursor: not-allowed; }
+/* Mensagem, vídeo e voz: mesmo comportamento — neutros em repouso, verdes só com o mouse (ou foco) em cima */
+.chamadas__icone-btn:hover:not(:disabled), .chamadas__icone-btn:focus-visible:not(:disabled) {
+  background: var(--intelbras-verde); color: #fff; border-color: var(--intelbras-verde);
+}
+.chamadas__icone-btn:disabled { background: #F3F4F6; color: #9CA3AF; border-color: #E5E7EB; cursor: default; }
 
 /* vazios / carregando */
 .chamadas__vazio {
@@ -269,10 +272,20 @@
   border: 1px solid var(--content-border); border-radius: 10px; background: #fff; cursor: pointer; font-family: inherit;
 }
 .chamadas__opcao:hover:not(:disabled):not(.chamadas__opcao--estatica) { background: #F9FAFB; }
-.chamadas__opcao:disabled { opacity: 0.55; cursor: not-allowed; }
+.chamadas__opcao:disabled { opacity: 0.55; cursor: default; }
 .chamadas__opcao--sel { border-color: var(--intelbras-verde); background: var(--intelbras-verde-100); box-shadow: inset 0 0 0 1px var(--intelbras-verde); }
 .chamadas__opcao--estatica { cursor: default; }
-.chamadas__opcao--check input { width: 18px; height: 18px; accent-color: var(--intelbras-verde); }
+.chamadas__opcao--check input {
+  -webkit-appearance: none; appearance: none; flex-shrink: 0; margin: 0; width: 20px; height: 20px;
+  border: 1.5px solid #D1D5DB; border-radius: 6px; background: #fff center / 14px 14px no-repeat; cursor: pointer;
+  transition: background-color 0.15s, border-color 0.15s;
+}
+.chamadas__opcao--check input:hover { border-color: var(--intelbras-verde); }
+.chamadas__opcao--check input:checked {
+  background-color: var(--intelbras-verde); border-color: var(--intelbras-verde);
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23fff' stroke-width='3.2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E");
+}
+.chamadas__opcao--check input:focus-visible { outline: 3px solid var(--ch-foco); outline-offset: 2px; }
 .chamadas__opcao-info { display: flex; flex-direction: column; flex: 1; min-width: 0; }
 .chamadas__opcao-info strong { font-size: 14px; color: var(--intelbras-preto); }
 .chamadas__opcao-info span { font-size: 12px; color: var(--intelbras-cinza); }
@@ -292,7 +305,7 @@
 .chamadas__toggle input:checked + .chamadas__toggle-trilho { background: var(--intelbras-verde); }
 .chamadas__toggle input:checked + .chamadas__toggle-trilho::after { transform: translateX(18px); }
 .chamadas__toggle input:focus-visible + .chamadas__toggle-trilho { outline: 3px solid var(--ch-foco); outline-offset: 2px; }
-.chamadas__toggle--desabilitado { cursor: not-allowed; color: #6B7280; }
+.chamadas__toggle--desabilitado { cursor: default; color: #6B7280; }
 .chamadas__toggle--linha { min-height: 40px; }
 .chamadas__cadeado { display: inline-flex; vertical-align: middle; margin-left: 6px; color: #6B7280; }
 .chamadas__aviso { display: flex; align-items: center; gap: 8px; margin: 0; padding: 10px 12px; border-radius: 8px; background: var(--intelbras-verde-100); color: #065F46; font-size: 13px; }
@@ -447,7 +460,7 @@ body.chamada-ativa { overflow: hidden; }
 
 .sala__icone-btn { display: inline-flex; align-items: center; justify-content: center; width: 44px; height: 44px; border: 0; border-radius: 50%; background: rgba(255,255,255,.12); color: inherit; cursor: pointer; }
 .sala__icone-btn:hover { background: rgba(255,255,255,.22); }
-.sala__icone-btn:disabled { opacity: .4; cursor: not-allowed; }
+.sala__icone-btn:disabled { opacity: .4; cursor: default; }
 .sala__painel .sala__icone-btn { background: transparent; }
 .sala__painel .sala__icone-btn:hover { background: #F3F4F6; }
 .sala__icone-btn--perigo { background: var(--ch-perigo); }
@@ -471,3 +484,132 @@ body.chamada-ativa { overflow: hidden; }
 @media (prefers-reduced-motion: reduce) {
   .chamadas__mini-ponto, .chamadas__spinner, .ch-alerta, .ch-alerta__avatar { animation: none !important; }
 }
+
+/* ============================================================
+   SALA — LAYOUT CLARO (padrão do site) + novos componentes
+   ============================================================ */
+.chamadas__sala { background: #F4F7F5; color: var(--intelbras-preto); }
+.sala__topo { background: #fff; border-bottom: 1px solid var(--content-border); }
+.sala__titulo { font-family: 'Poppins', 'Segoe UI', Arial, sans-serif; font-size: 16px; }
+.sala__timer { background: var(--intelbras-verde-100); color: var(--intelbras-verde-escuro); font-weight: 700; }
+.sala__cripto { color: var(--intelbras-verde-escuro); font-weight: 600; }
+.sala__estado { background: var(--intelbras-verde-100); color: var(--intelbras-verde-escuro); border-bottom: 1px solid #CDEBD9; }
+.sala__estado--aviso { background: #FFF4E0; color: #92400E; border-bottom-color: #F8DDA8; }
+.sala__estado--ok { background: #DDF5E7; color: #065F46; }
+
+.sala__tile { background: #E8EEEA; border: 3px solid #fff; box-shadow: 0 2px 10px rgba(16,24,40,.08); }
+.sala__tile--falando { border-color: var(--intelbras-verde); box-shadow: 0 0 0 3px rgba(0,168,89,.25); }
+.sala__tile--mao { border-color: #F59E0B; box-shadow: 0 0 0 3px rgba(245,158,11,.28); }
+.sala__avatar-tile { background: #E8EEEA; }
+.sala__avatar-tile span { background: #fff; box-shadow: 0 4px 14px rgba(16,24,40,.10); }
+.sala__tile-nome { background: rgba(255,255,255,.94); color: var(--intelbras-preto); box-shadow: 0 1px 4px rgba(16,24,40,.15); }
+.sala__tile-mic, .sala__tile-mao { background: rgba(255,255,255,.94); box-shadow: 0 1px 4px rgba(16,24,40,.15); color: var(--intelbras-preto); }
+.sala__tile-mao { gap: 6px; align-items: center; font-size: 12px; font-weight: 700; padding: 4px 10px 4px 8px; color: #92400E; background: #FEF3C7; }
+.sala__ic-off { color: var(--ch-perigo); }
+.sala__ic-mao { color: #D97706; }
+.sala__tile-status { background: #FFF4E0; color: #92400E; }
+
+.sala__painel { border-left: 1px solid var(--content-border); box-shadow: -4px 0 18px rgba(16,24,40,.06); }
+
+.sala__barra { background: #fff; border-top: 1px solid var(--content-border); }
+.sala__ctl { background: #fff; color: var(--intelbras-preto); border: 1px solid #DDE3DF; }
+.sala__ctl:hover { background: #F1F5F3; }
+.sala__ctl--off { background: #FDECEC; color: #B42318; border-color: #F5B5B8; }
+.sala__ctl--off:hover { background: #FBDADB; }
+.sala__ctl--ativo { background: var(--intelbras-verde); color: #fff; border-color: var(--intelbras-verde); }
+.sala__ctl--ativo:hover { background: var(--intelbras-verde-escuro); }
+.sala__ctl--encerrar { background: var(--ch-perigo); color: #fff; border-color: var(--ch-perigo); }
+.sala__ctl--encerrar:hover { background: var(--ch-perigo-escuro); }
+.sala__ctl:focus-visible, .sala__icone-btn:focus-visible, .sala__menu button:focus-visible { outline: 3px solid var(--ch-foco); outline-offset: 2px; }
+.sala__ctl-badge { color: #fff; }
+.sala__icone-btn { background: #F1F5F3; color: var(--intelbras-preto); }
+.sala__icone-btn:hover { background: #E4EBE7; }
+.sala__icone-btn--perigo { background: var(--ch-perigo); color: #fff; }
+.sala__icone-btn--off { background: #FDECEC; color: #B42318; }
+.sala__menu { box-shadow: 0 10px 30px rgba(16,24,40,.18); border: 1px solid var(--content-border); }
+
+.chamadas__mini { background: #fff; color: var(--intelbras-preto); border: 1px solid var(--content-border); box-shadow: 0 12px 32px rgba(16,24,40,.18); }
+.chamadas__mini-info { cursor: pointer; }
+.chamadas__mini-info span { color: var(--intelbras-cinza); }
+
+/* toasts dentro da sala */
+/* Em fluxo dentro do palco (entre o chip de mãos e a grade): empurra a grade em vez de ficar por cima do texto. */
+.sala__toasts { display: flex; flex-direction: column; gap: 6px; align-items: center; pointer-events: none; flex: 0 0 auto; }
+.sala__toasts:empty { display: none; }
+.sala__toast { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; background: #fff; color: var(--intelbras-preto); border: 1px solid var(--content-border); border-left: 4px solid #F59E0B; padding: 9px 16px; border-radius: 10px; font-size: 13.5px; font-weight: 600; box-shadow: 0 8px 22px rgba(16,24,40,.16); animation: ch-alerta-entra .2s ease; }
+.sala__toast .ch-ic { width: 16px; height: 16px; color: #D97706; flex: none; }
+.sala__toast--saindo { opacity: 0; transition: opacity .3s; }
+
+/* chip "mãos levantadas" */
+.sala__maos { align-self: center; display: inline-flex; align-items: center; gap: 8px; padding: 6px 14px; border-radius: 999px; border: 1px solid #F8DDA8; background: #FEF3C7; color: #92400E; font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; max-width: 100%; }
+.sala__maos[hidden] { display: none; }
+.sala__maos .ch-ic { width: 16px; height: 16px; }
+.sala__maos span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* participantes: fila de mãos */
+.sala__part { border: 1px solid transparent; }
+.sala__part--mao { background: #FFFBEB; border-color: #F8DDA8; }
+.sala__part-fila .ch-ic { width: 13px; height: 13px; margin-right: 3px; }
+.sala__part-fila { min-width: 24px; height: 24px; padding: 0 6px; border-radius: 999px; background: #F59E0B; color: #fff; font-size: 12px; font-weight: 700; display: inline-flex; align-items: center; justify-content: center; }
+.sala__part-baixar { border: 1px solid #F59E0B; background: #fff; color: #92400E; border-radius: 8px; min-height: 30px; padding: 0 10px; font-family: inherit; font-size: 12px; font-weight: 700; cursor: pointer; }
+.sala__part-baixar:hover { background: #FEF3C7; }
+
+/* chat da chamada */
+.sala__chat-corpo { position: relative; flex: 1; min-height: 0; display: flex; flex-direction: column; background: #F8FAF9; }
+.sala__msgs { flex: 1; overflow-y: auto; padding: 14px 12px; display: flex; flex-direction: column; gap: 2px; background: transparent; }
+.sala__chat-vazio { position: absolute; inset: 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 6px; padding: 24px; text-align: center; color: var(--intelbras-cinza); font-size: 13px; pointer-events: none; }
+.sala__chat-vazio[hidden] { display: none; }
+.sala__chat-vazio strong { color: var(--intelbras-preto); font-size: 14px; }
+.sala__chat-vazio-ico { width: 52px; height: 52px; border-radius: 50%; background: var(--intelbras-verde-100); color: var(--intelbras-verde); display: flex; align-items: center; justify-content: center; margin-bottom: 4px; }
+.sala__chat-vazio-ico .ch-ic { width: 24px; height: 24px; }
+.sala__msg { display: flex; flex-direction: row; align-items: flex-end; gap: 8px; max-width: 100%; align-self: stretch; margin-top: 8px; }
+.sala__msg--seq { margin-top: 2px; }
+.sala__msg--eu { flex-direction: row-reverse; align-self: stretch; }
+.sala__msg-av { width: 28px; height: 28px; flex-shrink: 0; border-radius: 50%; background: var(--intelbras-verde-100); color: var(--intelbras-verde-escuro); font-size: 12px; font-weight: 700; display: flex; align-items: center; justify-content: center; }
+.sala__msg--seq .sala__msg-av { visibility: hidden; }
+.sala__msg--eu .sala__msg-av { display: none; }
+.sala__msg-bloco { display: flex; flex-direction: column; max-width: 82%; min-width: 0; }
+.sala__msg--eu .sala__msg-bloco { align-items: flex-end; }
+.sala__msg-autor { font-size: 11.5px; color: var(--intelbras-cinza); margin: 0 4px 3px; }
+.sala__msg-autor b { color: var(--intelbras-preto); font-weight: 700; }
+.sala__msg-texto { background: #fff; border: 1px solid var(--content-border); padding: 8px 12px; border-radius: 14px 14px 14px 4px; font-size: 13.5px; line-height: 1.45; word-break: break-word; white-space: pre-wrap; }
+.sala__msg--eu .sala__msg-texto { background: var(--intelbras-verde); border-color: var(--intelbras-verde); color: #fff; border-radius: 14px 14px 4px 14px; }
+.sala__msg-texto a { color: inherit; text-decoration: underline; }
+.sala__chat-novas { position: absolute; left: 50%; bottom: 10px; transform: translateX(-50%); border: 0; border-radius: 999px; background: var(--intelbras-preto); color: #fff; padding: 7px 14px; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; box-shadow: 0 6px 16px rgba(0,0,0,.25); }
+.sala__chat-novas[hidden] { display: none; }
+.sala__msg-form { align-items: flex-end; background: #fff; border-top: 1px solid var(--content-border); padding: 10px 10px 4px; }
+.sala__msg-form textarea { flex: 1; min-height: 44px; max-height: 120px; padding: 11px 12px; border: 1px solid #D1D5DB; border-radius: 12px; font-family: inherit; font-size: 14px; line-height: 1.35; resize: none; outline: none; }
+.sala__msg-form textarea:focus { border-color: var(--intelbras-verde); box-shadow: 0 0 0 3px rgba(0,168,89,.15); }
+.sala__msg-enviar { width: 44px; height: 44px; flex-shrink: 0; border: 0; border-radius: 12px; background: var(--intelbras-verde); color: #fff; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.sala__msg-enviar:hover:not(:disabled) { background: var(--intelbras-verde-escuro); }
+.sala__msg-enviar:disabled { background: #E5E7EB; color: #9CA3AF; cursor: default; }
+.sala__msg-dica { margin: 0; padding: 2px 12px 8px; background: #fff; font-size: 11px; color: #9CA3AF; }
+
+/* aviso flutuante de compartilhamento */
+.sala__compart { position: fixed; top: 84px; left: 50%; transform: translateX(-50%); z-index: 3700; display: flex; align-items: center; gap: 12px; padding: 8px 10px 8px 16px; background: var(--intelbras-verde); color: #fff; border-radius: 999px; box-shadow: 0 10px 28px rgba(0,100,50,.35); font-size: 13.5px; }
+.sala__compart[hidden] { display: none; }
+.sala__compart-ponto { width: 10px; height: 10px; border-radius: 50%; background: #fff; animation: ch-pisca 1.4s ease-in-out infinite; }
+.sala__compart button { min-height: 34px; padding: 0 14px; border-radius: 999px; border: 1px solid rgba(255,255,255,.7); background: transparent; color: #fff; font-family: inherit; font-size: 12.5px; font-weight: 700; cursor: pointer; }
+.sala__compart button:hover { background: rgba(255,255,255,.15); }
+.sala__compart .sala__compart-parar { background: #fff; color: var(--ch-perigo-escuro); border-color: #fff; }
+.sala__compart .sala__compart-parar:hover { background: #FDECEC; }
+
+/* modal: o que compartilhar */
+.tela__opcoes { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; margin: 6px 0 12px; }
+.tela__op { display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 16px 8px; text-align: center; border: 1px solid #D1D5DB; border-radius: 12px; background: #fff; font-family: inherit; color: var(--intelbras-preto); cursor: pointer; }
+.tela__op .ch-ic { width: 30px; height: 30px; color: var(--intelbras-verde); }
+.tela__op strong { font-size: 13.5px; }
+.tela__op > span:last-child { font-size: 11.5px; color: var(--intelbras-cinza); line-height: 1.3; }
+.tela__op:hover { background: #F7FAF8; }
+.tela__op--sel { border-color: var(--intelbras-verde); background: var(--intelbras-verde-100); box-shadow: inset 0 0 0 1px var(--intelbras-verde); }
+.tela__aviso { display: flex; align-items: center; gap: 8px; margin: 0; font-size: 12.5px; color: var(--intelbras-cinza); }
+.tela__aviso .ch-ic { width: 16px; height: 16px; color: var(--intelbras-verde); flex-shrink: 0; }
+
+/* Ligação direta vinda do Chat: o menu Chamadas fica escondido; só aparece a sala (e os avisos). */
+.chamadas--direto > .inicio__sidebar, .chamadas--direto > .chamadas__main { visibility: hidden; }
+
+.chamadas__direto-carregando {
+  position: fixed; top: 73px; left: 0; right: 0; bottom: 0; z-index: 1; display: none;
+  align-items: center; justify-content: center; gap: 10px; color: var(--intelbras-cinza); font-size: 14px; font-weight: 600;
+}
+.chamadas--direto .chamadas__direto-carregando { display: flex; }

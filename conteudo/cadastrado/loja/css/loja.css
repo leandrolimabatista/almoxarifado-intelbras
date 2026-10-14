@@ -6,15 +6,15 @@
    drawer do carrinho (cart / checkout / confirm).
 
    Tokens conforme seção 7 do prompt (verde Intelbras do site,
-   âmbar/vermelho de estoque, tipografia Inter + JetBrains Mono
-   no drawer).
+   âmbar/vermelho de estoque, tipografia Poppins (títulos) + Nunito Sans
+   (texto e números)).
 ============================================================= */
 
 :root {
-  --loja-verde: #14C591;
-  --loja-verde-escuro: #0E8F6B;
+  --loja-verde: #00A859;
+  --loja-verde-escuro: #007A40;
   --loja-ambar: #D98B00;
-  --loja-vermelho: #C62828;
+  --loja-vermelho: #E5484D;
   --loja-bg: #F5F7FA;
   --loja-linha: #D7DEE6;
   --loja-texto: #1D2733;
@@ -27,7 +27,7 @@
 .loja {
   display: flex;
   align-items: stretch;
-  font-family: 'Nunito Sans', 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
   background: var(--loja-bg);
   min-height: calc(100vh - 73px);
 }
@@ -38,7 +38,7 @@
   padding: 28px 32px 60px;
 }
 
-.loja-mono { font-family: 'JetBrains Mono', monospace; }
+.loja-mono { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; }
 
 /* ---------------- Cabeçalho da página ---------------- */
 .loja__page-head {
@@ -95,7 +95,7 @@
   font-size: 12.5px;
   color: var(--loja-verde-escuro);
   background: #fff;
-  border: 1px solid rgba(20, 197, 145, 0.35);
+  border: 1px solid rgba(0, 168, 89, 0.35);
   box-shadow: 0 1px 2px rgba(18, 38, 63, 0.04);
   padding: 8px 14px;
   border-radius: 999px;
@@ -109,10 +109,10 @@
   margin-right: 8px;
   border-radius: 50%;
   background: var(--loja-verde);
-  box-shadow: 0 0 0 3px rgba(20, 197, 145, 0.18);
+  box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.18);
   vertical-align: 1px;
 }
-.loja__saldo-pill strong { font-family: 'JetBrains Mono', monospace; font-weight: 600; }
+.loja__saldo-pill strong { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-weight: 600; }
 
 .loja__ordenar {
   background: #fff;
@@ -162,7 +162,7 @@
   font-size: 14px;
   font-family: inherit;
 }
-.loja__busca input:focus { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(20, 197, 145, 0.16); }
+.loja__busca input:focus { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.16); }
 
 /* Dropdown de categorias */
 .loja__cat-wrap { position: relative; flex-shrink: 0; }
@@ -242,7 +242,7 @@
   flex-shrink: 0;
   background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A859' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
 }
-.loja__cat-count { font-family: 'JetBrains Mono', monospace; font-size: 11.5px; color: var(--loja-texto-faint); }
+.loja__cat-count { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 11.5px; color: var(--loja-texto-faint); }
 
 /* ---------------- Grid de produtos ---------------- */
 .loja__grid {
@@ -272,11 +272,15 @@
 .loja__card:hover {
   transform: translateY(-3px);
   box-shadow: 0 14px 28px rgba(18, 38, 63, 0.1);
-  border-color: rgba(20, 197, 145, 0.5);
+  border-color: rgba(0, 168, 89, 0.5);
 }
 
 .loja__card-media {
-  aspect-ratio: 4 / 3;
+  /* Altura fixa (antes: aspect-ratio 4/3). Com a proporção, a imagem crescia
+     junto com a largura do grid e os cards "respiravam" na vertical ao abrir/
+     fechar "Todas categorias". Assim a Loja anima igual ao Início. */
+  height: 200px;
+  flex-shrink: 0;
   background: linear-gradient(180deg, #F8FAFB 0%, #EEF2F6 100%);
   border-bottom: 1px solid #EDF1F5;
   position: relative;
@@ -303,7 +307,7 @@
   top: 8px;
   left: 8px;
   z-index: 1;
-  font-family: 'JetBrains Mono', monospace;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums;
   font-size: 10.5px;
   font-weight: 600;
   padding: 3px 9px;
@@ -312,9 +316,9 @@
   border: 1px solid currentColor;
   box-shadow: 0 1px 2px rgba(18, 38, 63, 0.08);
 }
-.loja__tag--ok { color: #0E8F6B; }
+.loja__tag--ok { color: #007A40; }
 .loja__tag--low { color: #B97300; }
-.loja__tag--out { color: #C62828; }
+.loja__tag--out { color: #E5484D; }
 
 .loja__card-body {
   padding: 16px 16px 16px;
@@ -323,13 +327,14 @@
   gap: 6px;
   flex: 1;
 }
-.loja__sku { font-family: 'JetBrains Mono', monospace; font-size: 10.5px; color: var(--loja-texto-faint); letter-spacing: 0.02em; }
+.loja__sku { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 10.5px; color: var(--loja-texto-faint); letter-spacing: 0.02em; }
 .loja__card-title { font-size: 14.5px; font-weight: 700; line-height: 1.3; margin: 0; color: var(--loja-texto); letter-spacing: -0.005em; }
 .loja__card-desc {
   font-size: 12.5px;
   color: var(--loja-texto-dim);
   line-height: 1.45;
   flex: 1;
+  min-height: calc(12.5px * 1.45 * 3); /* sempre 3 linhas: altura não muda ao reflowar */
   margin: 0;
   display: -webkit-box;
   -webkit-line-clamp: 3;
@@ -337,29 +342,32 @@
   overflow: hidden;
 }
 .loja__card-foot { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 6px 8px; margin-top: 8px; padding-top: 12px; border-top: 1px solid #EDF1F5; }
-.loja__price { font-family: 'JetBrains Mono', monospace; font-size: 13.5px; font-weight: 700; color: var(--loja-texto); white-space: nowrap; }
-.loja__price small { font-size: 10px; color: var(--loja-texto-faint); margin-left: 2px; }
+.loja__price { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 15px; font-weight: 700; color: var(--loja-texto); white-space: nowrap; }
+.loja__price small { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-size: 11px; font-weight: 600; color: var(--loja-texto-faint); margin-left: 2px; }
 
 .loja__add {
   display: flex;
   align-items: center;
-  gap: 5px;
-  background: var(--loja-verde);
+  gap: 6px;
+  background: linear-gradient(180deg, #00A859 0%, #008F4C 100%);
   border: none;
-  color: #04231A;
-  font-size: 11.5px;
+  color: #fff;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 12.5px;
   font-weight: 700;
-  padding: 8px 12px;
+  letter-spacing: 0.01em;
+  padding: 9px 15px;
   border-radius: 999px;
-  box-shadow: 0 2px 6px rgba(20, 197, 145, 0.28);
+  box-shadow: 0 2px 6px rgba(0, 143, 76, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.18);
   cursor: pointer;
   white-space: nowrap;
   flex-shrink: 0;
   transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
-.loja__add svg { flex-shrink: 0; width: 12px; height: 12px; }
-.loja__add:hover { background: #1EDDA5; box-shadow: 0 4px 10px rgba(20, 197, 145, 0.38); transform: translateY(-1px); }
-.loja__add:disabled { background: var(--loja-linha); color: var(--loja-texto-faint); box-shadow: none; transform: none; cursor: not-allowed; }
+.loja__add svg { flex-shrink: 0; width: 13px; height: 13px; }
+.loja__add:hover { background: linear-gradient(180deg, #009651 0%, #007A40 100%); box-shadow: 0 4px 12px rgba(0, 122, 64, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+.loja__add:active { transform: translateY(0); box-shadow: 0 1px 3px rgba(0, 122, 64, 0.35); }
+.loja__add:disabled { background: var(--loja-linha); text-shadow: none; color: var(--loja-texto-faint); box-shadow: none; transform: none; cursor: default; }
 
 .loja__stepper {
   display: flex;
@@ -379,7 +387,7 @@
   font-size: 14px;
 }
 .loja__stepper button:hover { background: var(--loja-linha); }
-.loja__stepper span { width: 26px; text-align: center; font-family: 'JetBrains Mono', monospace; font-size: 13px; }
+.loja__stepper span { width: 26px; text-align: center; font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; }
 
 /* ---------------- Drawer do carrinho ---------------- */
 .loja__overlay {
@@ -410,7 +418,7 @@
 }
 .loja__drawer.is-open { transform: translateX(0); }
 /* o drawer fica fora do .loja: define a mesma fonte da loja (botões/inputs herdam) */
-.loja__drawer { font-family: 'Nunito Sans', 'Inter', 'Segoe UI', Arial, sans-serif; }
+.loja__drawer { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; }
 .loja__drawer button, .loja__drawer input { font-family: inherit; }
 
 .loja__drawer-head {
@@ -425,6 +433,43 @@
 .loja__close:hover { color: var(--loja-texto); }
 
 .loja__drawer-body { flex: 1; overflow-y: auto; padding: 8px 20px; }
+
+/* ---- Abas do drawer: Carrinho | Compras ---- */
+.loja__tabs { display: flex; gap: 4px; padding: 0 20px; border-bottom: 1px solid var(--loja-linha); background: #fff; }
+.loja__tab {
+  flex: 1; background: none; border: none; cursor: pointer;
+  padding: 12px 8px 11px; font-size: 13.5px; font-weight: 700; color: var(--loja-texto-faint);
+  border-bottom: 2px solid transparent; margin-bottom: -1px; transition: color 0.15s ease, border-color 0.15s ease;
+}
+.loja__tab:hover { color: var(--loja-texto); }
+.loja__tab.is-active { color: var(--loja-verde-escuro); border-bottom-color: var(--loja-verde); }
+
+/* ---- Histórico de compras ---- */
+.lcompra { border: 1px solid var(--loja-linha); border-radius: var(--loja-raio); background: #fff; margin: 12px 0; overflow: hidden; }
+.lcompra summary { list-style: none; cursor: pointer; padding: 14px 16px; display: grid; gap: 6px; }
+.lcompra summary::-webkit-details-marker { display: none; }
+.lcompra[open] summary { border-bottom: 1px solid #EDF1F5; }
+.lcompra__top { display: flex; justify-content: space-between; align-items: center; gap: 8px; }
+.lcompra__cod { font-size: 13.5px; font-weight: 700; color: var(--loja-texto); font-variant-numeric: tabular-nums; }
+.lcompra__status { font-size: 11px; font-weight: 700; padding: 3px 10px; border-radius: 999px; border: 1px solid currentColor; white-space: nowrap; }
+.lcompra__status--iniciado { color: #B97300; background: rgba(217, 139, 0, 0.08); }
+.lcompra__status--pago { color: var(--loja-verde-escuro); background: rgba(0, 168, 89, 0.08); }
+.lcompra__status--cancelado { color: var(--loja-vermelho); background: rgba(229, 72, 77, 0.08); }
+.lcompra__meta { display: flex; justify-content: space-between; font-size: 12px; color: var(--loja-texto-dim); }
+.lcompra__total { display: flex; justify-content: space-between; align-items: baseline; font-size: 12.5px; color: var(--loja-texto-dim); }
+.lcompra__total strong { font-size: 15px; color: var(--loja-texto); font-variant-numeric: tabular-nums; }
+.lcompra__det { padding: 12px 16px 16px; display: grid; gap: 8px; background: #FAFBFC; }
+.lcompra__item { display: flex; justify-content: space-between; gap: 12px; font-size: 12.5px; color: var(--loja-texto); font-variant-numeric: tabular-nums; }
+.lcompra__item span:last-child { white-space: nowrap; }
+.lcompra__item--dim { color: var(--loja-texto-dim); }
+.lcompra__again, .lcompra__retry {
+  margin-top: 6px; background: #fff; color: var(--loja-verde-escuro);
+  border: 1.5px solid var(--loja-verde); border-radius: 999px; padding: 9px 14px;
+  font-size: 12.5px; font-weight: 700; cursor: pointer; transition: background 0.15s ease, color 0.15s ease;
+}
+.lcompra__again:hover, .lcompra__retry:hover { background: var(--loja-verde); color: #fff; }
+.lcompra__retry { margin-top: 14px; }
+
 .loja__cart-vazio { text-align: center; padding: 60px 10px; color: var(--loja-texto-faint); font-size: 13.5px; }
 .loja__cart-info {
   font-size: 12px;
@@ -444,16 +489,16 @@
 .loja__thumb svg { width: 60%; height: 60%; }
 .loja__cart-item-info { flex: 1; min-width: 0; }
 .loja__cart-name { font-size: 13px; font-weight: 600; margin-bottom: 2px; color: var(--loja-texto); }
-.loja__cart-sku { font-size: 10.5px; color: var(--loja-texto-faint); font-family: 'JetBrains Mono', monospace; margin-bottom: 8px; }
+.loja__cart-sku { font-size: 10.5px; color: var(--loja-texto-faint); font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; margin-bottom: 8px; }
 .loja__cart-controls { display: flex; align-items: center; justify-content: space-between; }
 .loja__remove { font-size: 11.5px; color: var(--loja-texto-faint); background: none; border: none; cursor: pointer; }
 .loja__remove:hover { color: var(--loja-vermelho); }
-.loja__line-price { font-family: 'JetBrains Mono', monospace; font-size: 13px; align-self: flex-start; margin-top: 1px; color: var(--loja-texto); }
+.loja__line-price { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 13px; align-self: flex-start; margin-top: 1px; color: var(--loja-texto); }
 
 .loja__drawer-foot { border-top: 1px solid var(--loja-linha); padding: 16px 20px 20px; }
 .loja__totals { display: flex; justify-content: space-between; font-size: 13px; color: var(--loja-texto-dim); margin-bottom: 6px; }
 .loja__totals--main { font-size: 15px; color: var(--loja-texto); font-weight: 700; margin-top: 8px; padding-top: 10px; border-top: 1px dashed var(--loja-linha); }
-.loja__mono { font-family: 'JetBrains Mono', monospace; }
+.loja__mono { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; }
 
 .loja__aviso {
   font-size: 12px; color: var(--loja-ambar);
@@ -463,19 +508,23 @@
 
 .loja__primary {
   width: 100%;
-  background: var(--loja-verde);
-  color: #04231A;
+  background: linear-gradient(180deg, #00A859 0%, #008F4C 100%);
+  color: #fff;
   border: none;
-  padding: 12px;
+  padding: 13px 16px;
   border-radius: 999px;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
   font-size: 14px;
   font-weight: 700;
+  letter-spacing: 0.01em;
+  box-shadow: 0 4px 12px rgba(0, 143, 76, 0.28), inset 0 1px 0 rgba(255, 255, 255, 0.18);
   cursor: pointer;
   margin-top: 10px;
-  font-family: inherit;
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
 }
-.loja__primary:hover { background: #1EDDA5; }
-.loja__primary:disabled { background: var(--loja-linha); color: var(--loja-texto-faint); cursor: not-allowed; }
+.loja__primary:hover { background: linear-gradient(180deg, #009651 0%, #007A40 100%); box-shadow: 0 6px 16px rgba(0, 122, 64, 0.36), inset 0 1px 0 rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+.loja__primary:active { transform: translateY(0); }
+.loja__primary:disabled { background: var(--loja-linha); box-shadow: none; transform: none; color: var(--loja-texto-faint); cursor: default; }
 
 /* Checkout */
 .loja__form { display: flex; flex-direction: column; gap: 14px; padding: 4px 0 10px; }
@@ -495,16 +544,16 @@
 /* Confirmação */
 .loja__confirm { text-align: center; padding: 30px 6px 10px; }
 .loja__confirm-icon {
-  width: 52px; height: 52px; border-radius: 50%; background: rgba(20, 197, 145, 0.12);
+  width: 52px; height: 52px; border-radius: 50%; background: rgba(0, 168, 89, 0.12);
   display: flex; align-items: center; justify-content: center; margin: 0 auto 18px;
-  border: 1px solid rgba(20, 197, 145, 0.3); color: var(--loja-verde-escuro);
+  border: 1px solid rgba(0, 168, 89, 0.3); color: var(--loja-verde-escuro);
 }
 .loja__confirm h4 { font-family: 'Poppins', sans-serif; font-size: 17px; margin: 0 0 8px; color: var(--loja-texto); }
 .loja__confirm p { font-size: 13px; color: var(--loja-texto-dim); line-height: 1.5; margin: 0 0 4px; }
 .loja__order-code {
   display: inline-block; margin-top: 14px; padding: 8px 14px;
   background: var(--loja-bg); border: 1px solid var(--loja-linha); border-radius: var(--loja-raio-sm);
-  font-family: 'JetBrains Mono', monospace; font-size: 13.5px; letter-spacing: 0.03em;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; font-size: 13.5px; letter-spacing: 0.03em;
 }
 .loja__ghost {
   margin-top: 22px; background: none; border: 1px solid var(--loja-linha); color: var(--loja-texto);
@@ -521,7 +570,7 @@
 ============================================================= */
 [hidden] { display: none !important; }
 
-.loja__stepper button:disabled { opacity: 0.35; cursor: not-allowed; }
+.loja__stepper button:disabled { opacity: 0.35; cursor: default; }
 
 /* ---------------- Miniatura (carrinho / sugestão / resumo) ---------------- */
 .lcart__thumb {
@@ -538,7 +587,7 @@
 .lcart__top { display: flex; justify-content: space-between; gap: 10px; align-items: flex-start; }
 .lcart__name { font-size: 13.5px; font-weight: 700; color: var(--loja-texto); line-height: 1.3; }
 .lcart__price { font-size: 13.5px; font-weight: 700; color: var(--loja-texto); white-space: nowrap; }
-.lcart__sku { font-size: 10.5px; color: var(--loja-texto-faint); font-family: 'JetBrains Mono', monospace; margin: 2px 0 10px; }
+.lcart__sku { font-size: 10.5px; color: var(--loja-texto-faint); font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-variant-numeric: tabular-nums; margin: 2px 0 10px; }
 .lcart__ctrl { display: flex; align-items: center; justify-content: space-between; }
 .lcart__trash {
   background: none; border: none; color: var(--loja-texto-faint); cursor: pointer;
@@ -581,7 +630,7 @@
   flex: 1; min-width: 0; border: 1px solid var(--loja-linha); border-radius: var(--loja-raio-sm);
   padding: 10px 12px; font-size: 13.5px; font-family: inherit; color: var(--loja-texto); background: #fff;
 }
-.lcart__cupom-form input:focus, .lck__cupom input:focus { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(20, 197, 145, 0.18); }
+.lcart__cupom-form input:focus, .lck__cupom input:focus { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.18); }
 .lcart__cupom-form button, .lck__cupom button {
   border: 1px solid var(--loja-linha); background: var(--loja-bg); border-radius: var(--loja-raio-sm);
   padding: 0 16px; font-size: 13px; font-weight: 600; cursor: pointer; font-family: inherit; color: var(--loja-texto);
@@ -591,13 +640,13 @@
 .lcart__cupom-msg:empty { display: none; }
 .lcart__cupom-ok {
   display: flex; justify-content: space-between; align-items: center; font-size: 12.5px;
-  background: rgba(20, 197, 145, 0.1); border: 1px solid rgba(20, 197, 145, 0.35);
+  background: rgba(0, 168, 89, 0.1); border: 1px solid rgba(0, 168, 89, 0.35);
   color: var(--loja-verde-escuro); border-radius: var(--loja-raio-sm); padding: 8px 10px; margin-bottom: 8px;
 }
 .lcart__cupom-ok button { background: none; border: none; cursor: pointer; color: inherit; font-size: 13px; }
 .lcart__sub { display: flex; justify-content: space-between; font-size: 15px; color: var(--loja-texto); margin: 8px 0 2px; }
 .lcart__sub--desc { font-size: 13px; color: var(--loja-verde-escuro); }
-.lcart__finalizar { padding: 14px; font-size: 14.5px; }
+.lcart__finalizar { padding: 15px; font-size: 14.5px; }
 .lcart__nota { margin: 8px 0 0; text-align: center; font-size: 11.5px; color: var(--loja-texto-faint); }
 
 /* ---------------- Checkout ---------------- */
@@ -620,7 +669,7 @@
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='14' height='14' viewBox='0 0 24 24' fill='none' stroke='%235E6B78' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M6 9l6 6 6-6'/%3E%3C/svg%3E");
   background-repeat: no-repeat; background-position: right 11px center; }
 .lck__field select:disabled { background-color: var(--loja-bg); color: var(--loja-texto-dim); }
-.lck__field input:focus, .lck__field select:focus { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(20, 197, 145, 0.18); }
+.lck__field input:focus, .lck__field select:focus { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.18); }
 .lck__field label {
   position: absolute; left: 14px; top: 17px; font-size: 14.5px; color: var(--loja-texto-faint);
   pointer-events: none; transition: top 0.12s ease, font-size 0.12s ease; white-space: nowrap;
@@ -661,7 +710,7 @@
 .lck__op:first-child { margin-top: 0; border-radius: var(--loja-raio-sm) var(--loja-raio-sm) 0 0; }
 .lck__op:last-child { border-radius: 0 0 var(--loja-raio-sm) var(--loja-raio-sm); }
 .lck__op:only-child { border-radius: var(--loja-raio-sm); }
-.lck__op.is-sel { background: rgba(20, 197, 145, 0.08); border-color: var(--loja-verde-escuro); z-index: 1; }
+.lck__op.is-sel { background: rgba(0, 168, 89, 0.08); border-color: var(--loja-verde-escuro); z-index: 1; }
 .lck__op input { width: 17px; height: 17px; accent-color: var(--loja-verde-escuro); margin: 0; }
 .lck__op-txt { flex: 1; display: flex; flex-direction: column; gap: 2px; font-size: 14px; }
 .lck__op-txt small { font-size: 12px; color: var(--loja-texto-dim); }

@@ -4,15 +4,15 @@
    Reaproveita o menu lateral da Home (.inicio__sidebar, vindo de
    inicio.css) e os tokens de cor/tipografia da identidade Intelbras
    (mesma paleta usada em Documentos, com pequenos ajustes de acordo
-   com o prompt: verde #00A335 / #008A2C / #E6F6EC).
+   com o prompt: verde #00A859 / #007A40 / #E7F7EE).
    Este arquivo cuida só da área .configuracoes__*.
    Media queries ficam em responsivo/configuracoes.responsivo.css.
 ============================================================= */
 
 :root {
-  --cfg-verde: #00A335;
-  --cfg-verde-escuro: #008A2C;
-  --cfg-verde-100: #E6F6EC;
+  --cfg-verde: #00A859;
+  --cfg-verde-escuro: #007A40;
+  --cfg-verde-100: #E7F7EE;
   --cfg-fundo: #F6F8F9;
   --cfg-card: #FFFFFF;
   --cfg-borda: #E5E9EC;
@@ -28,7 +28,7 @@
 .configuracoes {
   display: flex;
   align-items: stretch;
-  font-family: 'Nunito Sans', 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
   color: var(--cfg-texto);
   background: var(--cfg-fundo);
   min-height: calc(100vh - 73px);
@@ -66,39 +66,27 @@
 
 .configuracoes__cabecalho {
   display: flex;
-  align-items: center;
-  gap: 18px;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
   margin-bottom: 24px;
+  flex-wrap: wrap;
 }
 
-.configuracoes__cabecalho-icone {
-  width: 66px;
-  height: 66px;
-  flex-shrink: 0;
-  border-radius: 50%;
-  background: var(--cfg-verde-100);
-  color: var(--cfg-verde);
-  display: flex;
-  align-items: center;
-  justify-content: center;
-}
-
-.configuracoes__cabecalho-icone svg {
-  width: 30px;
-  height: 30px;
-}
-
+/* Título e subtítulo: mesma fonte, tamanho, peso, cor e espaçamento
+   do cabeçalho da página Documentos (.documentos__titulo/.documentos__subtitulo) */
 .configuracoes__titulo {
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: calc(24px * var(--cfg-fs, 1));
+  font-weight: 700;
+  color: #1A1A1A;
   margin: 0 0 4px;
-  font-size: 28px;
-  font-weight: 600;
-  color: var(--cfg-texto);
 }
 
 .configuracoes__subtitulo {
   margin: 0;
-  font-size: 14px;
-  color: var(--cfg-texto-2);
+  font-size: calc(14px * var(--cfg-fs, 1));
+  color: #6B6B6B;
 }
 
 /* ===================== AVISO (MODO DEMONSTRAÇÃO) ===================== */
@@ -113,7 +101,7 @@
   border: 1px solid #F6DDA8;
   background: #FEF5E7;
   color: #7A4B00;
-  font-size: 13px;
+  font-size: calc(13px * var(--cfg-fs, 1));
   line-height: 1.4;
 }
 
@@ -159,7 +147,7 @@
   border: none;
   background: none;
   font-family: inherit;
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
   font-weight: 500;
   color: var(--cfg-texto);
   text-align: left;
@@ -203,19 +191,19 @@
 
 .configuracoes__secao-titulo {
   margin: 0 0 4px;
-  font-size: 20px;
+  font-size: calc(20px * var(--cfg-fs, 1));
   font-weight: 600;
 }
 
 .configuracoes__secao-sub {
   margin: 0;
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
   color: var(--cfg-texto-2);
 }
 
 .configuracoes__subsecao {
   margin: 20px 0 12px;
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
   font-weight: 600;
 }
 
@@ -250,7 +238,7 @@
   justify-content: center;
   background: var(--cfg-verde-100);
   color: var(--cfg-verde);
-  font-size: 36px;
+  font-size: calc(36px * var(--cfg-fs, 1));
   font-weight: 600;
   object-fit: cover;
 }
@@ -285,7 +273,7 @@
 
 .configuracoes__ajuda {
   margin: 0;
-  font-size: 12px;
+  font-size: calc(12px * var(--cfg-fs, 1));
   color: var(--cfg-texto-2);
 }
 
@@ -303,7 +291,7 @@
 }
 
 .configuracoes__campo label {
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
   font-weight: 500;
 }
 
@@ -314,7 +302,7 @@
   border: 1px solid var(--cfg-input-borda);
   border-radius: 8px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
   color: var(--cfg-texto);
   background: #fff;
 }
@@ -338,7 +326,7 @@
 .configuracoes__campo input:disabled {
   background: var(--cfg-hover);
   color: var(--cfg-texto-2);
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .configuracoes__campo--erro input {
@@ -347,7 +335,7 @@
 
 .configuracoes__erro {
   min-height: 16px;
-  font-size: 12px;
+  font-size: calc(12px * var(--cfg-fs, 1));
   color: var(--cfg-erro);
 }
 
@@ -363,7 +351,7 @@
   display: flex;
   align-items: center;
   gap: 10px;
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
   font-weight: 500;
   color: var(--cfg-texto);
 }
@@ -382,7 +370,7 @@
   border: 1px solid var(--cfg-input-borda);
   border-radius: 8px;
   font-family: inherit;
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
   background: #fff;
 }
 
@@ -391,6 +379,28 @@
   width: auto;
   min-width: 220px;
   flex: 0 0 auto;
+}
+
+/* Menu do dropdown (fica no <body>; a classe é aplicada por configuracoes.js
+   só enquanto aberto a partir desta página) */
+.seletor__menu.seletor__menu--cfg {
+  box-sizing: border-box;
+  max-width: calc(100vw - 16px);
+}
+
+.seletor__menu.seletor__menu--cfg .seletor__item {
+  align-items: flex-start;
+}
+
+.seletor__menu.seletor__menu--cfg .seletor__item-texto {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+  overflow-wrap: anywhere;
+}
+
+.seletor__menu.seletor__menu--cfg .seletor__marca {
+  margin-top: 2px;
 }
 
 .configuracoes__acoes {
@@ -409,7 +419,7 @@
   padding: 0 18px;
   border-radius: 8px;
   font-family: inherit;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--cfg-fs, 1));
   font-weight: 600;
   cursor: pointer;
   white-space: nowrap;
@@ -428,7 +438,7 @@
 
 .configuracoes__btn--primario:disabled {
   opacity: 0.55;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .configuracoes__btn--contorno {
@@ -485,7 +495,7 @@
   gap: 16px;
   padding: 11px 0;
   border-bottom: 1px solid var(--cfg-borda);
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
 }
 
 .configuracoes__toggle-linha:last-child {
@@ -555,7 +565,7 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 13px;
+  font-size: calc(13px * var(--cfg-fs, 1));
   color: var(--cfg-texto-2);
 }
 
@@ -585,7 +595,7 @@
   border: 1.5px solid var(--cfg-input-borda);
   background: #fff;
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--cfg-fs, 1));
   font-weight: 600;
   cursor: pointer;
 }
@@ -623,7 +633,7 @@
   border: 1.5px solid var(--cfg-input-borda);
   background: #fff;
   font-family: inherit;
-  font-size: 13px;
+  font-size: calc(13px * var(--cfg-fs, 1));
   font-weight: 600;
   cursor: pointer;
 }
@@ -680,7 +690,7 @@
 }
 
 .configuracoes__dispositivo-nome {
-  font-size: 14px;
+  font-size: calc(14px * var(--cfg-fs, 1));
   font-weight: 600;
   display: flex;
   align-items: center;
@@ -688,12 +698,12 @@
 }
 
 .configuracoes__dispositivo-detalhe {
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--cfg-fs, 1));
   color: var(--cfg-texto-2);
 }
 
 .configuracoes__badge-atual {
-  font-size: 11px;
+  font-size: calc(11px * var(--cfg-fs, 1));
   font-weight: 700;
   color: var(--cfg-verde);
   background: var(--cfg-verde-100);
@@ -725,7 +735,7 @@
 }
 
 .configuracoes__integracao-status {
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--cfg-fs, 1));
   color: var(--cfg-texto-2);
 }
 
@@ -746,7 +756,7 @@
   justify-content: space-between;
   gap: 12px;
   padding: 8px 0;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--cfg-fs, 1));
 }
 
 .configuracoes__linha-chave span:first-child {
@@ -771,7 +781,7 @@
 
 .configuracoes__link-linha {
   margin: 8px 0 0;
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--cfg-fs, 1));
 }
 
 .configuracoes__link-linha a {
@@ -833,14 +843,14 @@
 
 .configuracoes__card-cab h3 {
   margin: 0;
-  font-size: 15.5px;
+  font-size: calc(15.5px * var(--cfg-fs, 1));
   font-weight: 600;
   color: var(--cfg-texto);
 }
 
 .configuracoes__card-sub {
   margin: 2px 0 0;
-  font-size: 12.5px;
+  font-size: calc(12.5px * var(--cfg-fs, 1));
   color: var(--cfg-texto-2);
 }
 
@@ -865,7 +875,7 @@
   gap: 10px;
   padding: 11px 0;
   border-bottom: 1px solid var(--cfg-borda);
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--cfg-fs, 1));
   color: var(--cfg-texto);
   text-decoration: none;
   background: none;
@@ -915,6 +925,17 @@
   display: flex;
   align-items: center;
   justify-content: center;
+  /* O modal fica fora de .configuracoes: precisa da fonte e cor do site */
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  color: var(--cfg-texto);
+}
+
+.configuracoes__modal [hidden] {
+  display: none !important;
+}
+
+.configuracoes__modal button {
+  font-family: inherit;
 }
 
 .configuracoes__modal[aria-hidden="true"] {
@@ -938,8 +959,10 @@
 
 .configuracoes__modal-caixa h2 {
   margin: 0 0 16px;
-  font-size: 18px;
-  font-weight: 600;
+  font-family: inherit;
+  font-size: calc(18px * var(--cfg-fs, 1));
+  font-weight: 700;
+  color: var(--cfg-texto);
 }
 
 .configuracoes__modal-drop {
@@ -948,7 +971,7 @@
   padding: 28px 16px;
   text-align: center;
   color: var(--cfg-texto-2);
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--cfg-fs, 1));
 }
 
 .configuracoes__modal-drop--sobre {
@@ -956,12 +979,75 @@
   background: var(--cfg-verde-100);
 }
 
-.configuracoes__modal-drop img {
-  max-width: 160px;
-  max-height: 160px;
+/* Editor de enquadramento: a vista é um círculo, igual ao avatar do site */
+.configuracoes__crop {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.configuracoes__crop-vista {
+  position: relative;
+  width: 200px;
+  height: 200px;
   border-radius: 50%;
-  margin-bottom: 12px;
-  object-fit: cover;
+  overflow: hidden;
+  background: var(--cfg-hover);
+  box-shadow: 0 0 0 3px #fff, 0 0 0 4px var(--cfg-input-borda);
+  cursor: grab;
+  touch-action: none;
+  user-select: none;
+}
+
+.configuracoes__crop-vista.configuracoes__crop-vista--arrastando {
+  cursor: grabbing;
+}
+
+.configuracoes__crop-vista img {
+  position: absolute;
+  top: 0;
+  left: 0;
+  max-width: none;
+  max-height: none;
+  pointer-events: none;
+  user-select: none;
+}
+
+.configuracoes__crop-zoom {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 200px;
+  color: var(--cfg-texto-2);
+}
+
+.configuracoes__crop-zoom svg {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+}
+
+.configuracoes__crop-zoom input[type="range"] {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--cfg-verde);
+  cursor: pointer;
+}
+
+.configuracoes__crop-dica {
+  margin: 0;
+  font-size: calc(12px * var(--cfg-fs, 1));
+  color: var(--cfg-texto-2);
+}
+
+.configuracoes__modal .configuracoes__erro:empty {
+  display: none;
+}
+
+.configuracoes__modal .configuracoes__erro:not(:empty) {
+  display: block;
+  margin-top: 10px;
 }
 
 .configuracoes__modal-acoes {
@@ -992,7 +1078,7 @@
   border-radius: 10px;
   padding: 12px 16px;
   box-shadow: 0 12px 28px rgba(27, 39, 51, 0.16);
-  font-size: 13.5px;
+  font-size: calc(13.5px * var(--cfg-fs, 1));
   font-weight: 600;
   color: var(--cfg-texto);
 }
@@ -1001,4 +1087,133 @@
   width: 20px;
   height: 20px;
   flex-shrink: 0;
+}
+
+
+/* ============================================================
+   APARÊNCIA (Configurações > Aparência)
+   O JS (configuracoes.js) grava em #cfgRaiz:
+     data-tema-efetivo = claro | escuro   (Automático já resolvido)
+     data-densidade    = confortavel | compacta
+     data-fonte        = p | m | g
+   e repete data-tema-efetivo / data-fonte no modal, no toast e no
+   menu do dropdown (que ficam fora de .configuracoes).
+   Vale só nesta página.
+============================================================ */
+
+/* ---------- Tamanho da fonte (só o texto; o layout não muda) ---------- */
+.configuracoes[data-fonte="p"],
+.configuracoes__modal[data-fonte="p"],
+.configuracoes__toast[data-fonte="p"],
+.seletor__menu[data-fonte="p"] { --cfg-fs: 0.92; }
+
+.configuracoes[data-fonte="g"],
+.configuracoes__modal[data-fonte="g"],
+.configuracoes__toast[data-fonte="g"],
+.seletor__menu[data-fonte="g"] { --cfg-fs: 1.12; }
+
+.configuracoes .seletor__botao { font-size: calc(13.5px * var(--cfg-fs, 1)); }
+.seletor__menu.seletor__menu--cfg .seletor__item { font-size: calc(13px * var(--cfg-fs, 1)); }
+
+/* ---------- Densidade compacta ---------- */
+.configuracoes[data-densidade="compacta"] .configuracoes__main { padding: 18px 24px 32px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__menu { padding: 14px 10px; gap: 0; }
+.configuracoes[data-densidade="compacta"] .configuracoes__menu-item { height: 36px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__conteudo { padding: 18px 24px 24px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__secao-cab { margin-bottom: 12px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__subsecao { margin: 14px 0 8px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__divisor { margin: 16px 0; }
+.configuracoes[data-densidade="compacta"] .configuracoes__form { gap: 10px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__campo input,
+.configuracoes[data-densidade="compacta"] .configuracoes__campo select { height: 34px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__linha-pref { padding: 0; }
+.configuracoes[data-densidade="compacta"] .seletor__botao { min-height: 34px; padding: 6px 12px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__btn { height: 34px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__toggle-linha { padding-top: 8px; padding-bottom: 8px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__dispositivo { padding: 8px 12px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__dispositivos { gap: 6px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__integracao-card { padding: 10px 12px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__opcao-card { padding: 8px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__opcao-preview { height: 48px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__pill { height: 30px; }
+.configuracoes[data-densidade="compacta"] .configuracoes__grade { gap: 16px; }
+
+/* ---------- Tema escuro ---------- */
+.configuracoes[data-tema-efetivo="escuro"],
+.configuracoes__modal[data-tema-efetivo="escuro"],
+.configuracoes__toast[data-tema-efetivo="escuro"],
+.seletor__menu[data-tema-efetivo="escuro"] {
+  --cfg-verde-100: rgba(0, 168, 89, 0.18);
+  --cfg-fundo: #0F1720;
+  --cfg-card: #17212B;
+  --cfg-borda: #2A3644;
+  --cfg-texto: #E6EDF3;
+  --cfg-texto-2: #9AA9B8;
+  --cfg-placeholder: #6F7F8F;
+  --cfg-input-borda: #364453;
+  --cfg-hover: #1F2B37;
+  --cfg-verde-escuro: #3DDC97;
+  color-scheme: dark;
+}
+
+/* a barra lateral compartilhada fica como nas outras páginas: o escuro
+   vale para a área de Configurações (conteúdo, modal, aviso e dropdown) */
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__main { background: var(--cfg-fundo); }
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__titulo { color: var(--cfg-texto); }
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__subtitulo { color: var(--cfg-texto-2); }
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__menu-item--ativo,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__menu-item--ativo:hover { color: var(--cfg-verde-escuro); }
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__aviso {
+  background: #2B2414; border-color: #5A4A1E; color: #F2C777;
+}
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__campo input,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__campo select,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__linha-pref select,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__linha-horario input,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__btn--contorno,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__btn--perigo,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__opcao-card,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__pill,
+.configuracoes[data-tema-efetivo="escuro"] .seletor__botao {
+  background: var(--cfg-card);
+  color: var(--cfg-texto);
+}
+.configuracoes[data-tema-efetivo="escuro"] .seletor__botao { border-color: var(--cfg-input-borda); }
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__campo input:disabled {
+  background: var(--cfg-hover);
+  color: var(--cfg-texto-2);
+}
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__campo input:hover,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__campo select:hover,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__btn--contorno:hover,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__opcao-card:hover,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__pill:hover { border-color: #4A5A6B; }
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__opcao-card--ativo,
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__pill--ativo {
+  background: var(--cfg-verde-100);
+  border-color: var(--cfg-verde);
+  color: var(--cfg-verde-escuro);
+}
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__btn--perigo:hover { background: #3A1D20; }
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__toggle-trilho { background: #3A4856; }
+.configuracoes[data-tema-efetivo="escuro"] .configuracoes__toggle input:checked + .configuracoes__toggle-trilho { background: var(--cfg-verde); }
+.configuracoes[data-tema-efetivo="escuro"] .seletor__botao:hover,
+.configuracoes[data-tema-efetivo="escuro"] .seletor__botao[aria-expanded="true"] { border-color: var(--cfg-verde); }
+
+.configuracoes__modal[data-tema-efetivo="escuro"] .configuracoes__modal-fundo { background: rgba(0, 0, 0, 0.6); }
+.configuracoes__modal[data-tema-efetivo="escuro"] .configuracoes__modal-caixa { background: var(--cfg-card); }
+.configuracoes__toast[data-tema-efetivo="escuro"] { background: var(--cfg-card); }
+
+
+.seletor__menu.seletor__menu--cfg[data-tema-efetivo="escuro"] {
+  background: var(--cfg-card);
+  border-color: var(--cfg-borda);
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.5);
+}
+.seletor__menu.seletor__menu--cfg[data-tema-efetivo="escuro"] .seletor__item { color: var(--cfg-texto); }
+.seletor__menu.seletor__menu--cfg[data-tema-efetivo="escuro"] .seletor__item:hover,
+.seletor__menu.seletor__menu--cfg[data-tema-efetivo="escuro"] .seletor__item:focus-visible { background: var(--cfg-hover); }
+.seletor__menu.seletor__menu--cfg[data-tema-efetivo="escuro"] .seletor__item[aria-selected="true"] {
+  background: var(--cfg-verde-100);
+  color: var(--cfg-verde-escuro);
 }

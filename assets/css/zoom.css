@@ -1,0 +1,359 @@
+/* ============================================================
+   ZOOM — comportamento do site com zoom do navegador (até 500%)
+
+   Dar zoom de 500% faz a janela "virar" uma tela de ~320 x 150 px
+   (CSS px). Os breakpoints abaixo cuidam disso:
+
+     • Cabeçalho   → nunca estoura a largura; encolhe logo, espaços e
+                     botões; some com os textos quando falta espaço.
+     • Menu lateral→ em tela estreita (≤ 860px) vira uma "gaveta" por
+                     cima do conteúdo (não empurra mais a página) e rola
+                     por dentro quando a janela é baixa.
+     • Cabeçalho em janela BAIXA (≤ 520px de altura) deixa de ficar
+                     fixo no topo, para não comer metade da tela.
+
+   Carregado por ÚLTIMO no index.php (depois do movimento.css), por isso
+   tem a palavra final na cascata. Só atua nesses breakpoints: em tela
+   grande / zoom normal nada muda.
+
+   A altura real do cabeçalho vem da variável --hdr-h, mantida pelo
+   assets/js/zoom.js (o valor abaixo é só o padrão de antes do JS rodar).
+============================================================= */
+
+:root {
+  --hdr-h: 73px;
+}
+
+/* ------------------------------------------------------------
+   0. Base (qualquer largura) — nada dentro do cabeçalho/menu pode
+      impedir o encolhimento dos itens
+------------------------------------------------------------ */
+.header__search,
+.header__search-input {
+  min-width: 0;
+}
+
+/* Menu lateral: se a janela for baixa, rola por dentro em vez de cortar
+   os itens de baixo (antes ficavam inalcançáveis: o menu é "sticky" e
+   mais alto que a tela). Sem barra de rolagem visível (movimento.css). */
+html body .inicio__sidebar {
+  max-height: calc(100vh - var(--hdr-h));
+  max-height: calc(100dvh - var(--hdr-h));
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+}
+
+/* Páginas que já travavam a altura do menu em 73px passam a seguir o
+   cabeçalho real (--hdr-h) */
+html body .equipes .inicio__sidebar,
+html body .chat .inicio__sidebar,
+html body .inteligencia-artificial .inicio__sidebar {
+  height: calc(100vh - var(--hdr-h));
+  height: calc(100dvh - var(--hdr-h));
+}
+
+/* ------------------------------------------------------------
+   1. Cabeçalho — larguras intermediárias (zoom ~150–200%):
+      ainda no layout desktop, mas sem estourar
+------------------------------------------------------------ */
+@media (min-width: 769px) and (max-width: 1100px) {
+  .header__container {
+    gap: 16px;
+    padding-left: 16px;
+    padding-right: 16px;
+  }
+
+  /* "Todas categorias" e "Olá, Bem-Vindo! Fulano" viram só o ícone/avatar
+     (o avatar continua abrindo o menu do usuário) */
+  .header__categories span,
+  .header__user-text {
+    display: none;
+  }
+
+  .header__logo img {
+    width: auto;
+    height: 34px;
+  }
+}
+
+/* ------------------------------------------------------------
+   2. Cabeçalho — layout compacto (≤ 768px: já é o layout "mobile",
+      aqui só ajustamos os tamanhos para caber sem cortar nada)
+------------------------------------------------------------ */
+@media (max-width: 768px) {
+  .header__container {
+    padding: 10px 14px;
+    gap: 10px;
+  }
+
+  /* A logo pode encolher (mantendo a proporção) se faltar espaço */
+  .header__logo {
+    flex: 0 1 auto;
+    min-width: 0;
+  }
+
+  .header__logo img {
+    width: auto;
+    height: auto;
+    max-width: 100%;
+    max-height: 30px;
+  }
+
+  .header__categories svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  .header__quick-icons {
+    flex-shrink: 0;
+  }
+
+  .header__categories,
+  .header__user,
+  .header__search-toggle {
+    flex-shrink: 0;
+  }
+}
+
+@media (max-width: 480px) {
+  .header__container {
+    padding: 8px 10px;
+    gap: 6px;
+  }
+
+  .header__logo img {
+    max-height: 26px;
+  }
+
+  .header__categories svg {
+    width: 22px;
+    height: 22px;
+  }
+
+  .header__quick-icons {
+    gap: 0;
+  }
+
+  .header__icon-btn {
+    width: 34px;
+    height: 34px;
+  }
+
+  .header__avatar {
+    width: 30px;
+    height: 30px;
+  }
+
+  /* Dropdown de login e popout de notificações acompanham a nova altura */
+  .login-modal {
+    top: calc(var(--hdr-h) + 4px);
+  }
+}
+
+@media (max-width: 380px) {
+  .header__container {
+    padding: 6px 8px;
+    gap: 4px;
+  }
+
+  .header__logo img {
+    max-height: 22px;
+  }
+
+  .header__icon-btn {
+    width: 30px;
+    height: 30px;
+  }
+
+  .header__icon-btn svg {
+    width: 19px;
+    height: 19px;
+  }
+
+  .header__avatar {
+    width: 28px;
+    height: 28px;
+  }
+}
+
+/* ------------------------------------------------------------
+   3. Menu lateral como "gaveta" em tela estreita (≤ 860px)
+      Abre por cima do conteúdo, com fundo escurecido; não empurra mais
+      a página (antes ocupava 200px dos ~320px disponíveis).
+------------------------------------------------------------ */
+@media (max-width: 860px) {
+  html body.sidebar-open .inicio__sidebar {
+    position: fixed;
+    top: var(--hdr-h);
+    left: 0;
+    z-index: 150;
+    width: min(280px, 86vw);
+    /* altura explícita (top + bottom com height:auto não estica aqui) */
+    height: calc(100vh - var(--hdr-h));
+    height: calc(100dvh - var(--hdr-h));
+    min-height: 0;
+    max-height: none;
+    box-shadow: 0 0 0 100vmax rgba(0, 0, 0, 0.38), 8px 0 28px rgba(0, 0, 0, 0.18);
+    clip-path: inset(0 -100vmax 0 0);
+  }
+
+  /* O botão "Recolher" fica sempre à vista no pé da gaveta */
+  html body.sidebar-open .inicio__sidebar .inicio__collapse {
+    position: sticky;
+    bottom: 0;
+    z-index: 2;
+    background: #fff;
+    padding-top: 6px;
+    padding-bottom: 6px;
+  }
+
+  html[data-tema="escuro"] body.sidebar-open .inicio__sidebar .inicio__collapse {
+    background: #17222b;
+  }
+
+  /* Com a gaveta aberta a página de trás não rola */
+  html body.sidebar-open {
+    overflow: hidden;
+  }
+}
+
+/* ------------------------------------------------------------
+   4. Janela BAIXA (≤ 520px de altura — zoom ≥ ~150% em monitor
+      comum, 500% = ~150px): o cabeçalho deixa de ficar fixo, para
+      não consumir metade da tela, e o conteúdo ganha o espaço todo.
+------------------------------------------------------------ */
+@media (max-height: 520px) {
+  .header {
+    position: relative;
+  }
+
+  /* Sem cabeçalho fixo, o menu lateral "gruda" no topo da tela */
+  html body .inicio__sidebar {
+    top: 0;
+    max-height: 100vh;
+    max-height: 100dvh;
+  }
+
+  html body .equipes .inicio__sidebar,
+  html body .chat .inicio__sidebar,
+  html body .inteligencia-artificial .inicio__sidebar {
+    height: 100vh;
+    height: 100dvh;
+  }
+}
+
+@media (max-width: 860px) and (max-height: 520px) {
+  /* Com o menu aberto o cabeçalho volta a ficar fixo no topo (não some) e
+     a gaveta começa logo abaixo dele. */
+  html body.sidebar-open .header {
+    position: sticky;
+    top: 0;
+  }
+
+  html body.sidebar-open .inicio__sidebar {
+    top: var(--hdr-h);
+    height: calc(100vh - var(--hdr-h));
+    height: calc(100dvh - var(--hdr-h));
+  }
+}
+
+/* Itens do menu mais compactos na gaveta: cabem bem mais categorias por
+   vez quando o zoom é alto (a tela útil fica minúscula). */
+@media (max-width: 860px) {
+  html body.sidebar-open .inicio__sidebar {
+    width: min(240px, 80vw);
+    padding: 8px 10px 0;
+  }
+
+  html body.sidebar-open .inicio__sidebar .inicio__nav {
+    gap: 0;
+  }
+
+  html body.sidebar-open .inicio__sidebar .inicio__nav-item,
+  html body.sidebar-open .inicio__sidebar .inicio__channel-item,
+  html body.sidebar-open .inicio__sidebar .inicio__shortcut {
+    padding-top: 5px;
+    padding-bottom: 5px;
+    gap: 8px;
+    font-size: 13px;
+  }
+
+  html body.sidebar-open .inicio__sidebar .inicio__icon {
+    width: 16px;
+    height: 16px;
+  }
+
+  html body.sidebar-open .inicio__sidebar .inicio__icon--ia {
+    width: 21px;
+    height: 21px;
+  }
+
+  html body.sidebar-open .inicio__sidebar .inicio__sidebar-section {
+    margin-top: 10px;
+  }
+
+  html body.sidebar-open .inicio__sidebar .inicio__sidebar-section:last-of-type {
+    margin-bottom: 10px;
+  }
+
+  html body.sidebar-open .inicio__sidebar .inicio__sidebar-label {
+    margin-bottom: 4px;
+  }
+}
+
+/* ------------------------------------------------------------
+   5. Elementos que usavam o cabeçalho fixo de 73px como referência
+      passam a seguir a altura real (--hdr-h)
+------------------------------------------------------------ */
+html body .inteligencia-artificial {
+  --ia-topo: var(--hdr-h);
+}
+
+html body .equipes__offline,
+html body .chamadas__sala,
+html body .chamadas__direto-carregando {
+  top: var(--hdr-h);
+}
+
+@media (max-width: 1279px) {
+  /* Painel direito de Equipes (gaveta) */
+  html body .equipes__painel {
+    top: var(--hdr-h);
+  }
+}
+
+/* ------------------------------------------------------------
+   6. Páginas que ocupam EXATAMENTE a altura da tela (Chat, Equipes,
+      IA): com a janela baixa (zoom alto) viravam uma faixa de ~100px.
+      Ganham uma altura mínima e a própria página passa a rolar.
+------------------------------------------------------------ */
+@media (max-height: 600px) {
+  html body .chat__main,
+  html body .equipes__main,
+  html body .inteligencia-artificial__main {
+    height: max(calc(100vh - var(--hdr-h)), 520px);
+    height: max(calc(100dvh - var(--hdr-h)), 520px);
+  }
+
+  html body .chat .inicio__sidebar,
+  html body .equipes .inicio__sidebar,
+  html body .inteligencia-artificial .inicio__sidebar {
+    height: max(calc(100vh - var(--hdr-h)), 520px);
+    height: max(calc(100dvh - var(--hdr-h)), 520px);
+    max-height: none;
+  }
+}
+
+@media (max-height: 520px) {
+  html body .equipes__painel {
+    top: 0;
+  }
+
+  /* Sem cabeçalho fixo, o painel/ sala de chamada ocupa a tela toda */
+  html body .chamadas__sala,
+  html body .chamadas__direto-carregando,
+  html body .equipes__offline {
+    top: 0;
+  }
+}

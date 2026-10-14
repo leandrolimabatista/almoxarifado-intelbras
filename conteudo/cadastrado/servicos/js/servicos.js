@@ -64,6 +64,30 @@
   document.querySelectorAll('.servicos__icon img').forEach(img =>
     img.addEventListener('error', () => img.parentElement.classList.add('servicos__icon--vazio')));
 
+  // ---- Botão direito num card: menu padronizado do site (assets/js/menu-contexto.js) ----
+  if (alvo) {
+    alvo.addEventListener('contextmenu', (e) => {
+      const M = window.MenuContexto;
+      const card = e.target.closest('.servicos__card');
+      if (!M || !card || e.shiftKey || M.temSelecao()) return;
+      const link = card.querySelector('.servicos__abrir');
+      if (!link) return;
+      e.preventDefault();
+      const nome = (card.querySelector('.servicos__name') || {}).textContent || 'Serviço';
+      const pos = M.posicao(e, card);
+      M.mostrar({
+        x: pos.x, y: pos.y, alvo: null,
+        aria: 'Opções de ' + nome,
+        cabeca: M.cabeca('abrir', nome),
+        opcoes: [
+          { rotulo: 'Abrir ' + nome, icone: 'abrir', destaque: true, acao: () => window.open(link.href, '_blank', 'noopener') },
+          { rotulo: 'Copiar link', icone: 'link', acao: () => M.copiar(link.href, 'Link copiado') },
+          { rotulo: 'Copiar nome', icone: 'copiar', acao: () => M.copiar(nome, 'Nome copiado') },
+        ],
+      });
+    });
+  }
+
   // ---- Menu lateral: botão "Recolher" ----
   const btnRecolher = document.getElementById('btnRecolher');
   const fecharMenu = () => document.body.classList.remove('sidebar-open');

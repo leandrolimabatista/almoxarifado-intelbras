@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="robots" content="noindex">
+  <meta name="color-scheme" content="light dark">
+  <!-- Tema (Claro/Escuro/Automático): tem que vir antes dos CSS -->
+  <script src="../../../assets/js/tema.js?v=1"></script>
+  <link rel="stylesheet" href="../../../assets/css/tema-escuro.css?v=2">
+  <title>Termos de Uso — Intelbras</title>
+  <link rel="icon" href="../../../assets/img/favicon/favicon.ico?v=2" sizes="any">
+  <link rel="icon" type="image/png" sizes="32x32" href="../../../assets/img/favicon/favicon-32.png?v=2">
+  <link rel="icon" type="image/png" sizes="192x192" href="../../../assets/img/favicon/favicon-192.png?v=2">
+  <link rel="apple-touch-icon" href="../../../assets/img/favicon/apple-touch-icon.png?v=2">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600&family=Nunito+Sans:wght@400;600;700;800&family=Source+Serif+4:opsz,wght@8..60,600&display=swap" rel="stylesheet">
+  <!-- Componentes globais do site (mesmos arquivos usados pelo index.php) -->
+  <link rel="stylesheet" href="../../../assets/css/busca-pagina.css?v=3">
+  <link rel="stylesheet" href="../../../assets/css/menu-contexto.css?v=8">
+  <link rel="stylesheet" href="../css/legal.css?v=20261012">
+  <link rel="stylesheet" href="../responsivo/legal.responsivo.css?v=20261012">
+</head>
+<body class="legal">
+
+  <!-- Barra superior -->
+  <header class="legal__topo">
+    <div class="legal__topo-esq">
+      <button type="button" class="legal__menu-btn" id="legalMenuBtn" aria-label="Abrir menu" aria-expanded="false" aria-controls="legalMenu">
+        <svg width="20" height="20" viewBox="0 0 24 24" fill="none"><path d="M4 6H20M4 12H20M4 18H20" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+      </button>
+      <a href="../../../index.php" class="legal__logo" aria-label="Intelbras - Página inicial">
+        <img class="logo-claro" src="../../../cabecalho/img/Logo.png" alt="Intelbras">
+        <img class="logo-escuro" src="../../../cabecalho/img/Logo-escuro.png" alt="Intelbras">
+      </a>
+      <span class="legal__logo-sep" aria-hidden="true"></span>
+      <span class="legal__logo-rotulo">Central legal</span>
+    </div>
+    <nav class="legal__topo-nav" aria-label="Documentos legais">
+      <a href="politica-de-privacidade.html">Política de Privacidade</a>
+      <a href="termos-de-uso.html" aria-current="page">Termos de Uso</a>
+      <a href="../../../index.php" class="legal__voltar" aria-label="Voltar ao site">
+        <svg width="14" height="14" viewBox="0 0 24 24" fill="none"><path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Voltar ao site</span>
+      </a>
+    </nav>
+  </header>
+
+  <div class="legal__corpo">
+
+    <!-- Menu lateral -->
+    <aside class="legal__menu" id="legalMenu" aria-label="Menu lateral">
+      <nav class="legal__nav" aria-label="Documentos legais">
+        <a href="politica-de-privacidade.html" class="legal__nav-item">
+          <svg class="legal__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 3.5l7 3v5.2c0 4.3-2.9 7.7-7 8.8-4.1-1.1-7-4.5-7-8.8V6.5l7-3z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12l2.2 2.2L15.5 10" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span>Política de Privacidade</span>
+        </a>
+        <a href="termos-de-uso.html" class="legal__nav-item legal__nav-item--active" aria-current="page">
+          <svg class="legal__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M7 3.5h7l4 4v13a1 1 0 01-1 1H7a1 1 0 01-1-1v-16a1 1 0 011-1z" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M9 12.5h6M9 16h6" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+          <span>Termos de Uso</span>
+        </a>
+      </nav>
+
+      <div class="legal__secao">
+        <span class="legal__rotulo">NESTA PÁGINA</span>
+        <ul class="legal__lista" id="legalIndice">
+          <li><a href="#aceitacao" class="legal__item">1. Aceitação dos termos</a></li>
+          <li><a href="#conta" class="legal__item">2. Conta e acesso</a></li>
+          <li><a href="#uso-permitido" class="legal__item">3. Uso permitido</a></li>
+          <li><a href="#condutas" class="legal__item">4. O que não é permitido</a></li>
+          <li><a href="#conteudo" class="legal__item">5. Conteúdo e propriedade intelectual</a></li>
+          <li><a href="#ia" class="legal__item">6. Assistente de IA</a></li>
+          <li><a href="#loja" class="legal__item">7. Loja e pedidos</a></li>
+          <li><a href="#disponibilidade" class="legal__item">8. Disponibilidade e responsabilidade</a></li>
+          <li><a href="#suspensao" class="legal__item">9. Suspensão e encerramento</a></li>
+          <li><a href="#alteracoes" class="legal__item">10. Alterações dos termos</a></li>
+          <li><a href="#foro" class="legal__item">11. Lei aplicável e foro</a></li>
+        </ul>
+      </div>
+    </aside>
+    <div class="legal__overlay" id="legalOverlay"></div>
+
+    <!-- Conteúdo -->
+    <main class="legal__main">
+      <article class="legal__artigo">
+
+        <ol class="legal__trilha" aria-label="Você está em">
+          <li><a href="../../../index.php">Início</a></li>
+          <li aria-current="page">Termos de Uso</li>
+        </ol>
+
+        <h1 class="legal__titulo">Termos de Uso</h1>
+
+        <div class="legal__meta">
+          <span>Atualizado em 12 de outubro de 2026</span>
+          <button type="button" class="legal__acao" id="legalImprimir">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none"><path d="M7 9V3H17V9M7 17H5C3.9 17 3 16.1 3 15V11C3 9.9 3.9 9 5 9H19C20.1 9 21 9.9 21 11V15C21 16.1 20.1 17 19 17H17M7 14H17V21H7V14Z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Imprimir
+          </button>
+        </div>
+
+        <div class="legal__corpo-texto">
+
+          <div class="legal__destaque">
+            <p><strong>Resumo:</strong> use a plataforma de forma responsável, mantenha sua senha em segurança, respeite as outras pessoas e os direitos da Intelbras. Ao entrar, você concorda com estes termos.</p>
+          </div>
+
+          <h2 id="aceitacao">1. Aceitação dos termos</h2>
+          <p>Estes Termos de Uso regulam o acesso e a utilização da plataforma Intelbras de comunicação e colaboração, que reúne funcionalidades como chat, equipes, chamadas, reuniões, documentos, cursos, loja e assistente de IA.</p>
+          <p>Ao criar uma conta ou usar a plataforma, você declara que leu e concorda com estes Termos e com a nossa <a href="politica-de-privacidade.html">Política de Privacidade</a>. Se não concordar, não utilize o serviço.</p>
+
+          <h2 id="conta">2. Conta e acesso</h2>
+          <ul>
+            <li>O acesso às áreas internas exige cadastro aprovado e é pessoal e intransferível.</li>
+            <li>Você é responsável por manter a confidencialidade da sua senha e por tudo o que for feito com a sua conta.</li>
+            <li>Os dados informados no cadastro devem ser verdadeiros e mantidos atualizados.</li>
+            <li>Algumas funcionalidades, como agendar reuniões ou acessar o painel de administração, dependem do cargo e do perfil de acesso atribuído.</li>
+            <li>Se suspeitar de uso indevido da sua conta, altere a senha e avise a equipe responsável imediatamente.</li>
+          </ul>
+
+          <h2 id="uso-permitido">3. Uso permitido</h2>
+          <p>A plataforma deve ser usada para fins profissionais e de acordo com a lei, as políticas internas da Intelbras e a boa-fé. Você pode, por exemplo, conversar com colegas, compartilhar documentos de trabalho, participar de chamadas e reuniões, fazer cursos e realizar compras pela loja.</p>
+
+          <h2 id="condutas">4. O que não é permitido</h2>
+          <p>É proibido:</p>
+          <ul>
+            <li>acessar contas, áreas ou dados de outras pessoas sem autorização;</li>
+            <li>tentar burlar controles de segurança, explorar falhas ou sobrecarregar o serviço;</li>
+            <li>enviar vírus, códigos maliciosos ou conteúdo que possa danificar sistemas;</li>
+            <li>publicar conteúdo ilegal, ofensivo, discriminatório, difamatório ou que viole direitos de terceiros;</li>
+            <li>compartilhar informações confidenciais da Intelbras ou de clientes fora dos canais autorizados;</li>
+            <li>gravar chamadas ou reuniões sem o conhecimento dos participantes;</li>
+            <li>usar a plataforma para spam, fraude ou qualquer finalidade comercial alheia à Intelbras.</li>
+          </ul>
+
+          <h2 id="conteudo">5. Conteúdo e propriedade intelectual</h2>
+          <p>A marca Intelbras, o layout, os textos, as imagens e o software da plataforma pertencem à Intelbras ou a seus licenciadores e são protegidos pela legislação de propriedade intelectual. Estes Termos não transferem nenhum direito sobre eles.</p>
+          <p>O conteúdo que você envia (mensagens, arquivos, documentos) continua sendo de quem o criou ou de quem detém os direitos sobre ele. Você nos autoriza a armazená-lo e exibi-lo apenas na medida necessária para prestar o serviço, e é responsável por ter o direito de compartilhá-lo.</p>
+
+          <h2 id="ia">6. Assistente de IA</h2>
+          <p>O assistente de IA pode gerar respostas incorretas, incompletas ou desatualizadas. Confira as informações importantes antes de usá-las, especialmente em decisões técnicas, financeiras, jurídicas ou de saúde.</p>
+          <p>Não envie ao assistente dados pessoais sensíveis, senhas ou informações confidenciais que não precisem ser tratadas por ele. O histórico das conversas e dos anexos fica associado à sua conta, conforme a <a href="politica-de-privacidade.html#dados-coletados">Política de Privacidade</a>.</p>
+
+          <h2 id="loja">7. Loja e pedidos</h2>
+          <ul>
+            <li>Preços, disponibilidade e prazos de entrega são exibidos no momento da compra e podem mudar sem aviso prévio.</li>
+            <li>O pagamento é processado por um provedor externo (Mercado Pago), sujeito aos termos dele.</li>
+            <li>O frete é calculado de acordo com o endereço informado; confira os dados antes de finalizar o pedido.</li>
+            <li>Trocas, devoluções e garantia seguem o Código de Defesa do Consumidor e as condições informadas em cada produto.</li>
+          </ul>
+
+          <h2 id="disponibilidade">8. Disponibilidade e responsabilidade</h2>
+          <p>Trabalhamos para manter a plataforma disponível e segura, mas não garantimos funcionamento ininterrupto. Podem ocorrer manutenções, instabilidades ou falhas fora do nosso controle, como problemas de internet ou de serviços de terceiros.</p>
+          <p>Na extensão permitida pela lei, a Intelbras não responde por danos decorrentes do uso indevido da plataforma, do compartilhamento de credenciais, de conteúdo publicado por usuários ou de indisponibilidades de serviços de terceiros.</p>
+
+          <h2 id="suspensao">9. Suspensão e encerramento</h2>
+          <p>Podemos suspender ou encerrar o acesso de quem violar estes Termos, a lei ou as políticas internas, ou quando o vínculo que justifica o acesso terminar. Sempre que possível, explicaremos o motivo. Você também pode solicitar o encerramento da sua conta a qualquer momento.</p>
+
+          <h2 id="alteracoes">10. Alterações dos termos</h2>
+          <p>Podemos atualizar estes Termos periodicamente. A data da última atualização fica no topo desta página. Continuar usando a plataforma depois de uma alteração significa que você concorda com a nova versão.</p>
+
+          <h2 id="foro">11. Lei aplicável e foro</h2>
+          <p>Estes Termos são regidos pelas leis da República Federativa do Brasil. Fica eleito o foro da comarca de <mark class="legal__pendente">[definir comarca com o jurídico da Intelbras]</mark> para resolver questões relacionadas a eles, ressalvados os direitos do consumidor previstos em lei.</p>
+
+        </div>
+
+        <div class="legal__rodape-artigo">
+          <span>Veja também: <a href="politica-de-privacidade.html">Política de Privacidade</a></span>
+          <a href="#topo-pagina" onclick="window.scrollTo({top:0});return false;">Voltar ao topo ↑</a>
+        </div>
+      </article>
+    </main>
+  </div>
+
+  <div class="legal__copy">© Intelbras 2026 - Todos os direitos reservados</div>
+
+  <!-- Funcionamento global do site: menu do botão direito (página / texto selecionado) e busca Ctrl+F -->
+  <script src="../../../assets/js/busca-pagina.js?v=2"></script>
+  <script src="../../../assets/js/menu-contexto.js?v=12"></script>
+  <script src="../js/legal.js?v=20261012"></script>
+</body>
+</html>

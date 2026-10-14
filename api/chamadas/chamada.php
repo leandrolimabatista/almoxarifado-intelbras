@@ -23,6 +23,8 @@ ch_exigir_csrf($corpo);
 
 $acao = (string)($corpo['acao'] ?? '');
 $midia = (($corpo['midia'] ?? 'video') === 'voz') ? 'voz' : 'video';
+// Chamada feita a partir do Chat: qualquer usuário liga para quem está na sua lista de conversas.
+$deChat = (string)($corpo['origem'] ?? '') === 'chat';
 
 /** true se o usuário já está dentro de alguma chamada ativa. */
 function ch_em_chamada(PDO $pdo, int $uid, int $exceto = 0): bool
@@ -69,13 +71,19 @@ try {
     $pdo = ch_pdo();
     $eu = ch_usuario($pdo, $uid);
     $equipe = (string)($eu['equipe_slug'] ?? '');
+    $admin = ch_e_super_admin($uid);
     ch_batida($pdo, $uid, 'online');
     ch_manutencao($pdo);
 
     // ------------------------------------------------------------
     if ($acao === 'iniciar') {
         $tipo = (string)($corpo['tipo'] ?? '');
-        if ($equipe === '') {
+        // Administrador (id 1) pode escolher a equipe da chamada; os demais usam a própria.
+        $eqPedida = strtolower(trim((string)($corpo['equipe'] ?? '')));
+        if ($admin && isset(CH_EQUIPES[$eqPedida])) {
+            $equipe = $eqPedida;
+        }
+        if ($equipe === '' && !(($admin || $deChat) && $tipo === 'individual')) {
             ch_erro(403, 'Você ainda não pertence a uma equipe.');
         }
         if (ch_em_chamada($pdo, $uid)) {
@@ -91,7 +99,20 @@ try {
                 ch_erro(404, 'Contato não encontrado.');
             }
             // REGRA 1: só chama quem é da mesma equipe.
-            if ((string)$alvo['equipe_slug'] !== $equipe) {
+            if ($admin) {
+                // Administrador chama qualquer pessoa; a chamada fica registrada na equipe do contato.
+                $equipe = (string)$alvo['equipe_slug'] !== '' ? (string)$alvo['equipe_slug'] : ($equipe !== '' ? $equipe : 'geral');
+            } elseif ($deChat) {
+                // Chat: liga para qualquer pessoa com quem já tem conversa (qualquer equipe).
+                $a = min($uid, $alvoId);
+                $b = max($uid, $alvoId);
+                $cv = $pdo->prepare('SELECT 1 FROM tb_conversas WHERE usuario1_id = ? AND usuario2_id = ? LIMIT 1');
+                $cv->execute([$a, $b]);
+                if (!$cv->fetchColumn()) {
+                    ch_erro(403, 'Você só pode ligar para pessoas da sua lista de conversas.');
+                }
+                $equipe = (string)$alvo['equipe_slug'] !== '' ? (string)$alvo['equipe_slug'] : ($equipe !== '' ? $equipe : 'geral');
+            } elseif ((string)$alvo['equipe_slug'] !== $equipe) {
                 ch_erro(403, CH_MSG_REGRA_MESMA_EQUIPE);
             }
             $s = ch_status_de($pdo, [$alvoId])[$alvoId] ?? 'offline';
@@ -117,7 +138,13 @@ try {
         }
 
         if ($tipo === 'equipe') {
-            // REGRA 2: só Diretor, Gerente e CEO.
+            // Equipe pedida diferente da própria: só o Administrador (já tratado acima).
+            $eqPedidaCanal = strtolower(trim((string)($corpo['equipe'] ?? '')));
+            if (!$admin && $eqPedidaCanal !== '' && $eqPedidaCanal !== $equipe) {
+                ch_erro(403, CH_MSG_REGRA_MESMA_EQUIPE);
+            }
+
+            // REGRA 2: só Diretor, Gerente e CEO chamam a equipe toda.
             if (!ch_pode_chamar_equipe($eu)) {
                 ch_erro(403, CH_MSG_REGRA_EQUIPE);
             }
@@ -133,6 +160,7 @@ try {
                 ch_entrar($pdo, $existente, $uid);
                 ch_resposta(200, ['sucesso' => true, 'chamada' => ch_formatar_chamada($pdo, $existente)]);
             }
+
 
             $membros = ch_membros_da_equipe($pdo, $equipe);
             $status = ch_status_de($pdo, array_column($membros, 'id'));

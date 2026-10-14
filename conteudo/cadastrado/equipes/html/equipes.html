@@ -26,10 +26,10 @@ $csrfEquipes = (string)$_SESSION['csrf_equipes'];
 $equipeInicial = strtolower((string)($_GET['equipe'] ?? 'geral'));
 $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
 ?>
-<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
-<link rel="stylesheet" href="conteudo/cadastrado/equipes/css/equipes.css?v=11">
-<link rel="stylesheet" href="conteudo/cadastrado/equipes/responsivo/equipes.responsivo.css?v=4">
+<link rel="stylesheet" href="conteudo/cadastrado/equipes/css/equipes.css?v=20261026">
+<link rel="stylesheet" href="conteudo/cadastrado/equipes/responsivo/equipes.responsivo.css?v=5">
 
 <div
   class="equipes"
@@ -79,9 +79,9 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
         <span>Loja</span>
       </a>
       <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
-      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>Usuários</span>
+      <a href="index.php?pagina=dashboard" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="15" width="7" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Dashboard</span>
       </a>
       <?php endif; ?>
     </nav>
@@ -89,50 +89,63 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">EQUIPES</span>
       <div class="inicio__channel-list">
+        <?php if (eqv_visivel('geral')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
           <span class="inicio__channel-dot" style="background:#00A859"></span>
           <span>Geral</span>
           <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('projetos')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
           <span class="inicio__channel-dot" style="background:#3B82F6"></span>
           <span>Projetos</span>
           <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('marketing')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
           <span class="inicio__channel-dot" style="background:#F59E0B"></span>
           <span>Marketing</span>
           <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('rh')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
           <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
           <span>RH</span>
           <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('financeiro')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
           <span class="inicio__channel-dot" style="background:#EC4899"></span>
           <span>Financeiro</span>
           <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('ti')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
           <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
           <span>TI</span>
           <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('sac')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
           <span class="inicio__channel-dot" style="background:#EF4444"></span>
           <span>SAC / Ouvidoria</span>
           <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
         </a>
+        <?php endif; ?>
       </div>
-      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
     </div>
 
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">ATALHOS</span>
-      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        <span>Nova conversa</span>
+      <a href="index.php?pagina=chat" class="inicio__shortcut" id="atalhoChatSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chat</span>
       </a>
       <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
         <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -209,8 +222,8 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
           <p class="equipes__canal-subtitulo" id="equipesCanalSubtitulo">Conversas da equipe</p>
         </div>
         <div class="equipes__canal-acoes">
-          <button type="button" class="equipes__icone-btn" id="equipesBtnVideo" aria-label="Iniciar videochamada" title="Iniciar videochamada">
-            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M15 9.5l5-2.8v10.6l-5-2.8" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/><rect x="3" y="6" width="12" height="12" rx="2" stroke="currentColor" stroke-width="1.7"/></svg>
+          <button type="button" class="equipes__icone-btn" id="equipesBtnVideo" aria-label="Iniciar chamada de vídeo" title="Iniciar chamada de vídeo">
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><rect x="2" y="6" width="14" height="12" rx="2.5" stroke="currentColor" stroke-width="1.8" stroke-linejoin="round"/><path d="M16 10.5l4.6-2.8a.7.7 0 0 1 1.1.6v7.4a.7.7 0 0 1-1.1.6L16 13.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg>
           </button>
           <button type="button" class="equipes__icone-btn" id="equipesBtnVoz" aria-label="Iniciar chamada de voz" title="Iniciar chamada de voz">
             <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"/></svg>
@@ -238,7 +251,6 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
         <button type="button" class="equipes__tab" data-aba="tarefas">Tarefas</button>
         <button type="button" class="equipes__tab" data-aba="calendario">Calendário</button>
         <button type="button" class="equipes__tab" data-aba="notas">Notas</button>
-        <button type="button" class="equipes__tab equipes__tab--add" id="equipesBtnNovaAba" aria-label="Adicionar aba">+</button>
       </nav>
 
       <!-- Corpo da aba Chat -->
@@ -405,15 +417,9 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
       <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="arquivos" hidden>
         <p>Os arquivos desta equipe já aparecem em <a href="index.php?pagina=documentos">Documentos</a>. Uma visão dedicada aqui está a caminho.</p>
       </div>
-      <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="tarefas" hidden>
-        <p>Tarefas — em breve.</p>
-      </div>
-      <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="calendario" hidden>
-        <p>Calendário — em breve.</p>
-      </div>
-      <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="notas" hidden>
-        <p>Notas — em breve.</p>
-      </div>
+      <div class="equipes__corpo-aba equipes__aba-conteudo" data-corpo-aba="tarefas" hidden></div>
+      <div class="equipes__corpo-aba equipes__aba-conteudo" data-corpo-aba="calendario" hidden></div>
+      <div class="equipes__corpo-aba equipes__aba-conteudo" data-corpo-aba="notas" hidden></div>
     </div>
 
     <!-- ----- Painel direito ----- -->
@@ -457,7 +463,22 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
 
   <!-- Toast de erro de envio / ação -->
   <div class="equipes__toast" id="equipesToast" role="alert" hidden></div>
+
+  <!-- Resumo da chamada (aparece sobre a Equipe quando a ligação feita daqui termina) -->
+  <div class="equipes__modal" id="equipesPos" hidden>
+    <div class="equipes__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="equipesPosTitulo">
+      <span class="equipes__pos-icone" id="equipesPosIcone" aria-hidden="true"></span>
+      <h2 id="equipesPosTitulo">Chamada encerrada</h2>
+      <p class="equipes__pos-texto" id="equipesPosTexto" hidden></p>
+      <dl class="equipes__pos-resumo" id="equipesPosResumo">
+        <div><dt>Duração</dt><dd id="equipesPosDuracao">00:00</dd></div>
+        <div><dt>Participantes</dt><dd id="equipesPosPartes">—</dd></div>
+      </dl>
+      <button type="button" class="equipes__pos-btn" id="equipesPosFechar">Voltar para a Equipe</button>
+    </div>
+  </div>
 </div>
 
 <script src="conteudo/cadastrado/equipes/js/emojis-dados.js?v=2"></script>
-<script src="conteudo/cadastrado/equipes/js/equipes.js?v=7"></script>
+<script src="conteudo/cadastrado/equipes/js/equipes.js?v=19"></script>
+<script src="conteudo/cadastrado/equipes/js/equipes-abas.js?v=4"></script>

@@ -105,6 +105,29 @@ if ($equipe !== '') {
     $par['equipe'] = $equipe;
 }
 
+// Administrador Intelbras (id 1) não aparece para os outros usuários: nem os documentos dele.
+if ($usuarioId !== 1) {
+    $onde[] = 'd.usuario_id <> 1';
+}
+
+// Visibilidade por equipe: quem não é o Administrador (id 1) só vê documentos
+// das equipes que acessa (a própria + acessos concedidos) e os que ele mesmo enviou.
+require_once __DIR__ . '/../equipes/_visibilidade.php';
+try {
+    $slugsVisiveis = eqv_slugs_visiveis(doc_pdo(), $usuarioId);
+} catch (Throwable $e) {
+    $slugsVisiveis = [];
+}
+if ($slugsVisiveis !== null) {
+    $condVis = ['d.usuario_id = :vis_uid'];
+    $par['vis_uid'] = $usuarioId;
+    foreach ($slugsVisiveis as $i => $slugVis) {
+        $condVis[] = 'd.equipe_slug = :vis_eq' . $i;
+        $par['vis_eq' . $i] = $slugVis;
+    }
+    $onde[] = '(' . implode(' OR ', $condVis) . ')';
+}
+
 if ($busca !== '') {
     $like = '%' . addcslashes($busca, '\\%_') . '%';
     $onde[] = '(d.nome LIKE :busca1 OR d.nome_arquivo LIKE :busca2 OR u.nome LIKE :busca3)';
@@ -188,19 +211,21 @@ try {
     // Atividade recente (montada das tabelas existentes; sem tabela de log).
     // Só documentos ativos: o que está na lixeira some do feed.
     // --------------------------------------------------------
+    // Atividades do Administrador (id 1) só aparecem para ele mesmo.
+    $semAdm = $usuarioId !== 1;
     $stmt = $pdo->query(
         "(SELECT 'criou' AS acao, d.criado_em AS quando, d.usuario_id AS autor_id, u.nome AS autor,
                  d.id AS documento_id, d.nome AS documento, d.extensao AS extensao, d.equipe_slug AS equipe
             FROM tb_documentos d
             JOIN tb_usuarios u ON u.id = d.usuario_id
-           WHERE d.excluido_em IS NULL
+           WHERE d.excluido_em IS NULL" . ($semAdm ? ' AND d.usuario_id <> 1' : '') . "
            ORDER BY d.criado_em DESC LIMIT 12)
          UNION ALL
          (SELECT 'atualizou', d.atualizado_em, d.atualizado_por, u.nome,
                  d.id, d.nome, d.extensao, d.equipe_slug
             FROM tb_documentos d
             JOIN tb_usuarios u ON u.id = d.atualizado_por
-           WHERE d.excluido_em IS NULL AND d.atualizado_em > d.criado_em
+           WHERE d.excluido_em IS NULL AND d.atualizado_em > d.criado_em" . ($semAdm ? ' AND d.atualizado_por <> 1 AND d.usuario_id <> 1' : '') . "
            ORDER BY d.atualizado_em DESC LIMIT 12)
          UNION ALL
          (SELECT 'favoritou', f.criado_em, f.usuario_id, u.nome,
@@ -208,7 +233,7 @@ try {
             FROM tb_documentos_favoritos f
             JOIN tb_documentos d ON d.id = f.documento_id
             JOIN tb_usuarios u ON u.id = f.usuario_id
-           WHERE d.excluido_em IS NULL
+           WHERE d.excluido_em IS NULL" . ($semAdm ? ' AND f.usuario_id <> 1 AND d.usuario_id <> 1' : '') . "
            ORDER BY f.criado_em DESC LIMIT 12)
          ORDER BY quando DESC
          LIMIT 12"

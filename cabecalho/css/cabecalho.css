@@ -62,6 +62,7 @@
   border: 1px solid var(--intelbras-cinza-claro);
   border-radius: 6px;
   background: var(--intelbras-branco);
+  position: relative;
 }
 
 .header__search-input {
@@ -111,6 +112,72 @@ input[type="search"]::-webkit-search-cancel-button {
 
 input[type="search"]::-webkit-search-cancel-button:hover {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A859' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M18 6L6 18M6 6l12 12'/%3E%3C/svg%3E");
+}
+
+/* Sugestões da busca (aparecem logo abaixo da barra ao digitar) */
+.header__search-results {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 0;
+  right: 0;
+  margin: 0;
+  padding: 6px;
+  list-style: none;
+  background: var(--intelbras-branco);
+  border: 1px solid var(--intelbras-cinza-claro);
+  border-radius: 8px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+  max-height: 340px;
+  overflow-y: auto;
+  z-index: 200;
+}
+
+.header__search-results[hidden] {
+  display: none;
+}
+
+.header__search-group {
+  padding: 10px 12px 4px;
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--intelbras-cinza);
+}
+
+.header__search-group:not(:first-child) {
+  margin-top: 6px;
+  padding-top: 12px;
+  border-top: 1px solid var(--intelbras-cinza-claro);
+}
+
+.header__search-item {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 12px;
+  border-radius: 6px;
+  font-size: 14px;
+  color: var(--intelbras-preto);
+  cursor: pointer;
+}
+
+.header__search-item.is-active {
+  background: #F2FAF6;
+  color: var(--intelbras-verde-escuro);
+}
+
+.header__search-item-type {
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--intelbras-cinza);
+}
+
+.header__search-empty {
+  padding: 12px;
+  font-size: 13px;
+  color: var(--intelbras-cinza);
 }
 
 /* Fecha a busca (X) — só existe/aparece no layout mobile */
@@ -206,6 +273,133 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   text-align: center;
 }
 
+.header__icon-badge[hidden] {
+  display: none;
+}
+
+/* Popout de notificações (sino) */
+.notif-popout {
+  position: fixed;
+  z-index: 300;
+  background: var(--intelbras-branco);
+  border-radius: 14px;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.16);
+  overflow: hidden;
+  animation: loginModalPop 0.18s ease;
+}
+
+.notif-popout[hidden] {
+  display: none;
+}
+
+.notif-popout__topo {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--intelbras-cinza-claro);
+}
+
+.notif-popout__titulo {
+  font-size: 15px;
+  font-weight: 700;
+  color: var(--intelbras-preto);
+}
+
+.notif-popout__lista {
+  max-height: 380px;
+  overflow-y: auto;
+  padding: 6px;
+}
+
+.notif-popout__vazio {
+  margin: 0;
+  padding: 24px 12px;
+  text-align: center;
+  font-size: 13px;
+  color: var(--intelbras-cinza);
+}
+
+.notif-item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px;
+  border-radius: 10px;
+  text-decoration: none;
+  color: var(--intelbras-preto);
+  transition: background-color 0.15s ease;
+}
+
+.notif-item:hover {
+  background: #F2FAF6;
+}
+
+.notif-item__avatar {
+  flex-shrink: 0;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #E6F6EE;
+  color: var(--intelbras-verde-escuro);
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.notif-item__avatar--cor {
+  color: #fff;
+}
+
+.notif-item__corpo {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  line-height: 1.35;
+}
+
+.notif-item__titulo {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-item__texto {
+  font-size: 13px;
+  color: var(--intelbras-cinza);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.notif-item__meta {
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+}
+
+.notif-item__tempo {
+  font-size: 11px;
+  color: var(--intelbras-cinza);
+}
+
+.notif-item__qtd {
+  min-width: 18px;
+  height: 18px;
+  padding: 0 5px;
+  border-radius: 999px;
+  background: var(--intelbras-verde);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 18px;
+  text-align: center;
+}
+
 /* Usuário */
 .header__user {
   display: flex;
@@ -273,6 +467,12 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
   font-weight: 700;
   font-size: 13px;
+}
+
+.header__avatar--btn {
+  border: none;
+  padding: 0;
+  cursor: pointer;
 }
 
 .header__user-menu-trigger {
@@ -522,8 +722,26 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   border-color: var(--intelbras-erro);
 }
 
+/* A camada de animação (movimento.css) pinta borda e anel VERDES em todo
+   campo com foco/hover, com seletor mais forte que o de cima — por isso o
+   erro ficava misturado (verde + vermelho). Aqui o erro vence: borda e
+   anel 100% vermelhos, em qualquer estado. */
+html body .login-modal__input.is-invalid,
+html body .login-modal__input.is-invalid:hover:not(:disabled):not(:focus),
+html body .login-modal__input.is-invalid:focus,
+html body .login-modal__input.is-invalid:focus-visible {
+  border-color: var(--intelbras-erro);
+}
+
+html body .login-modal__input.is-invalid:focus,
+html body .login-modal__input.is-invalid:focus-visible {
+  box-shadow: 0 0 0 3px rgba(229, 72, 77, 0.2);
+}
+
 .login-modal__field-error {
   display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
   min-height: 0;
   margin-top: 6px;
   font-size: 11.5px;
@@ -600,6 +818,29 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   text-decoration: underline;
 }
 
+.login-modal__hint {
+  white-space: normal;
+  overflow-wrap: break-word;
+  margin: 0 0 16px;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--intelbras-cinza);
+}
+
+.login-modal__field-ok {
+  display: block;
+  white-space: normal;
+  overflow-wrap: break-word;
+  margin: 0 0 14px;
+  font-size: 13px;
+  line-height: 1.4;
+  color: var(--intelbras-verde-escuro);
+}
+
+.login-modal__field-ok:empty {
+  display: none;
+}
+
 .login-modal__actions {
   display: flex;
   align-items: center;
@@ -644,4 +885,43 @@ input[type="search"]::-webkit-search-cancel-button:hover {
 
 .login-modal__submit:hover {
   background: var(--intelbras-verde-escuro);
+}
+
+/* Equipe silenciada no menu lateral: sem badge e com ícone de silenciada */
+.inicio__channel-item--silenciada .inicio__channel-badge {
+  display: none !important;
+}
+
+.inicio__channel-mudo {
+  margin-left: auto;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+  color: #9B9B9B;
+}
+
+.inicio__channel-mudo svg {
+  width: 14px;
+  height: 14px;
+}
+
+/* Etapas "Esqueci minha senha" / "Nova senha": respiro entre campos, mensagens e botões */
+#esqueciStepForm .login-modal__field,
+#redefinirStepForm .login-modal__field {
+  margin-bottom: 14px;
+}
+
+#esqueciStepForm .login-modal__field-error,
+#redefinirStepForm .login-modal__field-error {
+  margin: -4px 0 14px;
+  font-size: 12.5px;
+}
+
+#esqueciStepForm .login-modal__actions,
+#redefinirStepForm .login-modal__actions {
+  margin-top: 6px;
+}
+
+#redefinirStepForm .login-modal__actions {
+  justify-content: flex-end;
 }

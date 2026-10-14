@@ -11,16 +11,16 @@
 ============================================================= */
 
 .reuniao {
-  --reu-primary: #00A335;
-  --reu-primary-hover: #008C2D;
-  --reu-primary-soft: #E6F6EC;
+  --reu-primary: #00A859;
+  --reu-primary-hover: #007A40;
+  --reu-primary-soft: #E7F7EE;
   --reu-bg: #F5F6F7;
   --reu-surface: #FFFFFF;
   --reu-border: #E3E5E8;
   --reu-text: #1F2937;
   --reu-text2: #6B7280;
   --reu-placeholder: #9CA3AF;
-  --reu-error: #DC2626;
+  --reu-error: #E5484D;
   --reu-radius-input: 8px;
   --reu-radius-card: 12px;
   --reu-shadow-card: 0 1px 3px rgba(0, 0, 0, 0.06);
@@ -29,7 +29,7 @@
   position: relative;
   display: flex;
   align-items: stretch;
-  font-family: 'Nunito Sans', 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
   color: var(--reu-text);
   background: var(--reu-bg);
   min-height: calc(100vh - 73px);
@@ -55,7 +55,7 @@
 .reuniao__main {
   flex: 1;
   min-width: 0;
-  padding: 32px 32px 48px;
+  padding: 28px 32px 40px;
 }
 
 .reuniao__conteudo {
@@ -65,31 +65,25 @@
 
 .reuniao__cabecalho {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
+  justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
-}
-
-.reuniao__cabecalho-icone {
-  width: 32px;
-  height: 32px;
-  flex-shrink: 0;
-  color: var(--reu-text2);
+  margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 
 .reuniao__titulo {
-  margin: 0;
-  font-family: 'Poppins', 'Inter', 'Segoe UI', Arial, sans-serif;
-  font-size: 28px;
-  font-weight: 600;
-  line-height: 1.2;
-  color: var(--reu-text);
+  font-family: 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 24px;
+  font-weight: 700;
+  color: #1A1A1A;
+  margin: 0 0 4px;
 }
 
 .reuniao__subtitulo {
-  margin: 2px 0 0;
+  margin: 0;
   font-size: 14px;
-  color: var(--reu-text2);
+  color: #6B6B6B;
 }
 
 .reuniao__aviso {
@@ -206,7 +200,7 @@
 .reuniao__campo:focus-within {
   outline: none;
   border-color: var(--reu-primary);
-  box-shadow: 0 0 0 1px var(--reu-primary), 0 0 0 4px rgba(0, 163, 53, 0.15);
+  box-shadow: 0 0 0 1px var(--reu-primary), 0 0 0 4px rgba(0, 168, 89, 0.15);
 }
 
 .reuniao__campo[aria-expanded="true"] {
@@ -411,7 +405,7 @@
 
 .reuniao__cal-nav:disabled {
   color: #D1D5DB;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .reuniao__cal-nav svg {
@@ -461,7 +455,7 @@
 
 .reuniao__cal-dia:disabled {
   color: #C4C8CE;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .reuniao__cal-rodape {
@@ -602,7 +596,7 @@
   min-height: 96px;
   padding: 12px 14px;
   line-height: 1.5;
-  resize: vertical;
+  resize: none;
 }
 
 .reuniao__contador {
@@ -763,7 +757,7 @@
 .reuniao__mini-input:disabled {
   background: #F3F4F6;
   color: var(--reu-placeholder);
-  cursor: not-allowed;
+  cursor: default;
 }
 
 /* ===================== BOTÕES ===================== */
@@ -834,7 +828,7 @@
 
 .reuniao__btn:disabled {
   opacity: 0.55;
-  cursor: not-allowed;
+  cursor: default;
 }
 
 .reuniao__spinner {
@@ -953,7 +947,7 @@
   background: var(--reu-surface);
   color: var(--reu-text);
   box-shadow: 0 20px 50px rgba(0, 0, 0, 0.25);
-  font-family: 'Nunito Sans', 'Inter', 'Segoe UI', Arial, sans-serif;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
 }
 
 .reuniao__dlg[open] {
@@ -1046,9 +1040,14 @@
   border-radius: var(--reu-radius-input);
 }
 
+.reuniao__busca:hover {
+  border-color: #C9CDD3;
+}
+
+/* Foco padronizado (mesmo dos demais campos): o anel fica só no contêiner */
 .reuniao__busca:focus-within {
   border-color: var(--reu-primary);
-  box-shadow: 0 0 0 1px var(--reu-primary);
+  box-shadow: 0 0 0 1px var(--reu-primary), 0 0 0 4px rgba(0, 168, 89, 0.15);
 }
 
 .reuniao__busca input {
@@ -1057,9 +1056,25 @@
   height: 100%;
   border: 0;
   outline: 0;
+  box-shadow: none;
   font: inherit;
   font-size: 14px;
   background: transparent;
+  -webkit-appearance: none;
+  appearance: none;
+}
+
+/* Remove o anel de foco interno (o global .reuniao :focus-visible o recriava) */
+.reuniao .reuniao__busca input:focus,
+.reuniao .reuniao__busca input:focus-visible {
+  outline: none;
+  box-shadow: none;
+}
+
+.reuniao__busca input::-webkit-search-decoration,
+.reuniao__busca input::-webkit-search-cancel-button {
+  -webkit-appearance: none;
+  appearance: none;
 }
 
 .reuniao__pessoas {
@@ -1205,10 +1220,13 @@
   to { opacity: 1; transform: translateY(0); }
 }
 
+/* O menu lateral (.inicio__sidebar) fica de fora: ele segue a animação padrão
+   do site (abre/fecha deslizando, igual às demais abas). Antes, esta regra
+   zerava a transição dele também, e "Todas categorias" abria/fechava seco. */
 @media (prefers-reduced-motion: reduce) {
-  .reuniao *,
-  .reuniao *::before,
-  .reuniao *::after {
+  .reuniao *:not(.inicio__sidebar):not(.inicio__sidebar *),
+  .reuniao *:not(.inicio__sidebar):not(.inicio__sidebar *)::before,
+  .reuniao *:not(.inicio__sidebar):not(.inicio__sidebar *)::after {
     animation-duration: 0.01ms !important;
     transition-duration: 0.01ms !important;
   }

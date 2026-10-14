@@ -47,40 +47,40 @@
   // [titulo, descricao, [modulo1, modulo2, modulo3], modulosConcluidos(0-3), [min1, min2, min3]]
   const CATALOGO = {
     ti: [
-      ['Fundamentos de Redes e Infraestrutura', 'Aprenda os conceitos básicos de redes, protocolos e infraestrutura de TI.', ['Redes e Protocolos', 'Equipamentos e Conectividade', 'Segurança de Rede'], 1, [20, 25, 20]],
+      ['Fundamentos de Redes e Infraestrutura', 'Aprenda os conceitos básicos de redes, protocolos e infraestrutura de TI.', ['Redes e Protocolos', 'Equipamentos e Conectividade', 'Segurança de Rede'], 0, [20, 25, 20]],
       ['Segurança da Informação', 'Entenda como proteger dados, evitar riscos e adotar boas práticas no dia a dia.', ['Conceitos e Ameaças', 'Boas Práticas e Ferramentas', 'Política de Segurança'], 0, [15, 20, 15]],
       ['Cloud Computing', 'Entenda os principais conceitos de nuvem e suas aplicações no dia a dia.', ['Conceitos e Modelos', 'Serviços e Plataformas', 'Segurança na Nuvem'], 0, [15, 25, 20]],
-      ['Suporte Técnico e Help Desk', 'Aprenda a atender chamados e resolver problemas técnicos com agilidade.', ['Atendimento de Chamados', 'Diagnóstico de Problemas', 'Base de Conhecimento'], 3, [15, 20, 15]]
+      ['Suporte Técnico e Help Desk', 'Aprenda a atender chamados e resolver problemas técnicos com agilidade.', ['Atendimento de Chamados', 'Diagnóstico de Problemas', 'Base de Conhecimento'], 0, [15, 20, 15]]
     ],
     rh: [
-      ['Gestão de Pessoas', 'Desenvolva habilidades para um ambiente de trabalho mais colaborativo e produtivo.', ['Liderança e Colaboração', 'Feedback e Desenvolvimento', 'Diversidade e Inclusão'], 1, [20, 20, 25]],
-      ['Onboarding e Integração', 'Conheça o processo de acolhimento de novos colaboradores na Intelbras.', ['Cultura Intelbras', 'Primeiros 90 Dias', 'Ferramentas do Dia a Dia'], 2, [15, 20, 15]],
+      ['Gestão de Pessoas', 'Desenvolva habilidades para um ambiente de trabalho mais colaborativo e produtivo.', ['Liderança e Colaboração', 'Feedback e Desenvolvimento', 'Diversidade e Inclusão'], 0, [20, 20, 25]],
+      ['Onboarding e Integração', 'Conheça o processo de acolhimento de novos colaboradores na Intelbras.', ['Cultura Intelbras', 'Primeiros 90 Dias', 'Ferramentas do Dia a Dia'], 0, [15, 20, 15]],
       ['Clima Organizacional', 'Entenda como medir e melhorar o clima e o engajamento das equipes.', ['Comunicação Interna', 'Pesquisa de Clima', 'Engajamento'], 0, [15, 20, 20]],
-      ['Legislação Trabalhista Básica', 'Veja os fundamentos da legislação trabalhista aplicados à rotina da empresa.', ['Contratos e Jornada', 'Benefícios e Direitos', 'Boas Práticas de Conformidade'], 3, [20, 20, 15]]
+      ['Legislação Trabalhista Básica', 'Veja os fundamentos da legislação trabalhista aplicados à rotina da empresa.', ['Contratos e Jornada', 'Benefícios e Direitos', 'Boas Práticas de Conformidade'], 0, [20, 20, 15]]
     ],
     marketing: [
-      ['Comunicação e Marca', 'Fortaleça a identidade da Intelbras e aprenda a se comunicar de forma eficiente.', ['Identidade da Marca', 'Comunicação Interna', 'Marketing Digital'], 2, [15, 20, 25]],
+      ['Comunicação e Marca', 'Fortaleça a identidade da Intelbras e aprenda a se comunicar de forma eficiente.', ['Identidade da Marca', 'Comunicação Interna', 'Marketing Digital'], 0, [15, 20, 25]],
       ['Marketing de Conteúdo', 'Planeje e crie conteúdos que aproximam a marca do seu público.', ['Planejamento Editorial', 'Criação de Conteúdo', 'Métricas de Engajamento'], 0, [20, 25, 15]],
-      ['Redes Sociais e Comunidade', 'Aprenda a gerir canais e a se relacionar com a comunidade da marca.', ['Estratégia por Canal', 'Calendário e Publicação', 'Relacionamento e Moderação'], 1, [20, 15, 20]],
-      ['Análise de Dados de Marketing', 'Use indicadores e ferramentas para tomar decisões com base em dados.', ['Indicadores Essenciais', 'Ferramentas de Análise', 'Relatórios e Decisões'], 3, [15, 25, 20]]
+      ['Redes Sociais e Comunidade', 'Aprenda a gerir canais e a se relacionar com a comunidade da marca.', ['Estratégia por Canal', 'Calendário e Publicação', 'Relacionamento e Moderação'], 0, [20, 15, 20]],
+      ['Análise de Dados de Marketing', 'Use indicadores e ferramentas para tomar decisões com base em dados.', ['Indicadores Essenciais', 'Ferramentas de Análise', 'Relatórios e Decisões'], 0, [15, 25, 20]]
     ],
     financeiro: [
       ['Noções de Finanças Corporativas', 'Entenda os principais conceitos financeiros e como eles impactam o negócio.', ['Conceitos Básicos', 'Orçamento e Controle', 'Resultados e Indicadores'], 0, [15, 20, 20]],
-      ['Contas a Pagar e a Receber', 'Organize o fluxo de pagamentos, cobranças e a conciliação financeira.', ['Fluxo de Pagamentos', 'Cobrança e Recebimentos', 'Conciliação'], 2, [15, 20, 15]],
-      ['Planejamento Orçamentário', 'Aprenda a definir premissas, construir e acompanhar o orçamento.', ['Premissas e Metas', 'Construção do Orçamento', 'Acompanhamento'], 1, [20, 25, 15]],
-      ['Impostos e Conformidade Fiscal', 'Conheça os tributos, as notas fiscais e as obrigações do dia a dia.', ['Visão Geral Tributária', 'Notas Fiscais', 'Obrigações Acessórias'], 3, [20, 20, 20]]
+      ['Contas a Pagar e a Receber', 'Organize o fluxo de pagamentos, cobranças e a conciliação financeira.', ['Fluxo de Pagamentos', 'Cobrança e Recebimentos', 'Conciliação'], 0, [15, 20, 15]],
+      ['Planejamento Orçamentário', 'Aprenda a definir premissas, construir e acompanhar o orçamento.', ['Premissas e Metas', 'Construção do Orçamento', 'Acompanhamento'], 0, [20, 25, 15]],
+      ['Impostos e Conformidade Fiscal', 'Conheça os tributos, as notas fiscais e as obrigações do dia a dia.', ['Visão Geral Tributária', 'Notas Fiscais', 'Obrigações Acessórias'], 0, [20, 20, 20]]
     ],
     projetos: [
-      ['Gestão de Projetos', 'Conheça as etapas e ferramentas para planejar, executar e entregar resultados.', ['Planejamento', 'Execução', 'Monitoramento'], 2, [20, 25, 20]],
-      ['Metodologias Ágeis', 'Aprenda os fundamentos do Ágil, do Scrum e do Kanban na prática.', ['Fundamentos do Ágil', 'Scrum na Prática', 'Kanban e Fluxo'], 1, [15, 25, 20]],
+      ['Gestão de Projetos', 'Conheça as etapas e ferramentas para planejar, executar e entregar resultados.', ['Planejamento', 'Execução', 'Monitoramento'], 0, [20, 25, 20]],
+      ['Metodologias Ágeis', 'Aprenda os fundamentos do Ágil, do Scrum e do Kanban na prática.', ['Fundamentos do Ágil', 'Scrum na Prática', 'Kanban e Fluxo'], 0, [15, 25, 20]],
       ['Gestão de Riscos', 'Identifique, priorize e responda aos riscos que afetam seus projetos.', ['Identificação', 'Análise e Priorização', 'Plano de Resposta'], 0, [15, 20, 20]],
-      ['Comunicação com Stakeholders', 'Mapeie interessados e mantenha todos alinhados durante o projeto.', ['Mapeamento', 'Reuniões e Alinhamentos', 'Relatórios de Status'], 3, [15, 15, 20]]
+      ['Comunicação com Stakeholders', 'Mapeie interessados e mantenha todos alinhados durante o projeto.', ['Mapeamento', 'Reuniões e Alinhamentos', 'Relatórios de Status'], 0, [15, 15, 20]]
     ],
     sac: [
-      ['Atendimento de Excelência', 'Melhore a experiência do cliente com uma comunicação clara e empática.', ['Comunicação Eficaz', 'Escuta Ativa', 'Resolução de Conflitos'], 1, [15, 20, 25]],
+      ['Atendimento de Excelência', 'Melhore a experiência do cliente com uma comunicação clara e empática.', ['Comunicação Eficaz', 'Escuta Ativa', 'Resolução de Conflitos'], 0, [15, 20, 25]],
       ['Gestão de Reclamações e Ouvidoria', 'Aprenda a registrar, tratar e encerrar reclamações dentro do prazo.', ['Registro e Triagem', 'Prazos e SLA', 'Encerramento e Feedback'], 0, [15, 20, 15]],
-      ['Pós-venda e Fidelização', 'Acompanhe o cliente após a compra e construa relacionamentos duradouros.', ['Acompanhamento do Cliente', 'Indicadores de Satisfação', 'Retenção'], 2, [20, 20, 20]],
-      ['LGPD no Atendimento', 'Entenda como proteger os dados do cliente no contato do dia a dia.', ['Conceitos da LGPD', 'Dados do Cliente', 'Boas Práticas'], 3, [20, 20, 15]]
+      ['Pós-venda e Fidelização', 'Acompanhe o cliente após a compra e construa relacionamentos duradouros.', ['Acompanhamento do Cliente', 'Indicadores de Satisfação', 'Retenção'], 0, [20, 20, 20]],
+      ['LGPD no Atendimento', 'Entenda como proteger os dados do cliente no contato do dia a dia.', ['Conceitos da LGPD', 'Dados do Cliente', 'Boas Práticas'], 0, [20, 20, 15]]
     ]
   };
 
@@ -94,18 +94,15 @@
         slug: slugify(c[0]), equipe: eq, indice: i, titulo: c[0], descricao: c[1],
         modulos: c[2].map((t, k) => ({
           n: k + 1, titulo: t, min: c[4][k],
-          resumo: 'Veja os pontos principais de ' + t.toLowerCase() + ' aplicados ao dia a dia da equipe.',
-          texto: 'Neste módulo você vai entender os conceitos de ' + t.toLowerCase() + ' do curso "' + c[0] +
-            '". Assista ao vídeo, acompanhe os exemplos práticos e, ao terminar, marque o módulo como concluído ' +
-            'para acompanhar o seu progresso.'
+          resumo: 'Leia os pontos principais de ' + t.toLowerCase() + ' aplicados ao dia a dia da equipe.'
         })),
-        baseConcluidos: c[3]
+        baseConcluidos: 0
       });
     });
   });
 
   // ---------- Progresso (mock + o que o usuário marcou, salvo no navegador) ----------
-  const CHAVE = 'intelbras_cursos_progresso_' + uid;
+  const CHAVE = 'intelbras_cursos_progresso_v3_' + uid;
   function lerSalvo() {
     try { return JSON.parse(localStorage.getItem(CHAVE)) || {}; } catch (e) { return {}; }
   }
@@ -162,7 +159,7 @@
     projetos: (v) => '<g fill="#0a2a1b" stroke="#22c55e" stroke-opacity=".6">' + [0, 1, 2].map((c) => '<rect x="' + (192 + v * 6 + c * 32) + '" y="18" width="28" height="84" rx="4"/>' + [0, 1, 2].slice(0, 3 - c).map((r) => '<rect x="' + (196 + v * 6 + c * 32) + '" y="' + (24 + r * 26) + '" width="20" height="20" rx="3" fill="#16a34a" fill-opacity=".8" stroke="none"/>').join('')).join('') + '</g>',
     sac: (v) => '<g fill="none" stroke="#22c55e" stroke-width="5" stroke-linecap="round"><path d="M' + (204 + v * 6) + ' 62a34 34 0 0168 0" stroke-opacity=".85"/><rect x="' + (198 + v * 6) + '" y="58" width="12" height="26" rx="5" fill="#16a34a" stroke="none"/><rect x="' + (266 + v * 6) + '" y="58" width="12" height="26" rx="5" fill="#16a34a" stroke="none"/><path d="M' + (272 + v * 6) + ' 84q0 14-24 14" stroke-opacity=".7"/></g>'
   };
-  function capa(curso) {
+  function capaSvg(curso) {
     const v = curso.indice % 3;
     const id = 'cv' + curso.slug.slice(0, 12).replace(/-/g, '') + curso.indice;
     return '<svg class="curso-card__capa-svg" viewBox="0 0 320 118" preserveAspectRatio="xMidYMid slice" role="img" aria-label="Capa do curso ' + esc(curso.titulo) + '">' +
@@ -170,6 +167,20 @@
       '<pattern id="' + id + 'g" width="16" height="16" patternUnits="userSpaceOnUse"><path d="M16 0H0v16" fill="none" stroke="#22c55e" stroke-opacity=".08"/></pattern></defs>' +
       '<rect width="320" height="118" fill="url(#' + id + ')"/><rect width="320" height="118" fill="url(#' + id + 'g)"/>' +
       MOTIVOS[curso.equipe](v) + '</svg>';
+  }
+
+  // ---------- Capa com imagem (conteudo/cadastrado/cursos/img/capas) ----------
+  // Arquivo: capa-<equipe>-<slug-do-curso>.webp (1600px) e -640.webp (cards).
+  // A imagem já traz o título; por isso NUNCA é cortada (altura automática).
+  const PREFIXO_CAPA = { ti: 'ti', rh: 'rh', marketing: 'marketing', financeiro: 'financeiro', projetos: 'projetos', sac: 'sac-ouvidoria' };
+  const PASTA_CAPAS = 'conteudo/cadastrado/cursos/img/capas/';
+  function capa(curso, grande) {
+    const base = PASTA_CAPAS + 'capa-' + PREFIXO_CAPA[curso.equipe] + '-' + curso.slug;
+    return '<img class="curso-card__capa-img" src="' + base + '.webp" ' +
+      'srcset="' + base + '-640.webp 640w, ' + base + '.webp 1600w" ' +
+      'sizes="' + (grande ? '(max-width: 900px) 100vw, 1400px' : '(max-width: 600px) 100vw, (max-width: 1200px) 50vw, 25vw') + '" ' +
+      'width="2172" height="692" alt="Capa do curso ' + esc(curso.titulo) + '" ' +
+      (grande ? 'fetchpriority="high" ' : 'loading="lazy" ') + 'decoding="async" data-curso="' + curso.slug + '">';
   }
 
   // ---------- Peças reutilizáveis ----------
@@ -188,9 +199,9 @@
       '<span class="curso-modulo__nome">' + esc(m.titulo) + '</span>' +
       (feito[k] ? '<span class="curso-modulo__ok" aria-label="Concluído">' + IC.check + '</span>' : '<span class="curso-modulo__pendente" aria-label="Pendente"></span>') + '</li>').join('');
     return '<a class="curso-card" data-equipe="' + curso.equipe + '" data-progresso="' + pct + '" href="' + url({ curso: curso.slug }) + '" data-nav>' +
-      '<div class="curso-card__capa">' + capa(curso) + '<span class="curso-card__tag">' + tag(curso.equipe) + '</span>' +
+      '<div class="curso-card__capa">' + capa(curso) +
       (pct === 100 ? '<span class="curso-selo">' + IC.check + 'Concluído</span>' : '') + '</div>' +
-      '<div class="curso-card__corpo"><h3 class="curso-card__titulo">' + esc(curso.titulo) + '</h3>' +
+      '<div class="curso-card__corpo"><span class="curso-card__tag">' + tag(curso.equipe) + '</span><h3 class="curso-card__titulo">' + esc(curso.titulo) + '</h3>' +
       '<p class="curso-card__desc">' + esc(curso.descricao) + '</p>' +
       '<ul class="curso-card__modulos">' + modulos + '</ul>' +
       '<div class="curso-card__rodape">' + barra(pct) + '<span class="curso-card__pct">' + pct + '% concluído</span></div></div></a>';
@@ -229,7 +240,7 @@
     const quem = !visaoAdmin ? '<p class="cursos__contexto">' + esc(nomeUsuario.split(' ').slice(0, 2).join(' ')) + ' · ' + esc(nomeEq) + '</p>' : '';
 
     return '<div class="cursos__topo"><div class="cursos__topo-texto">' +
-      migalhas([{ txt: 'Cursos' }]) + '<h1 class="cursos__titulo">Cursos</h1><p class="cursos__subtitulo">' + subtitulo + '</p>' + quem + '</div>' +
+      '<h1 class="cursos__titulo">Cursos</h1><p class="cursos__subtitulo">' + subtitulo + '</p>' + quem + '</div>' +
       '<aside class="cursos__banner"><span class="cursos__banner-icone">' + IC.capelo + '</span><div><strong>Aprender também é inovar</strong>' +
       '<p>Aqui você encontra cursos rápidos e práticos, feitos para o seu dia a dia na Intelbras.</p></div></aside></div>' +
       '<div class="cursos__chips" role="group" aria-label="Filtrar cursos">' + chips.map((c) =>
@@ -246,7 +257,7 @@
     const rotulo = { concluido: 'Concluído', andamento: 'Em andamento', 'nao-iniciado': 'Não iniciado' };
     const btn = pct === 100 ? 'Revisar curso' : (pct === 0 ? 'Começar curso' : 'Continuar curso');
     return migalhas([{ txt: 'Cursos', href: url() }, { txt: curso.titulo }]) +
-      '<header class="curso-hero"><div class="curso-hero__capa">' + capa(curso) + '</div><div class="curso-hero__info">' + tag(curso.equipe) +
+      '<header class="curso-hero"><div class="curso-hero__capa">' + capa(curso, true) + '</div><div class="curso-hero__info">' + tag(curso.equipe) +
       '<h1 class="curso-hero__titulo">' + esc(curso.titulo) + '</h1><p class="curso-hero__desc">' + esc(curso.descricao) + '</p>' +
       '<div class="curso-hero__progresso">' + barra(pct) + '<span>' + pct + '% concluído</span></div>' +
       '<a class="btn-curso btn-curso--primario" href="' + url({ curso: curso.slug, modulo: proximo + 1 }) + '" data-nav>' + btn + '</a></div></header>' +
@@ -260,16 +271,57 @@
       '<dt>Total de módulos</dt><dd>' + curso.modulos.length + '</dd><dt>Duração total</dt><dd>' + total + ' min</dd></dl></aside></div>';
   }
 
+  // ---------- Conteúdo em texto do módulo (modelo de leitura) ----------
+  const fmt = (t) => esc(t).replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  function conteudoRico(curso, m, r) {
+    let i = 0;
+    const anim = () => ' style="--i:' + (i++) + '"';
+    return '<div class="leitura__meta"' + anim() + '><span class="leitura__chip">' + tag(curso.equipe) + '</span><span class="leitura__chip leitura__chip--tempo">' + IC.relogio + m.min + ' min de leitura</span></div>' +
+      '<h2 class="leitura__titulo"' + anim() + '>Módulo ' + m.n + ' – ' + esc(m.titulo) + '</h2>' +
+      r.intro.map((p) => '<p class="leitura__intro"' + anim() + '>' + fmt(p) + '</p>').join('') +
+      '<div class="leitura__objetivo"' + anim() + '><strong>Ao final deste módulo você vai:</strong><ul>' + r.objetivos.map((o) => '<li>' + fmt(o) + '</li>').join('') + '</ul></div>' +
+      r.secoes.map((sc, k) => '<h3 class="leitura__subtitulo"' + anim() + '><span class="leitura__sec-num">' + (k + 1) + '</span>' + esc(sc.t) + '</h3>' +
+        sc.p.map((p) => '<p' + anim() + '>' + fmt(p) + '</p>').join('') +
+        (sc.lista ? '<ul class="leitura__lista"' + anim() + '>' + sc.lista.map((l) => '<li>' + fmt(l) + '</li>').join('') + '</ul>' : '')).join('') +
+      '<div class="leitura__destaque"' + anim() + '><strong>Na prática</strong><p>' + fmt(r.pratica) + '</p></div>' +
+      '<div class="leitura__alerta"' + anim() + '><strong>Erros comuns</strong><ul>' + r.erros.map((e) => '<li>' + fmt(e) + '</li>').join('') + '</ul></div>' +
+      '<div class="leitura__objetivo leitura__resumo"' + anim() + '><strong>Resumo do módulo</strong><ul>' + r.resumo.map((e) => '<li>' + fmt(e) + '</li>').join('') + '</ul></div>' +
+      '<p class="leitura__fim"' + anim() + '>Quando terminar a leitura, clique em <strong>Concluído</strong> para registrar o seu progresso.</p>';
+  }
+
+  function conteudoModulo(curso, m) {
+    const rico = (window.CURSOS_RICO || {})[curso.slug + ':' + m.n];
+    if (rico) return conteudoRico(curso, m, rico);
+    const eq = EQUIPES[curso.equipe].nome;
+    const dado = ((window.CURSOS_CONTEUDO || {})[curso.equipe] || [])[curso.indice];
+    const c = dado && dado[m.n - 1];
+    const intro = c ? c[0] : 'Neste módulo você vai estudar ' + m.titulo.toLowerCase() + ' aplicado à rotina da equipe de ' + eq + '.';
+    const pontos = c ? c[1] : [];
+    const exemplo = c ? c[2] : '';
+    let i = 0;
+    const anim = () => ' style="--i:' + (i++) + '"';
+    return '<div class="leitura__meta"' + anim() + '><span class="leitura__chip">' + tag(curso.equipe) + '</span>' +
+      '<span class="leitura__chip leitura__chip--tempo">' + IC.relogio + m.min + ' min de leitura</span></div>' +
+      '<h2 class="leitura__titulo"' + anim() + '>Módulo ' + m.n + ' – ' + esc(m.titulo) + '</h2>' +
+      '<p class="leitura__intro"' + anim() + '>' + esc(intro) + '</p>' +
+      '<div class="leitura__objetivo"' + anim() + '><strong>Ao final deste módulo você vai:</strong><ul>' +
+      pontos.map((pt) => '<li>' + esc(pt[0]) + '</li>').join('') + '</ul></div>' +
+      (pontos.length ? '<h3 class="leitura__subtitulo"' + anim() + '>Pontos-chave</h3><div class="leitura__cards">' +
+        pontos.map((pt, k) => '<div class="leitura__card"' + anim() + '><span class="leitura__card-num">' + (k + 1) + '</span><h4>' + esc(pt[0]) + '</h4><p>' + esc(pt[1]) + '</p></div>').join('') + '</div>' : '') +
+      (exemplo ? '<div class="leitura__destaque"' + anim() + '><strong>Na prática</strong><p>' + esc(exemplo) + '</p></div>' : '') +
+      '<p class="leitura__fim"' + anim() + '>Quando terminar a leitura, clique em <strong>Concluído</strong> para registrar o seu progresso.</p>';
+  }
+
   function telaModulo(curso, n) {
     const m = curso.modulos[n - 1];
     const feito = concluidos(curso);
-    const anterior = n > 1 ? url({ curso: curso.slug, modulo: n - 1 }) : url({ curso: curso.slug });
+    const ultimo = n >= curso.modulos.length;
     return migalhas([{ txt: 'Cursos', href: url() }, { txt: curso.titulo, href: url({ curso: curso.slug }) }, { txt: m.titulo }]) +
-      '<div class="modulo-layout"><section class="modulo-principal"><div class="modulo-video" role="img" aria-label="Espaço reservado para o vídeo da aula">' +
-      '<button type="button" class="modulo-video__play" aria-label="Reproduzir vídeo">' + IC.play + '</button><span class="modulo-video__legenda">Vídeo do módulo ' + n + ' · ' + m.min + ' min</span></div>' +
-      '<h1 class="modulo-principal__titulo">' + esc(m.titulo) + '</h1><p class="modulo-principal__texto">' + esc(m.texto) + '</p>' +
-      '<div class="modulo-acoes"><a class="btn-curso btn-curso--secundario" href="' + anterior + '" data-nav>Módulo anterior</a>' +
-      '<button type="button" class="btn-curso btn-curso--primario" id="btnConcluirModulo"' + (feito[n - 1] ? ' disabled' : '') + '>' + (feito[n - 1] ? 'Módulo concluído' : 'Marcar como concluído') + '</button></div></section>' +
+      '<div class="modulo-layout"><section class="modulo-principal"><div class="leitura"><header class="leitura__cabecalho"><span aria-hidden="true">📖</span> Material de Leitura</header>' +
+      '<article class="leitura__corpo">' + conteudoModulo(curso, m) + '</article></div>' +
+      '<div class="modulo-acoes leitura__acoes"><a class="leitura__voltar" href="' + url({ curso: curso.slug }) + '" data-nav>↺ Voltar aos Módulos</a>' +
+      '<button type="button" class="btn-curso btn-curso--primario leitura__concluir" id="btnConcluirModulo"' + (feito[n - 1] ? ' disabled' : '') + '>' + (feito[n - 1] ? '✓ Módulo concluído' : '✓ Concluído') + '</button>' +
+      (ultimo ? '' : '<a class="leitura__proxima" href="' + url({ curso: curso.slug, modulo: n + 1 }) + '" data-nav>Próxima aula →</a>') + '</div></section>' +
       '<aside class="modulo-lateral" aria-label="Módulos do curso"><h2>' + esc(curso.titulo) + '</h2><ol>' + curso.modulos.map((mm, k) =>
         '<li><a class="modulo-lateral__item' + (mm.n === n ? ' modulo-lateral__item--atual' : '') + '" href="' + url({ curso: curso.slug, modulo: mm.n }) + '" data-nav' + (mm.n === n ? ' aria-current="page"' : '') + '>' +
         '<span class="modulo-lateral__num">' + mm.n + '</span><span>' + esc(mm.titulo) + '</span>' + (feito[k] ? '<span class="modulo-lateral__ok">' + IC.check + '</span>' : '') + '</a></li>').join('') + '</ol></aside></div>';
@@ -320,6 +372,14 @@
     });
   }
 
+  // Reserva: se alguma imagem não carregar, troca pela capa SVG gerada.
+  app.addEventListener('error', (e) => {
+    const img = e.target;
+    if (!img || !img.classList || !img.classList.contains('curso-card__capa-img')) return;
+    const curso = CURSOS.find((c) => c.slug === img.dataset.curso);
+    if (curso) img.outerHTML = capaSvg(curso);
+  }, true);
+
   function irPara(href) {
     history.pushState(null, '', href);
     renderizar();
@@ -332,6 +392,30 @@
     irPara(a.getAttribute('href'));
   });
   window.addEventListener('popstate', renderizar);
+
+  // Botão direito num curso ou módulo (menu padronizado do site, assets/js/menu-contexto.js)
+  app.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    const a = e.target.closest('a.curso-card, a.modulo-card');
+    if (!M || !a || e.shiftKey || M.temSelecao()) return;
+    const ehCurso = a.classList.contains('curso-card');
+    const nomeEl = ehCurso ? a.querySelector('.curso-card__titulo') : a.querySelector('.modulo-card__texto h3');
+    const nome = nomeEl ? nomeEl.textContent.trim() : (ehCurso ? 'Curso' : 'Módulo');
+    const href = a.getAttribute('href');
+    const url = new URL(href, window.location.href).href;
+    e.preventDefault();
+    const pos = M.posicao(e, a);
+    M.mostrar({
+      x: pos.x, y: pos.y, alvo: null,
+      aria: 'Opções de ' + nome,
+      cabeca: M.cabeca('curso', nome),
+      opcoes: [
+        { rotulo: ehCurso ? 'Abrir curso' : 'Abrir módulo', icone: 'curso', destaque: true, acao: () => irPara(href) },
+        { rotulo: 'Abrir em nova aba', icone: 'abrir', acao: () => window.open(url, '_blank', 'noopener') },
+        { rotulo: 'Copiar link', icone: 'link', acao: () => M.copiar(url, 'Link copiado') },
+      ],
+    });
+  });
 
   renderizar();
 })();

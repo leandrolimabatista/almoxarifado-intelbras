@@ -234,6 +234,51 @@
     refs.recentes.replaceChildren(bloco);
   }
 
+  // Botão direito numa conversa recente ou numa mensagem (menu padronizado do site,
+  // assets/js/menu-contexto.js). Usa as mesmas ações do menu ⋮ e do botão "Copiar".
+  refs.recentes.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    const li = e.target.closest('li.' + P + 'conversa');
+    if (!M || !li || e.shiftKey || M.temSelecao()) return;
+    const conv = estado.conversas.find((c) => String(c.id) === li.dataset.id);
+    if (!conv) return;
+    e.preventDefault();
+    fecharMenu(false); // fecha o menu ⋮ aberto, se houver
+    const abrirBtn = li.querySelector('.' + P + 'conversa-abrir');
+    const pos = M.posicao(e, li);
+    M.mostrar({
+      x: pos.x, y: pos.y, alvo: null,
+      aria: 'Opções da conversa ' + conv.titulo,
+      cabeca: M.cabeca('mensagem', conv.titulo),
+      opcoes: [
+        { rotulo: 'Abrir conversa', icone: 'mensagem', destaque: true, acao: () => abrirConversa(conv.id) },
+        { rotulo: 'Renomear', icone: 'editar', acao: () => editarTitulo(conv, li, abrirBtn) },
+        { rotulo: conv.fixada ? 'Desafixar' : 'Fixar no topo', icone: conv.fixada ? 'unpin' : 'pin', acao: () => fixarConversa(conv) },
+        'sep',
+        { rotulo: 'Excluir', icone: 'lixeira', perigo: true, acao: () => excluirConversa(conv) },
+      ],
+    });
+  });
+
+  refs.lista.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    const linha = e.target.closest('.' + P + 'msg');
+    if (!M || !linha || e.shiftKey || M.temSelecao()) return;
+    if (e.target.closest('a[href], img, button, textarea, input')) return;
+    const textoEl = linha.querySelector('.' + P + 'texto');
+    const texto = textoEl ? textoEl.textContent : '';
+    if (!texto.trim()) return;
+    const ehIa = linha.classList.contains(P + 'msg--ia');
+    e.preventDefault();
+    const pos = M.posicao(e, linha);
+    M.mostrar({
+      x: pos.x, y: pos.y, alvo: null,
+      aria: 'Opções da mensagem',
+      cabeca: M.cabeca('mensagem', ehIa ? 'Resposta da IA' : 'Você'),
+      opcoes: [{ rotulo: 'Copiar mensagem', icone: 'copiar', destaque: true, acao: () => M.copiar(texto, 'Mensagem copiada') }],
+    });
+  });
+
   function renderRecentes() {
     estado.menuAberto = null;
     refs.recentes.setAttribute('aria-busy', 'false');
@@ -263,6 +308,7 @@
   function criarItemConversa(conv) {
     const ativa = conv.id === estado.conversaId;
     const li = el('li', 'conversa' + (ativa ? ' conversa--ativa' : ''));
+    li.dataset.id = String(conv.id);
 
     // Botão principal: abre a conversa
     const abrir = el('button', 'conversa-abrir');
@@ -448,7 +494,7 @@
   // Diálogo de confirmação (<dialog>), com fallback para confirm()
   function confirmar(texto) {
     const d = refs.dialogo;
-    if (!d || typeof d.showModal !== 'function') return Promise.resolve(window.confirm(texto));
+    if (!d || typeof d.showModal !== 'function') return window.IBDialogo ? window.IBDialogo.confirmar({ texto: texto, confirmar: 'Confirmar', perigo: true }) : Promise.resolve(window.confirm(texto));
 
     return new Promise((resolver) => {
       let resolvido = false;

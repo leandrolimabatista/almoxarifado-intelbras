@@ -60,10 +60,10 @@
 
   // ------------------------------------------------------------
   // FRETE — ⚠ VALORES DE EXEMPLO: trocar pelos valores/prazos reais.
-  // O frete é escolhido pelo estado (UF) do CEP informado no checkout e
-  // é cobrado como um item "Frete" junto com o pedido no Mercado Pago.
-  // Para usar uma transportadora/API de cotação, basta substituir a
-  // função calcularFrete() em loja.js (ela recebe a UF e devolve opções).
+  // O frete é cobrado como um item "Frete" junto com o pedido no Mercado Pago.
+  // Cotação real: api/loja/frete.php (Melhor Envio, por CEP + peso/medidas
+  // dos produtos). Esta tabela por UF é só a RESERVA, usada quando a
+  // cotação não está configurada ou fica indisponível (loja.js -> obterFrete).
   // ------------------------------------------------------------
   const FRETE_REGIOES = {
     SP: 'sudeste', RJ: 'sudeste', MG: 'sudeste', ES: 'sudeste',
@@ -76,16 +76,16 @@
 
   // preco em R$; prazo em dias úteis [mínimo, máximo]
   const FRETE_OPCOES = {
-    sudeste:    [{ id: 'padrao', nome: 'Entrega padrão',   preco: 16.90, prazo: [3, 5] },
-                 { id: 'expressa', nome: 'Entrega expressa', preco: 29.90, prazo: [1, 2] }],
-    sul:        [{ id: 'padrao', nome: 'Entrega padrão',   preco: 21.90, prazo: [4, 6] },
-                 { id: 'expressa', nome: 'Entrega expressa', preco: 36.90, prazo: [2, 3] }],
-    centroeste: [{ id: 'padrao', nome: 'Entrega padrão',   preco: 24.90, prazo: [5, 7] },
-                 { id: 'expressa', nome: 'Entrega expressa', preco: 39.90, prazo: [2, 4] }],
-    nordeste:   [{ id: 'padrao', nome: 'Entrega padrão',   preco: 29.90, prazo: [6, 9] },
-                 { id: 'expressa', nome: 'Entrega expressa', preco: 49.90, prazo: [3, 5] }],
-    norte:      [{ id: 'padrao', nome: 'Entrega padrão',   preco: 34.90, prazo: [8, 12] },
-                 { id: 'expressa', nome: 'Entrega expressa', preco: 54.90, prazo: [4, 7] }],
+    sudeste:    [{ id: 'padrao', nome: 'Entrega padrão',   preco: 11.80, prazo: [3, 5] },
+                 { id: 'expressa', nome: 'Entrega expressa', preco: 20.90, prazo: [1, 2] }],
+    sul:        [{ id: 'padrao', nome: 'Entrega padrão',   preco: 15.30, prazo: [4, 6] },
+                 { id: 'expressa', nome: 'Entrega expressa', preco: 25.80, prazo: [2, 3] }],
+    centroeste: [{ id: 'padrao', nome: 'Entrega padrão',   preco: 17.40, prazo: [5, 7] },
+                 { id: 'expressa', nome: 'Entrega expressa', preco: 27.90, prazo: [2, 4] }],
+    nordeste:   [{ id: 'padrao', nome: 'Entrega padrão',   preco: 20.90, prazo: [6, 9] },
+                 { id: 'expressa', nome: 'Entrega expressa', preco: 34.90, prazo: [3, 5] }],
+    norte:      [{ id: 'padrao', nome: 'Entrega padrão',   preco: 24.40, prazo: [8, 12] },
+                 { id: 'expressa', nome: 'Entrega expressa', preco: 38.40, prazo: [4, 7] }],
   };
 
   // ------------------------------------------------------------

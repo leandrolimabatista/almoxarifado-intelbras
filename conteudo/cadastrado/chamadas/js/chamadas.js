@@ -22,7 +22,9 @@
   // Ícones (traço/outline, estilo Lucide) — o HTML usa data-ic="nome"
   // ------------------------------------------------------------
   const ICONES = {
-    video: '<path d="M15 10l4.55-2.28A1 1 0 0 1 21 8.62v6.76a1 1 0 0 1-1.45.9L15 14"/><rect x="2" y="6" width="13" height="12" rx="2"/>',
+    video: '<rect x="2" y="6" width="14" height="12" rx="2.5"/><path d="M16 10.5l4.6-2.8a.7.7 0 0 1 1.1.6v7.4a.7.7 0 0 1-1.1.6L16 13.5"/>',
+    'app-window': '<rect x="2" y="4" width="20" height="16" rx="2.5"/><path d="M2 9h20M5.5 6.5h.01M8.5 6.5h.01"/>',
+    'browser-tab': '<path d="M3 20V8a2 2 0 0 1 2-2h4a2 2 0 0 1 1.6.8L12 8h7a2 2 0 0 1 2 2v10a1 1 0 0 1-1 1H4a1 1 0 0 1-1-1z"/><path d="M3 11.5h18"/>',
     'video-off': '<path d="M16 16v1a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V7a2 2 0 0 1 2-2h2m5.66 0H14a2 2 0 0 1 2 2v3.34l1 1L23 7v10"/><path d="M1 1l22 22"/>',
     phone: '<path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z"/>',
     users: '<path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/>',
@@ -95,6 +97,7 @@
   const E = {
     eu: null,
     equipe: null,
+    vista: '', // equipe exibida (só o Administrador, id 1, pode trocar)
     equipes: [],
     contatos: [],
     agendadas: [],
@@ -185,6 +188,10 @@
     else rot = d.toLocaleDateString('pt-BR', { weekday: 'short', day: '2-digit', month: '2-digit' }).replace('.', '');
     return rot + ', ' + hora(iso);
   }
+  /** Balão de permissão (assets/js/aviso-permissao.js); cai no toast se o script não carregou. */
+  function avisar(el, texto) {
+    toast(texto);
+  }
   function primeiroNome(n) { return String(n || '').split(' ')[0]; }
 
   // ------------------------------------------------------------
@@ -195,12 +202,16 @@
     const card = $('cardEquipe');
     const btn = $('btnChamarEquipe');
     card.classList.toggle('chamadas__acao--bloqueada', !pode);
-    btn.disabled = !pode;
     btn.setAttribute('aria-disabled', pode ? 'false' : 'true');
     $('icoEquipe').innerHTML = ic(pode ? 'users' : 'lock');
     $('tipEquipe').textContent = E.regraEquipe;
     card.setAttribute('tabindex', pode ? '-1' : '0');
     if (!pode) card.setAttribute('aria-describedby', 'tipEquipe'); else card.removeAttribute('aria-describedby');
+    // Agendar reunião: mesma regra (Diretor, Gerente, CEO). Sem permissão o botão avisa ao clicar.
+    const ag = $('btnAgendar');
+    ag.setAttribute('aria-disabled', pode ? 'false' : 'true');
+    $('cardAgendar').classList.toggle('chamadas__acao--bloqueada', !pode);
+    $('icoAgendar').innerHTML = ic(pode ? 'calendar' : 'lock');
     $('btnNovaChamada').disabled = !E.equipe || !E.equipe.slug;
   }
 
@@ -211,15 +222,18 @@
       const b = document.createElement('button');
       b.type = 'button';
       const ativa = q.minha;
+      const liberada = ativa || !!q.liberada;
       b.className = 'chamadas__chip' + (ativa ? ' chamadas__chip--ativo' : '');
       b.setAttribute('aria-pressed', ativa ? 'true' : 'false');
-      if (!ativa) {
+      b.textContent = q.nome;
+      if (!liberada) {
         b.setAttribute('aria-disabled', 'true');
         b.title = 'Você só pode chamar pessoas da sua equipe.';
         b.innerHTML = esc(q.nome) + ' ' + ic('lock', 'chamadas__chip-lock');
-        b.addEventListener('click', () => toast('Você só pode chamar pessoas da sua equipe.'));
-      } else {
-        b.textContent = q.nome;
+        b.addEventListener('click', () => avisar(b, 'Você só pode chamar pessoas da sua equipe.'));
+      } else if (!ativa) {
+        // Administrador (id 1): troca para a equipe escolhida.
+        b.addEventListener('click', () => { E.vista = q.slug; carregarContatos(); });
       }
       alvo.appendChild(b);
     });
@@ -270,8 +284,8 @@
         '<div class="chamadas__contato-acoes">' +
           (off ? '<button type="button" class="chamadas__link-btn chamadas__link-btn--msg" data-acao="msg">Enviar mensagem</button>' : '') +
           '<button type="button" class="chamadas__icone-btn" data-acao="msg" aria-label="Enviar mensagem para ' + esc(c.nome) + '" title="Enviar mensagem">' + ic('message') + '</button>' +
-          '<button type="button" class="chamadas__icone-btn chamadas__icone-btn--voz" data-acao="voz" aria-label="Chamada de voz com ' + esc(c.nome) + '" title="' + (dica ? esc(c.nome) + ' ' + dica : 'Chamada de voz') + '"' + (off ? ' disabled' : '') + '>' + ic('phone') + '</button>' +
           '<button type="button" class="chamadas__icone-btn chamadas__icone-btn--video" data-acao="video" aria-label="Chamada de vídeo com ' + esc(c.nome) + '" title="' + (dica ? esc(c.nome) + ' ' + dica : 'Chamada de vídeo') + '"' + (off ? ' disabled' : '') + '>' + ic('video') + '</button>' +
+          '<button type="button" class="chamadas__icone-btn chamadas__icone-btn--voz" data-acao="voz" aria-label="Chamada de voz com ' + esc(c.nome) + '" title="' + (dica ? esc(c.nome) + ' ' + dica : 'Chamada de voz') + '"' + (off ? ' disabled' : '') + '>' + ic('phone') + '</button>' +
         '</div></div>';
     }).join('');
     lista.innerHTML = html;
@@ -323,7 +337,7 @@
   // Carregamento de dados
   // ------------------------------------------------------------
   async function carregarContatos() {
-    const r = await api('contatos.php');
+    const r = await api('contatos.php', E.vista ? { query: { equipe: E.vista } } : undefined);
     if (r.status === 401) { mostrarSessaoExpirada(); return; }
     if (!r.ok) {
       if (!E.carregou) {
@@ -333,6 +347,7 @@
     }
     const d = r.dados;
     E.eu = d.eu; E.equipe = d.equipe; E.equipes = d.equipes; E.contatos = d.contatos; E.regraEquipe = d.regra_equipe || E.regraEquipe;
+    E.vista = (E.eu && E.eu.super_admin && E.equipe) ? E.equipe.slug : '';
     E.carregou = true;
     renderTudo();
   }
@@ -353,12 +368,12 @@
   // ------------------------------------------------------------
   let iniciando = false;
 
-  function tratarErroChamada(r) {
+  function tratarErroChamada(r, alvoId) {
     const d = r.dados || {};
     if (r.status === 0) { aviso('wifi-off', 'Falha de conexão', 'Não conseguimos falar com a plataforma. Verifique sua internet e tente de novo.'); return; }
     if (r.status === 409 && (d.motivo === 'offline' || d.motivo === 'nao_perturbe' || d.motivo === 'em_chamada')) {
       aviso('user-x', 'Usuário indisponível', d.erro || 'Essa pessoa não pode atender agora.', [
-        { rotulo: 'Enviar mensagem', tipo: 'secundario', acao: () => toast('O chat entre colegas ainda não está disponível nesta versão.') },
+        { rotulo: 'Enviar mensagem', tipo: 'secundario', acao: () => { if (alvoId) window.location.href = 'index.php?pagina=chat&usuario=' + encodeURIComponent(alvoId); } },
         { rotulo: 'Entendi', tipo: 'primario' },
       ]);
       carregarContatos();
@@ -371,12 +386,34 @@
     aviso('alert', 'Não foi possível concluir', d.erro || 'Tente novamente em instantes.');
   }
 
-  async function iniciarIndividual(id, midia) {
+  // Ligação iniciada pelo Chat: ao terminar (ou falhar) volta para a conversa com essa pessoa.
+  let diretoChat = 0;
+  let diretoConversa = 0; // id da conversa de origem: volta direto nela, sem passar por ?usuario=
+  let diretoEquipe = ''; // slug da equipe de origem (ligação feita no canal em Equipes)
+  function voltarAoChat(resumo) {
+    if (diretoEquipe) { // vem do canal da Equipe: volta para ele, com o resumo sobre a tela
+      try { if (resumo) sessionStorage.setItem('equipesResumoChamada', JSON.stringify(resumo)); } catch (e) { /* sem storage */ }
+      window.location.replace('index.php?pagina=equipes&equipe=' + encodeURIComponent(diretoEquipe));
+      return;
+    }
+    try { if (resumo) sessionStorage.setItem('chatResumoChamada', JSON.stringify(resumo)); } catch (e) { /* sem storage: só volta */ }
+    if (diretoChat) window.location.replace(diretoConversa
+      ? 'index.php?pagina=chat&id=' + encodeURIComponent(diretoConversa)
+      : 'index.php?pagina=chat&usuario=' + encodeURIComponent(diretoChat));
+  }
+  function sairModoDireto() { $('chRaiz').classList.remove('chamadas--direto'); }
+
+  async function iniciarIndividual(id, midia, origem) {
     if (iniciando) return;
     iniciando = true;
-    const r = await api('chamada.php', { corpo: { acao: 'iniciar', tipo: 'individual', alvo_id: id, midia: midia } });
+    if (origem === 'chat') diretoChat = id;
+    const r = await api('chamada.php', { corpo: { acao: 'iniciar', tipo: 'individual', alvo_id: id, midia: midia, origem: origem || '' } });
     iniciando = false;
-    if (!r.ok) { tratarErroChamada(r); return; }
+    if (!r.ok) {
+      if (diretoChat) { diretoChat = 0; sairModoDireto(); }
+      tratarErroChamada(r, id);
+      return;
+    }
     ['mdNova'].forEach(fecharModal);
     window.Chamadas.sala.entrar(r.dados.chamada, { midia: midia, mudo: false });
   }
@@ -384,11 +421,26 @@
   async function iniciarEquipe(midia, mudo) {
     if (iniciando) return;
     iniciando = true;
-    const r = await api('chamada.php', { corpo: { acao: 'iniciar', tipo: 'equipe', midia: midia } });
+    const r = await api('chamada.php', { corpo: { acao: 'iniciar', tipo: 'equipe', midia: midia, equipe: E.equipe ? E.equipe.slug : '' } });
     iniciando = false;
     if (!r.ok) { tratarErroChamada(r); return; }
     fecharModal('mdEquipe');
     window.Chamadas.sala.entrar(r.dados.chamada, { midia: midia, mudo: !!mudo });
+  }
+
+  /** Botão de telefone do canal da equipe (página Equipes): inicia a chamada da equipe ou entra na que já está em andamento. */
+  async function chamarEquipeDoCanal(slug, midia, doCanal) {
+    if (iniciando) return;
+    iniciando = true;
+    if (doCanal) diretoEquipe = slug;
+    const r = await api('chamada.php', { corpo: { acao: 'iniciar', tipo: 'equipe', midia: midia, equipe: slug } });
+    iniciando = false;
+    if (!r.ok) {
+      if (diretoEquipe) { diretoEquipe = ''; sairModoDireto(); }
+      tratarErroChamada(r);
+      return;
+    }
+    window.Chamadas.sala.entrar(r.dados.chamada, { midia: midia, mudo: false });
   }
 
   async function atenderChamada(chamadaId) {
@@ -401,7 +453,7 @@
   // ------------------------------------------------------------
   // Modal: Nova chamada
   // ------------------------------------------------------------
-  const nova = { sel: 0, midia: 'video' };
+  const nova = { sel: 0, midia: 'voz' };
 
   function renderModalNova() {
     const q = $('mdNovaBusca').value.trim().toLowerCase();
@@ -423,7 +475,7 @@
   function abrirNova(preSel, midia) {
     if (!E.equipe || !E.equipe.slug) { aviso('lock', 'Sem equipe definida', 'Você ainda não pertence a uma equipe, por isso não há contatos para chamar.'); return; }
     nova.sel = preSel || 0;
-    nova.midia = midia || 'video';
+    nova.midia = midia || 'voz';
     $('mdNovaBusca').value = '';
     $('mdNovaEquipe').textContent = E.equipe.nome;
     $$('#mdNova [data-midia]').forEach((b) => {
@@ -440,7 +492,7 @@
   // Modal: Chamar equipe
   // ------------------------------------------------------------
   function abrirEquipe() {
-    if (!E.eu || !E.eu.pode_chamar_equipe) { toast(E.regraEquipe); return; }
+    if (!E.eu || !E.eu.pode_chamar_equipe) { avisar($('cardEquipe'), E.regraEquipe); return; }
     const t = E.equipe;
     $('mdEquipeTitulo').textContent = t.nome + ' — ' + t.total + (t.total === 1 ? ' membro' : ' membros') + ', ' + t.online + ' online';
     const membros = [{ inicial: E.eu.inicial, nome: 'Você' }].concat(E.contatos);
@@ -448,7 +500,6 @@
     $('mdEquipeAvatares').innerHTML = vis.map((c) => '<span class="chamadas__avatar chamadas__avatar--pequeno" title="' + esc(c.nome) + '">' + esc(c.inicial) + '</span>').join('') +
       (membros.length > vis.length ? '<span class="chamadas__avatar chamadas__avatar--pequeno chamadas__avatar--mais">+' + (membros.length - vis.length) + '</span>' : '');
     $('mdEquipeMic').checked = true;
-    $('mdEquipeCam').checked = true;
     abrirModal('mdEquipe');
   }
 
@@ -456,6 +507,7 @@
   // Modal: Agendar chamada
   // ------------------------------------------------------------
   function abrirAgendar() {
+    if (!E.eu || !E.eu.pode_chamar_equipe) { avisar($('btnAgendar'), 'Apenas Diretores, Gerentes e CEO podem agendar reuniões.'); return; }
     if (!E.equipe || !E.equipe.slug) { aviso('lock', 'Sem equipe definida', 'Você ainda não pertence a uma equipe, por isso não há participantes para convidar.'); return; }
     const pode = !!E.eu.pode_chamar_equipe;
     $('agTitulo').value = ''; $('agDescricao').value = ''; $('agDuracao').value = '30';
@@ -489,7 +541,7 @@
     if (new Date($('agData').value + 'T' + $('agHora').value) < new Date()) { erro('Escolha um horário no futuro.'); return; }
     if (!toda && !ids.length) { erro('Selecione ao menos um participante ou marque “Toda a equipe”.'); return; }
     $('agSalvar').disabled = true;
-    const r = await api('agendadas.php', { corpo: { acao: 'criar', titulo: titulo, descricao: $('agDescricao').value.trim(), data: $('agData').value, hora: $('agHora').value, duracao_min: parseInt($('agDuracao').value, 10), toda_equipe: toda, participantes: ids } });
+    const r = await api('agendadas.php', { corpo: { acao: 'criar', titulo: titulo, descricao: $('agDescricao').value.trim(), data: $('agData').value, hora: $('agHora').value, duracao_min: parseInt($('agDuracao').value, 10), toda_equipe: toda, participantes: ids, equipe: E.equipe ? E.equipe.slug : '' } });
     $('agSalvar').disabled = false;
     if (!r.ok) { erro(r.dados.erro || 'Não foi possível agendar.'); return; }
     fecharModal('mdAgendar');
@@ -522,7 +574,7 @@
   $('btnAgendar').addEventListener('click', abrirAgendar);
   $('btnVerTodas').addEventListener('click', abrirTodas);
   $('mdNovaIniciar').addEventListener('click', () => { if (nova.sel) iniciarIndividual(nova.sel, nova.midia); });
-  $('mdEquipeIniciar').addEventListener('click', () => iniciarEquipe($('mdEquipeCam').checked ? 'video' : 'voz', !$('mdEquipeMic').checked));
+  $('mdEquipeIniciar').addEventListener('click', () => iniciarEquipe('voz', !$('mdEquipeMic').checked));
   $('agSalvar').addEventListener('click', salvarAgendamento);
   $('agToda').addEventListener('change', () => {
     $('agLista').classList.toggle('chamadas__modal-lista--off', $('agToda').checked);
@@ -532,7 +584,7 @@
   $('chBusca').addEventListener('input', (e) => { E.busca = e.target.value; renderContatos(); });
   $('chFiltroStatus').addEventListener('change', (e) => { E.filtro = e.target.value; renderContatos(); });
   $('chErroTentar').addEventListener('click', () => { falhas = 0; tickAgora(); });
-  $('posVoltar').addEventListener('click', () => { fecharModal('chPos'); carregarContatos(); carregarAgendadas(); });
+  $('posVoltar').addEventListener('click', () => { fecharModal('chPos'); if (diretoChat || diretoEquipe) { voltarAoChat(); return; } carregarContatos(); carregarAgendadas(); });
 
   $('mdNovaLista').addEventListener('click', (e) => {
     const b = e.target.closest('.chamadas__opcao');
@@ -556,8 +608,50 @@
     if (!b || !linha || b.disabled) return;
     const id = parseInt(linha.getAttribute('data-id'), 10);
     const acao = b.getAttribute('data-acao');
-    if (acao === 'msg') { toast('O chat entre colegas ainda não está disponível nesta versão.'); return; }
+    if (acao === 'msg') { window.location.href = 'index.php?pagina=chat&usuario=' + encodeURIComponent(id); return; }
     iniciarIndividual(id, acao);
+  });
+
+  // Botão direito em um contato ou reunião (menu padronizado do site, assets/js/menu-contexto.js)
+  document.addEventListener('contextmenu', (e) => {
+    const M = window.MenuContexto;
+    if (!M || e.shiftKey || M.temSelecao() || !e.target.closest) return;
+    const linha = e.target.closest('.chamadas__contato');
+    const reuniao = !linha && e.target.closest('.chamadas__reuniao');
+    if (!linha && !reuniao) return;
+    let titulo, icone, opcoes;
+    if (linha) {
+      const id = parseInt(linha.getAttribute('data-id'), 10);
+      const c = E.contatos.find((x) => x.id === id);
+      if (!c) return;
+      const indisponivel = c.status === 'offline' || c.status === 'nao_perturbe' || c.status === 'em_chamada';
+      titulo = c.nome; icone = 'pessoa';
+      opcoes = [
+        { rotulo: 'Chamada de voz', icone: 'telefone', destaque: true, desabilitado: indisponivel,
+          acao: () => iniciarIndividual(id, 'voz') },
+        { rotulo: 'Chamada de vídeo', icone: 'telefone', desabilitado: indisponivel,
+          acao: () => iniciarIndividual(id, 'video') },
+        { rotulo: 'Copiar nome', icone: 'copiar', acao: () => M.copiar(c.nome, 'Nome copiado') },
+      ];
+    } else {
+      const id = parseInt(reuniao.getAttribute('data-ag'), 10);
+      const a = E.agendadas.find((x) => x.id === id);
+      if (!a) return;
+      const cancelar = reuniao.querySelector('[data-ag-cancelar]');
+      titulo = a.titulo; icone = 'agenda';
+      opcoes = [
+        { rotulo: a.pode_entrar ? 'Entrar na reunião' : 'Sala abre 15 min antes', icone: 'agenda', destaque: true,
+          desabilitado: !a.pode_entrar, acao: () => entrarAgendada(id) },
+        { rotulo: 'Copiar título', icone: 'copiar', acao: () => M.copiar(a.titulo, 'Título copiado') },
+      ];
+      if (cancelar) {
+        opcoes.push('sep');
+        opcoes.push({ rotulo: 'Cancelar reunião', icone: 'lixeira', perigo: true, acao: () => cancelar.click() });
+      }
+    }
+    e.preventDefault();
+    const pos = M.posicao(e, linha || reuniao);
+    M.mostrar({ x: pos.x, y: pos.y, alvo: null, aria: 'Opções de ' + titulo, cabeca: M.cabeca(icone, titulo), opcoes: opcoes });
   });
 
   document.addEventListener('click', (e) => {
@@ -582,19 +676,21 @@
   // Tooltip do card "Chamar equipe" sem permissão (hover + foco no teclado)
   const cardEquipe = $('cardEquipe');
   const tip = $('tipEquipe');
-  const mostrarTip = () => { if (cardEquipe.classList.contains('chamadas__acao--bloqueada')) tip.hidden = false; };
-  const esconderTip = () => { tip.hidden = true; };
-  cardEquipe.addEventListener('mouseenter', mostrarTip);
-  cardEquipe.addEventListener('mouseleave', esconderTip);
-  cardEquipe.addEventListener('focusin', mostrarTip);
-  cardEquipe.addEventListener('focusout', esconderTip);
-  cardEquipe.addEventListener('click', () => { if (cardEquipe.classList.contains('chamadas__acao--bloqueada')) toast(E.regraEquipe); });
+  // O aviso aparece ao clicar (mesmo balão para Chamar equipe, Agendar reunião e equipes bloqueadas).
+  tip.hidden = true;
+  cardEquipe.addEventListener('click', (e) => { if (!e.target.closest('button') && cardEquipe.classList.contains('chamadas__acao--bloqueada')) avisar(cardEquipe.querySelector('.chamadas__btn') || cardEquipe, E.regraEquipe); });
+
+  // Os 3 cards são clicáveis do mesmo jeito (padrão de Serviços): clicar fora do botão aciona o botão do card.
+  $('cardNova').addEventListener('click', (e) => { if (!e.target.closest('button')) $('btnNovaChamada').click(); });
+  cardEquipe.addEventListener('click', (e) => { if (!e.target.closest('button') && !cardEquipe.classList.contains('chamadas__acao--bloqueada')) $('btnChamarEquipe').click(); });
+
+  const cardAgendar = $('cardAgendar');
+  cardAgendar.addEventListener('click', (e) => { if (!e.target.closest('button') && !cardAgendar.classList.contains('chamadas__acao--bloqueada')) $('btnAgendar').click(); });
+  cardAgendar.addEventListener('click', (e) => { if (!e.target.closest('button') && cardAgendar.classList.contains('chamadas__acao--bloqueada')) avisar(cardAgendar.querySelector('.chamadas__btn') || cardAgendar, 'Apenas Diretores, Gerentes e CEO podem agendar reuniões.'); });
 
   // Atalhos da sidebar
   const atalhoAgendar = $('atalhoAgendarReuniaoSidebar');
   if (atalhoAgendar) atalhoAgendar.addEventListener('click', (e) => { e.preventDefault(); abrirAgendar(); });
-  const atalhoNovaConv = $('atalhoNovaConversaSidebar');
-  if (atalhoNovaConv) atalhoNovaConv.addEventListener('click', (e) => { e.preventDefault(); toast('O chat entre colegas ainda não está disponível nesta versão.'); });
   const atalhoNovaCham = $('atalhoNovaChamadaSidebar');
   if (atalhoNovaCham) atalhoNovaCham.addEventListener('click', (e) => { e.preventDefault(); abrirNova(); });
   const btnRecolher = $('btnRecolher');
@@ -651,6 +747,9 @@
     dados: E,
     recarregar: function () { carregarContatos(); carregarAgendadas(); },
     primeiroNome: primeiroNome,
+    aposChamadaIndividual: function (resumo) { if (diretoChat || diretoEquipe) voltarAoChat(resumo); },
+    modoDireto: function () { return !!(diretoChat || diretoEquipe); },
+    sairModoDireto: sairModoDireto,
     sala: null,
   };
 
@@ -663,7 +762,22 @@
     if (p.get('nova') === '1') abrirNova();
     const atender = parseInt(p.get('atender') || '0', 10);
     if (atender > 0) setTimeout(() => atenderChamada(atender), 300);
-    if (p.has('nova') || p.has('atender')) {
+    // index.php?pagina=chamadas&ligar=<id>&midia=voz|video (botão de ligar do Chat)
+    const ligar = parseInt(p.get('ligar') || '0', 10);
+    if (ligar > 0) {
+      const doChat = p.get('origem') === 'chat';
+      diretoConversa = doChat ? parseInt(p.get('conversa') || '0', 10) || 0 : 0;
+      const ir = () => iniciarIndividual(ligar, p.get('midia') === 'video' ? 'video' : 'voz', doChat ? 'chat' : '');
+      if (doChat) ir(); else setTimeout(ir, 300); // vindo do Chat não há por que esperar: a sala abre na hora
+    }
+    // index.php?pagina=chamadas&chamar_equipe=<slug>&midia=voz|video (botão de telefone do canal em Equipes)
+    const chamarEquipe = (p.get('chamar_equipe') || '').toLowerCase().replace(/[^a-z]/g, '');
+    if (chamarEquipe) {
+      const doCanal = p.get('origem') === 'equipes';
+      const irEq = () => chamarEquipeDoCanal(chamarEquipe, p.get('midia') === 'video' ? 'video' : 'voz', doCanal);
+      if (doCanal) irEq(); else setTimeout(irEq, 300); // vindo do canal não há por que esperar
+    }
+    if (p.has('nova') || p.has('atender') || p.has('ligar') || p.has('chamar_equipe') || p.has('origem')) {
       history.replaceState(null, '', 'index.php?pagina=chamadas');
     }
   });

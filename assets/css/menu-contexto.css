@@ -1,0 +1,407 @@
+/* ============================================================
+   MENU DE CONTEXTO DO MENU LATERAL (botão direito nas categorias)
+   Comportamento: assets/js/menu-contexto.js
+   Vale para todas as páginas da área logada.
+============================================================ */
+
+:root {
+  --ml-ease: cubic-bezier(0.2, 0.8, 0.2, 1);
+  --ml-sombra: 0 0 0 1px rgba(0, 0, 0, 0.04), 0 4px 10px rgba(0, 0, 0, 0.06), 0 18px 40px rgba(0, 0, 0, 0.16);
+}
+
+/* Evita o "preview" nativo do iOS ao segurar o dedo num link do menu */
+.inicio__sidebar a { -webkit-touch-callout: none; }
+
+/* Transições suaves nos itens do menu lateral (hover / ativo / alvo) */
+.inicio__nav-item,
+.inicio__shortcut,
+.inicio__channel-item {
+  transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease;
+}
+
+/* Item que está com o menu aberto: só um fundo cinza suave, sem borda */
+.ml-alvo { background-color: #EEF0F2; }
+
+/* Item que está sendo movido: fica acima dos vizinhos durante a animação */
+.ml-movendo { position: relative; z-index: 3; background-color: #fff; }
+
+/* Item que acabou de trocar de grupo: fundo verde claro que se dissolve (sem borda) */
+.ml-pulso { animation: ml-pulso 0.9s ease-out 1; }
+@keyframes ml-pulso {
+  0%   { background-color: rgba(0, 168, 89, 0.22); }
+  100% { background-color: transparent; }
+}
+
+/* Item desafixado (some do menu lateral, volta em "Personalizar") */
+.ml-oculto { display: none !important; }
+
+/* Seção inteira sem itens visíveis (ex.: todas as equipes desafixadas) */
+.ml-secao-vazia { display: none !important; }
+
+/* ---------- Menu ---------- */
+.ml-menu {
+  position: fixed;
+  z-index: 5000;
+  min-width: 244px;
+  max-width: calc(100vw - 16px);
+  padding: 6px;
+  background: #fff;
+  border-radius: 14px;
+  box-shadow: var(--ml-sombra);
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  opacity: 0;
+}
+.ml-menu:focus { outline: 0; }
+.ml-menu--entrar { animation: ml-menu-entrar 0.18s var(--ml-ease) forwards; }
+.ml-menu--saindo { animation: ml-menu-sair 0.1s ease-in forwards; pointer-events: none; }
+@keyframes ml-menu-entrar {
+  from { opacity: 0; transform: scale(0.92); }
+  to   { opacity: 1; transform: scale(1); }
+}
+@keyframes ml-menu-sair {
+  from { opacity: 1; transform: scale(1); }
+  to   { opacity: 0; transform: scale(0.96); }
+}
+
+/* Cabeça: mostra de qual item é o menu */
+.ml-menu__cabeca {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 10px 9px;
+  margin-bottom: 4px;
+  border-bottom: 1px solid var(--content-border, #ECECEC);
+  font-size: 12px;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--intelbras-cinza, #6B6B6B);
+}
+.ml-menu__cabeca svg { flex: none; width: 15px; height: 15px; }
+.ml-menu__cabeca-dot { flex: none; width: 9px; height: 9px; margin: 0 3px; border-radius: 50%; }
+/* Mini avatar com as iniciais (menu de conversa do Chat) */
+.ml-menu__cabeca-avatar {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  background: var(--intelbras-verde-100, #E7F7EE);
+  color: var(--intelbras-verde-escuro, #007A40);
+  font-size: 9.5px;
+  font-weight: 800;
+  letter-spacing: 0;
+}
+.ml-menu__cabeca-nome { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.ml-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 9px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 13.5px;
+  font-weight: 600;
+  text-align: left;
+  color: var(--intelbras-preto, #1A1A1A);
+  cursor: pointer;
+  transition: background-color 0.12s ease, color 0.12s ease;
+}
+.ml-menu--entrar .ml-menu__item {
+  animation: ml-item-entrar 0.22s var(--ml-ease) both;
+  animation-delay: calc(var(--i, 0) * 16ms + 30ms);
+}
+@keyframes ml-item-entrar {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.ml-menu__item:hover:not([aria-disabled="true"]),
+.ml-menu__item:focus-visible {
+  background: #F3F4F6;
+  outline: 0;
+}
+.ml-menu__item:active:not([aria-disabled="true"]) { background: #E9EBEE; }
+.ml-menu__item[aria-disabled="true"] { opacity: 0.38; cursor: default; }
+
+.ml-menu__item--destaque { color: var(--intelbras-verde-escuro, #007A40); }
+.ml-menu__item--destaque:hover:not([aria-disabled="true"]),
+.ml-menu__item--destaque:focus-visible { background: var(--intelbras-verde-100, #E7F7EE); }
+
+/* Ação destrutiva (Apagar, Mover para a lixeira...) */
+.ml-menu__item--perigo,
+.ml-menu__item--perigo .ml-menu__icone { color: #C62828; }
+.ml-menu__item--perigo:hover:not([aria-disabled="true"]),
+.ml-menu__item--perigo:focus-visible { background: #FDECEC; }
+.ml-menu__item--perigo:hover:not([aria-disabled="true"]) .ml-menu__icone { color: #C62828; }
+
+.ml-menu__icone {
+  flex: none;
+  width: 18px;
+  height: 18px;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  color: var(--intelbras-cinza, #6B6B6B);
+  transition: color 0.12s ease, transform 0.18s var(--ml-ease);
+}
+.ml-menu__item:hover:not([aria-disabled="true"]) .ml-menu__icone { color: var(--intelbras-preto, #1A1A1A); transform: scale(1.08); }
+.ml-menu__item--destaque .ml-menu__icone,
+.ml-menu__item--destaque:hover:not([aria-disabled="true"]) .ml-menu__icone { color: var(--intelbras-verde, #00A859); }
+
+.ml-menu__rotulo { flex: 1; min-width: 0; white-space: nowrap; }
+.ml-menu__atalho {
+  flex: none;
+  padding: 2px 6px;
+  border-radius: 5px;
+  background: #F3F4F6;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--intelbras-cinza, #6B6B6B);
+}
+
+.ml-menu__sep {
+  height: 1px;
+  margin: 5px 6px;
+  background: var(--content-border, #ECECEC);
+}
+
+/* ---------- Aviso (toast) ---------- */
+.ml-toast {
+  position: fixed;
+  left: 50%;
+  bottom: 28px;
+  z-index: 5100;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  max-width: calc(100vw - 32px);
+  padding: 12px 14px;
+  overflow: hidden;
+  border-radius: 12px;
+  background: #1A1A1A;
+  color: #fff;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 13.5px;
+  font-weight: 600;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.3);
+  transform: translateX(-50%);
+  animation: ml-toast-entrar 0.28s var(--ml-ease) both;
+}
+.ml-toast--saindo { animation: ml-toast-sair 0.16s ease-in forwards; }
+@keyframes ml-toast-entrar {
+  from { opacity: 0; transform: translate(-50%, 16px) scale(0.96); }
+  to   { opacity: 1; transform: translate(-50%, 0) scale(1); }
+}
+@keyframes ml-toast-sair {
+  from { opacity: 1; transform: translate(-50%, 0); }
+  to   { opacity: 0; transform: translate(-50%, 10px); }
+}
+.ml-toast__icone {
+  flex: none;
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background: var(--intelbras-verde, #00A859);
+  display: grid;
+  place-items: center;
+}
+.ml-toast__icone svg { width: 12px; height: 12px; fill: none; stroke: #fff; stroke-width: 3; stroke-linecap: round; stroke-linejoin: round; }
+.ml-toast__texto { min-width: 0; }
+.ml-toast__acao {
+  flex: none;
+  margin-left: 4px;
+  padding: 4px 10px;
+  border: 0;
+  border-radius: 7px;
+  background: rgba(255, 255, 255, 0.12);
+  color: #4ADE80;
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.12s ease;
+}
+.ml-toast__acao:hover { background: rgba(255, 255, 255, 0.2); }
+.ml-toast__acao:focus-visible { outline: 2px solid #4ADE80; outline-offset: 1px; }
+.ml-toast__barra {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  height: 3px;
+  width: 100%;
+  background: var(--intelbras-verde, #00A859);
+  transform-origin: left center;
+  animation: ml-toast-barra var(--ml-dur, 6s) linear forwards;
+}
+@keyframes ml-toast-barra { from { transform: scaleX(1); } to { transform: scaleX(0); } }
+
+/* ---------- Personalizar menu lateral (modal) ---------- */
+.ml-modal-fundo {
+  position: fixed;
+  inset: 0;
+  z-index: 5050;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(15, 18, 22, 0.45);
+  -webkit-backdrop-filter: blur(3px);
+  backdrop-filter: blur(3px);
+  animation: ml-fade 0.18s ease-out both;
+}
+.ml-modal-fundo--saindo { animation: ml-fade-sair 0.14s ease-in forwards; }
+@keyframes ml-fade { from { opacity: 0; } to { opacity: 1; } }
+@keyframes ml-fade-sair { from { opacity: 1; } to { opacity: 0; } }
+
+.ml-modal {
+  display: flex;
+  flex-direction: column;
+  width: min(460px, 100%);
+  max-height: min(660px, calc(100vh - 32px));
+  background: #fff;
+  border-radius: 18px;
+  box-shadow: 0 28px 70px rgba(0, 0, 0, 0.32);
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  color: var(--intelbras-preto, #1A1A1A);
+  animation: ml-modal-entrar 0.26s var(--ml-ease) both;
+}
+.ml-modal-fundo--saindo .ml-modal { animation: ml-modal-sair 0.14s ease-in forwards; }
+@keyframes ml-modal-entrar {
+  from { opacity: 0; transform: translateY(14px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+@keyframes ml-modal-sair {
+  from { opacity: 1; transform: none; }
+  to   { opacity: 0; transform: translateY(8px) scale(0.98); }
+}
+
+.ml-modal__topo { padding: 22px 24px 10px; }
+.ml-modal__titulo { margin: 0; font-size: 19px; font-weight: 800; }
+.ml-modal__sub { margin: 6px 0 0; font-size: 13px; line-height: 1.45; color: var(--intelbras-cinza, #6B6B6B); }
+
+.ml-modal__corpo {
+  overflow-y: auto;
+  padding: 0 16px 10px;
+  scrollbar-width: thin;
+  scrollbar-color: #D5D8DC transparent;
+}
+.ml-modal__grupo {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin: 16px 8px 6px;
+  font-size: 11.5px;
+  font-weight: 800;
+  letter-spacing: 0.06em;
+  color: var(--intelbras-cinza, #6B6B6B);
+}
+.ml-modal__grupo-qtd {
+  padding: 1px 7px;
+  border-radius: 999px;
+  background: #F0F1F3;
+  font-size: 11px;
+  letter-spacing: 0;
+}
+.ml-modal__linha {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 7px 8px;
+  border-radius: 10px;
+  transition: background-color 0.12s ease;
+}
+.ml-modal__linha:hover { background: #F5F6F7; }
+
+/* Ícone da categoria dentro de um quadradinho */
+.ml-modal__tile {
+  flex: none;
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 34px;
+  border-radius: 9px;
+  background: #F0F1F3;
+  color: var(--intelbras-cinza, #6B6B6B);
+  transition: background-color 0.15s ease, color 0.15s ease;
+}
+.ml-modal__tile svg { width: 19px; height: 19px; }
+.ml-modal__linha--fixado .ml-modal__tile { background: var(--intelbras-verde-100, #E7F7EE); color: var(--intelbras-verde, #00A859); }
+.ml-modal__bolinha { width: 11px; height: 11px; border-radius: 50%; }
+.ml-modal__nome { flex: 1; min-width: 0; font-size: 14px; font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* Chave liga/desliga */
+.ml-chave {
+  position: relative;
+  flex: none;
+  width: 40px;
+  height: 24px;
+  border: 0;
+  border-radius: 12px;
+  background: #CFD3D8;
+  cursor: pointer;
+  transition: background-color 0.18s ease;
+}
+.ml-chave::after {
+  content: '';
+  position: absolute;
+  top: 3px;
+  left: 3px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  transition: transform 0.2s var(--ml-ease);
+}
+.ml-chave[aria-checked="true"] { background: var(--intelbras-verde, #00A859); }
+.ml-chave[aria-checked="true"]::after { transform: translateX(16px); }
+.ml-chave:focus-visible { outline: 2px solid var(--intelbras-verde, #00A859); outline-offset: 2px; }
+.ml-chave:disabled { opacity: 0.45; cursor: default; }
+
+.ml-modal__rodape {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 14px 24px 18px;
+  border-top: 1px solid var(--content-border, #ECECEC);
+}
+.ml-btn {
+  padding: 10px 18px;
+  border-radius: 10px;
+  font: inherit;
+  font-size: 13.5px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background-color 0.12s ease, transform 0.12s ease;
+}
+.ml-btn:active { transform: scale(0.97); }
+.ml-btn--outline { background: #fff; color: var(--intelbras-preto, #1A1A1A); border: 1px solid var(--intelbras-cinza-claro, #E8E8E8); }
+.ml-btn--outline:hover { background: #F5F5F5; }
+.ml-btn--primario { background: var(--intelbras-verde, #00A859); color: #fff; border: 1px solid var(--intelbras-verde, #00A859); }
+.ml-btn--primario:hover { background: var(--intelbras-verde-escuro, #007A40); }
+.ml-btn:focus-visible { outline: 2px solid var(--intelbras-verde, #00A859); outline-offset: 2px; }
+
+/* Celular: o menu fica mais largo e o modal vira "folha" na base da tela */
+@media (max-width: 600px) {
+  .ml-menu { min-width: min(280px, calc(100vw - 16px)); }
+  .ml-menu__item { padding: 12px 10px; }
+  .ml-modal-fundo { align-items: flex-end; padding: 0; }
+  .ml-modal { width: 100%; max-height: 88vh; border-radius: 18px 18px 0 0; }
+}
+
+/* Quem desativa animações no sistema não vê nenhuma */
+@media (prefers-reduced-motion: reduce) {
+  .ml-menu, .ml-menu--entrar, .ml-menu--saindo,
+  .ml-menu--entrar .ml-menu__item,
+  .ml-toast, .ml-toast--saindo, .ml-toast__barra,
+  .ml-modal-fundo, .ml-modal-fundo--saindo, .ml-modal, .ml-modal-fundo--saindo .ml-modal,
+  .ml-pulso { animation: none !important; }
+  .ml-menu { opacity: 1; }
+  .ml-chave, .ml-chave::after, .ml-menu__icone, .ml-btn { transition: none; }
+}

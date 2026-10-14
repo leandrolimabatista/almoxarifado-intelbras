@@ -60,24 +60,6 @@
 
 /* ---------- Mobile (<768px) ---------- */
 @media (max-width: 767px) {
-  .configuracoes__cabecalho {
-    align-items: flex-start;
-  }
-
-  .configuracoes__cabecalho-icone {
-    width: 52px;
-    height: 52px;
-  }
-
-  .configuracoes__cabecalho-icone svg {
-    width: 24px;
-    height: 24px;
-  }
-
-  .configuracoes__titulo {
-    font-size: 22px;
-  }
-
   .configuracoes__foto {
     flex-wrap: wrap;
   }
@@ -126,5 +108,12 @@
     left: 16px;
     right: 16px;
     top: 12px;
+  }
+}
+
+/* ---------- Celular pequeno (mesmo ajuste do título de Documentos) ---------- */
+@media (max-width: 480px) {
+  .configuracoes__titulo {
+    font-size: calc(22px * var(--cfg-fs, 1));
   }
 }

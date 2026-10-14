@@ -1,9 +1,147 @@
 /* ============================================================
-   CONTEÚDO — Chat (área CADASTRADO) — Estilos responsivos
+   CONTEÚDO — Chat (área CADASTRADO) — responsivo
+   Abaixo de 860px: lista e conversa não cabem lado a lado, então
+   empilha (como o Teams no celular) — a conversa aberta cobre a
+   tela toda, com um botão "< Conversas" pra voltar pra lista.
 ============================================================= */
 
-@media (max-width: 480px) {
+/* Regra base (visível só em telas estreitas — ver @media abaixo). Vem
+   ANTES do @media de propósito: as duas regras têm a mesma especificidade,
+   então a que aparece DEPOIS no arquivo vence — se essa base viesse depois,
+   o "display: none" dela apagaria o "display: flex" do @media em qualquer
+   largura de tela. */
+.chat__thread-voltar {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  width: 32px;
+  height: 32px;
+  margin-right: 2px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: var(--intelbras-preto);
+  cursor: pointer;
+}
+
+.chat__thread-voltar svg {
+  width: 20px;
+  height: 20px;
+}
+
+.chat__thread-voltar:hover {
+  background: var(--content-bg);
+}
+
+@media (max-width: 860px) {
   .chat__main {
-    padding: 32px 20px;
+    position: relative;
+  }
+
+  .chat__coluna-lista {
+    width: 100%;
+  }
+
+  .chat__coluna-lista,
+  .chat__coluna-thread {
+    position: absolute;
+    inset: 0;
+  }
+
+  .chat__coluna-thread {
+    display: none;
+    background: var(--intelbras-branco);
+  }
+
+  .chat__coluna-thread.is-aberta {
+    display: flex;
+  }
+
+  .chat__coluna-lista.is-escondida {
+    display: none;
+  }
+
+  .chat__thread-voltar {
+    display: flex;
+  }
+}
+
+@media (max-width: 420px) {
+  .chat__novo-fundo {
+    padding-top: 0;
+    align-items: stretch;
+  }
+
+  .chat__novo-painel {
+    width: 100%;
+    max-width: none;
+    max-height: none;
+    border-radius: 0;
+  }
+}
+
+/* ----- Padrão Equipes (mesmos pontos de quebra da página Equipes) ----- */
+@media (max-width: 860px) {
+  .chat__thread-cabecalho {
+    padding: 14px 16px;
+  }
+
+  .chat__thread-nome {
+    font-size: 18px;
+  }
+
+  .chat__messages {
+    padding: 16px 16px 8px;
+  }
+
+  .chat__composer-wrap {
+    padding: 10px 16px 14px;
+  }
+}
+
+@media (max-width: 767px) {
+  .chat__thread-cargo {
+    display: none;
+  }
+
+  .chat__grupo-corpo {
+    max-width: calc(100vw - 100px);
+  }
+
+  .chat__popover--emoji {
+    width: calc(100vw - 24px);
+    max-width: 320px;
+    right: -16px;
+  }
+
+  .chat__emoji-grade {
+    grid-template-columns: repeat(6, 1fr);
+  }
+}
+
+/* Campo de mensagem em telas bem estreitas: botões um pouco menores */
+@media (max-width: 480px) {
+  .chat__composer-wrap {
+    padding: 10px 10px 12px;
+  }
+
+  .chat__composer-linha {
+    padding: 6px;
+  }
+
+  .chat__composer-btn,
+  .chat__enviar {
+    width: 34px;
+    height: 34px;
+  }
+
+  .chat__composer-icones {
+    height: 34px;
+  }
+
+  .chat__campo {
+    min-height: 34px;
+    padding: 7px 6px;
+    font-size: 14px;
   }
 }

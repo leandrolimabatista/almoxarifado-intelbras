@@ -48,7 +48,7 @@
 }
 .ch-alerta__btn--ok { background: #00A859; }
 .ch-alerta__btn--ok:hover { background: #007A40; }
-.ch-alerta__btn--no { background: #DC2626; }
+.ch-alerta__btn--no { background: #E5484D; }
 .ch-alerta__btn--no:hover { background: #B91C1C; }
 .ch-alerta__btn:focus-visible { outline: 3px solid #1A1A1A; outline-offset: 2px; }
 @media (max-width: 600px) { .ch-alerta-pilha { top: 76px; right: 12px; } }

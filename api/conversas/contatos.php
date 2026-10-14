@@ -11,6 +11,7 @@
 
 declare(strict_types=1);
 require_once __DIR__ . '/_bootstrap.php';
+require_once __DIR__ . '/../equipes/_visibilidade.php';
 
 $meuId = chat_iniciar(['GET']);
 
@@ -22,6 +23,7 @@ try {
         "SELECT id, nome, cargo, equipe_slug
          FROM tb_usuarios
          WHERE status = 'ativo' AND id <> :eu
+           AND id <> 1 -- Administrador Intelbras não aparece para ninguém
          ORDER BY nome
          LIMIT 1000"
     );
@@ -49,8 +51,12 @@ try {
         ];
     }
 
+    $slugsVisiveis = eqv_slugs_visiveis($pdo, $meuId);
     $equipes = [];
     foreach ($equipesInfo as $slug => $info) {
+        if (!eqv_pode_ver($slugsVisiveis, (string)$slug)) {
+            continue;
+        }
         $equipes[] = [
             'slug'    => $slug,
             'nome'    => $info['nome'],

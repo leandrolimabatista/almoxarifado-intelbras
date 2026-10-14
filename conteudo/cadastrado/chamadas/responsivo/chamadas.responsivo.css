@@ -27,7 +27,6 @@
 
 @media (max-width: 600px) {
   .chamadas__main { padding: 14px 14px 28px; }
-  .chamadas__title { font-size: 22px; }
   .chamadas__acao { flex-direction: row; gap: 14px; }
   .chamadas__acao-icone { width: 64px; height: 64px; }
   .chamadas__acao-icone .ch-ic { width: 30px; height: 30px; }
@@ -65,4 +64,14 @@
 @media (max-width: 420px) {
   .chamadas__acao { flex-direction: column; align-items: flex-start; }
   .chamadas__acao-icone { width: 56px; height: 56px; }
+}
+
+@media (max-width: 480px) {
+  .chamadas__title { font-size: 22px; }
+}
+
+@media (max-width: 720px) {
+  .tela__opcoes { grid-template-columns: 1fr; }
+  .tela__op { flex-direction: row; text-align: left; padding: 12px; }
+  .sala__compart { top: 74px; max-width: calc(100% - 16px); flex-wrap: wrap; justify-content: center; border-radius: 16px; }
 }

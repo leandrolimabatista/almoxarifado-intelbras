@@ -1,0 +1,272 @@
+/* ============================================================
+   BARRA DE APPS — menu de contexto + diálogo "Personalizar"
+   (comportamento em assets/js/barra-app.js)
+   Usa os tokens de cor definidos em conteudo/cadastrado/inicio/css/inicio.css,
+   com valores de reserva caso a página não os carregue.
+============================================================= */
+
+/* Item desafixado: some da barra (o display:flex do item venceria o [hidden]) */
+.inicio__nav-item[hidden] {
+  display: none !important;
+}
+
+/* Texto só para leitores de tela */
+.barra-app-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  margin: -1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* ===================== MENU DE CONTEXTO ===================== */
+.barra-app-menu {
+  position: fixed;
+  z-index: 6000;
+  min-width: 232px;
+  padding: 6px;
+  background: #fff;
+  border: 1px solid var(--content-border, #ECECEC);
+  border-radius: 10px;
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.16), 0 2px 6px rgba(0, 0, 0, 0.08);
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+  color: var(--intelbras-preto, #1A1A1A);
+  animation: barra-app-entrada 0.12s ease-out;
+}
+
+@keyframes barra-app-entrada {
+  from { opacity: 0; transform: translateY(-4px) scale(0.98); }
+  to   { opacity: 1; transform: none; }
+}
+
+.barra-app-menu__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 9px 10px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+
+.barra-app-menu__item svg {
+  width: 18px;
+  height: 18px;
+  flex-shrink: 0;
+}
+
+.barra-app-menu__item:hover,
+.barra-app-menu__item:focus {
+  background: #F5F5F5;
+  outline: none;
+}
+
+.barra-app-menu__item:focus-visible {
+  outline: 2px solid var(--intelbras-verde, #00A859);
+  outline-offset: -2px;
+}
+
+.barra-app-menu__sep {
+  height: 1px;
+  margin: 6px 4px;
+  background: var(--content-border, #ECECEC);
+}
+
+/* ===================== DIÁLOGO PERSONALIZAR ===================== */
+.barra-app-dialogo {
+  width: min(520px, calc(100vw - 32px));
+  max-height: calc(100vh - 48px);
+  padding: 0;
+  border: 0;
+  border-radius: 14px;
+  background: #fff;
+  color: var(--intelbras-preto, #1A1A1A);
+  box-shadow: 0 24px 60px rgba(0, 0, 0, 0.28);
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  font-size: 14px;
+  overflow: hidden;
+}
+
+.barra-app-dialogo[open] {
+  display: flex;
+  flex-direction: column;
+}
+
+.barra-app-dialogo::backdrop {
+  background: rgba(0, 0, 0, 0.42);
+}
+
+.barra-app-dialogo__cab {
+  padding: 20px 22px 12px;
+}
+
+.barra-app-dialogo__cab h2 {
+  margin: 0 0 4px;
+  font-size: 18px;
+  font-weight: 800;
+}
+
+.barra-app-dialogo__cab p {
+  margin: 0;
+  color: var(--intelbras-cinza, #6B6B6B);
+}
+
+.barra-app-dialogo__lista {
+  list-style: none;
+  margin: 0;
+  padding: 4px 12px;
+  overflow-y: auto;
+  border-top: 1px solid var(--content-border, #ECECEC);
+  border-bottom: 1px solid var(--content-border, #ECECEC);
+}
+
+.barra-app-dialogo__linha {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border-radius: 8px;
+}
+
+.barra-app-dialogo__linha:hover {
+  background: #F7F7F7;
+}
+
+.barra-app-dialogo__icone {
+  display: inline-flex;
+  width: 24px;
+  justify-content: center;
+  color: var(--intelbras-preto, #1A1A1A);
+}
+
+.barra-app-dialogo__icone svg {
+  width: 19px;
+  height: 19px;
+}
+
+.barra-app-dialogo__nome {
+  flex: 1;
+  min-width: 0;
+  font-weight: 600;
+}
+
+.barra-app-dialogo__seta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  padding: 0;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: var(--intelbras-preto, #1A1A1A);
+  cursor: pointer;
+}
+
+.barra-app-dialogo__seta svg {
+  width: 17px;
+  height: 17px;
+}
+
+.barra-app-dialogo__seta:hover:not(:disabled) {
+  background: #ECECEC;
+}
+
+.barra-app-dialogo__seta:disabled {
+  opacity: 0.3;
+  cursor: default;
+}
+
+.barra-app-dialogo__fixar,
+.barra-app-dialogo__auto {
+  width: 18px;
+  height: 18px;
+  margin: 0 4px 0 6px;
+  accent-color: var(--intelbras-verde, #00A859);
+  cursor: pointer;
+}
+
+.barra-app-dialogo__fixar:disabled {
+  cursor: default;
+}
+
+.barra-app-dialogo__seta:focus-visible,
+.barra-app-dialogo__fixar:focus-visible,
+.barra-app-dialogo__auto:focus-visible,
+.barra-app-botao:focus-visible {
+  outline: 2px solid var(--intelbras-verde, #00A859);
+  outline-offset: 2px;
+}
+
+.barra-app-dialogo__opcao {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 22px;
+  cursor: pointer;
+}
+
+.barra-app-dialogo__opcao .barra-app-dialogo__auto {
+  margin: 2px 0 0;
+  flex-shrink: 0;
+}
+
+.barra-app-dialogo__opcao strong {
+  display: block;
+  font-weight: 700;
+}
+
+.barra-app-dialogo__opcao small {
+  display: block;
+  margin-top: 2px;
+  color: var(--intelbras-cinza, #6B6B6B);
+  font-size: 13px;
+}
+
+.barra-app-dialogo__rod {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 12px 22px 18px;
+}
+
+.barra-app-botao {
+  padding: 9px 16px;
+  border: 1px solid var(--intelbras-cinza-claro, #E8E8E8);
+  border-radius: 8px;
+  background: #fff;
+  color: var(--intelbras-preto, #1A1A1A);
+  font: inherit;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.barra-app-botao:hover {
+  background: #F5F5F5;
+}
+
+.barra-app-botao--primario {
+  border-color: var(--intelbras-verde, #00A859);
+  background: var(--intelbras-verde, #00A859);
+  color: #fff;
+}
+
+.barra-app-botao--primario:hover {
+  background: var(--intelbras-verde-escuro, #007A40);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barra-app-menu { animation: none; }
+}

@@ -19,7 +19,7 @@ $un = (static function (): array {
             'bairro'                => 'Vila Romana',
             'cidade'                => 'São Paulo',
             'estado'                => 'SP',
-            'telefone'              => '(11) 95704-1110',
+            'telefone'              => '0800 882 4040',
             'horario_funcionamento' => 'Segunda a sexta, das 08h às 18h',
             'responsavel_nome'      => null,
             'responsavel_cargo'     => null,
@@ -116,19 +116,6 @@ $unHorarioDias   = $unHorarioPartes[0] ?? '';
 $unHorarioHoras  = $unHorarioPartes[1] ?? '';
 $unEnderecoCopia = $unEnderecoLinha1 . ', ' . $unU['bairro'] . ', ' . $unU['cidade'] . ' - ' . $unU['estado'];
 
-// Link "Ligar": só dígitos; números nacionais (10/11 dígitos, sem 0 inicial) ganham +55
-$unFoneRaw = trim((string)$unU['telefone']);
-$unFoneDig = preg_replace('/\D/', '', $unFoneRaw);
-if ($unFoneDig === '') {
-    $unFoneHref = '';
-} elseif (str_starts_with($unFoneRaw, '+')) {
-    $unFoneHref = 'tel:+' . $unFoneDig;
-} elseif ($unFoneDig[0] !== '0' && in_array(strlen($unFoneDig), [10, 11], true)) {
-    $unFoneHref = 'tel:+55' . $unFoneDig;
-} else {
-    $unFoneHref = 'tel:' . $unFoneDig;
-}
-
 // Horário -> dias da semana (0 = domingo ... 6 = sábado) e abre/fecha, para o selo
 // "Aberto agora". Se o texto não puder ser interpretado, o selo simplesmente não aparece.
 $unHorarioNorm = strtr(mb_strtolower((string)$unU['horario_funcionamento'], 'UTF-8'), [
@@ -158,6 +145,12 @@ if (preg_match('/(\d{1,2})(?:h|:)(\d{2})?\s*(?:as|a|ate|-)\s*(\d{1,2})(?:h|:)(\d
 }
 $unTemStatusHorario = ($unDiasAbertos !== [] && $unAbre !== '' && $unFecha !== '');
 $unMapaUrl = 'https://www.google.com/maps/search/?api=1&query=' . rawurlencode($unU['endereco'] . ', ' . $unU['numero'] . ', ' . $unU['bairro'] . ', ' . $unU['cidade'] . ' - ' . $unU['estado']);
+// Coordenadas do mapa: usa latitude/longitude de tb_unidades se essas colunas
+// existirem; senão, ponto aproximado da Rua Tito (o mapa ainda tenta localizar
+// o endereço exato sozinho — ver unidade.js).
+$unTemCoord = isset($unU['latitude'], $unU['longitude']) && is_numeric($unU['latitude']) && is_numeric($unU['longitude']);
+$unLat = $unTemCoord ? (float)$unU['latitude']  : -23.5290;
+$unLng = $unTemCoord ? (float)$unU['longitude'] : -46.6990;
 $unAtiva = ($unU['status'] === 'ativa');
 $unResponsavel = trim((string)($unU['responsavel_nome'] ?? ''));
 
@@ -182,12 +175,15 @@ $unAvisoIcones = [
      unidade Intelbras — Lapa Tito (única unidade por enquanto).
      Dados vêm de tb_unidades / tb_unidade_contatos /
      tb_unidade_avisos (database/unidade.sql), com fallback fixo
-     para a Lapa Tito. O mapa é uma ilustração (img/mapa-unidade.svg);
+     para a Lapa Tito. O mapa é interativo (MapLibre + OpenFreeMap, ver unidade.js); a
+     Antes de o mapa carregar, o quadro fica em branco (cor neutra do mapa).
      "Ver no mapa" abre o Google Maps.
 ============================================================= -->
-<link rel="stylesheet" href="conteudo/cadastrado/unidade/css/unidade.css?v=3">
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.css">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/maplibre-gl/4.7.1/maplibre-gl.js" defer></script>
+<link rel="stylesheet" href="conteudo/cadastrado/unidade/css/unidade.css?v=6">
 <link rel="stylesheet" href="conteudo/cadastrado/unidade/responsivo/unidade.responsivo.css?v=3">
-<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
 
 <div class="unidade">
@@ -232,9 +228,9 @@ $unAvisoIcones = [
         <span>Loja</span>
       </a>
       <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
-      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>Usuários</span>
+      <a href="index.php?pagina=dashboard" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="15" width="7" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Dashboard</span>
       </a>
       <?php endif; ?>
     </nav>
@@ -242,50 +238,63 @@ $unAvisoIcones = [
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">EQUIPES</span>
       <div class="inicio__channel-list">
+        <?php if (eqv_visivel('geral')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
           <span class="inicio__channel-dot" style="background:#00A859"></span>
           <span>Geral</span>
           <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('projetos')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
           <span class="inicio__channel-dot" style="background:#3B82F6"></span>
           <span>Projetos</span>
           <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('marketing')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
           <span class="inicio__channel-dot" style="background:#F59E0B"></span>
           <span>Marketing</span>
           <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('rh')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
           <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
           <span>RH</span>
           <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('financeiro')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
           <span class="inicio__channel-dot" style="background:#EC4899"></span>
           <span>Financeiro</span>
           <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('ti')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
           <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
           <span>TI</span>
           <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('sac')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
           <span class="inicio__channel-dot" style="background:#EF4444"></span>
           <span>SAC / Ouvidoria</span>
           <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
         </a>
+        <?php endif; ?>
       </div>
-      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
     </div>
 
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">ATALHOS</span>
-      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        <span>Nova conversa</span>
+      <a href="index.php?pagina=chat" class="inicio__shortcut" id="atalhoChatSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chat</span>
       </a>
       <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
         <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -328,10 +337,11 @@ $unAvisoIcones = [
         <aside class="unidade__card unidade__mapa" aria-labelledby="unidadeMapaTitulo">
           <h2 class="unidade__card-titulo" id="unidadeMapaTitulo">Localização</h2>
           <div class="unidade__mapa-box">
-            <img class="unidade__mapa-img"
-                 src="conteudo/cadastrado/unidade/img/mapa-unidade.svg"
-                 alt="Mapa ilustrativo: <?= $unH($unEnderecoLinha1 . ', ' . $unU['bairro'] . ', ' . $unU['cidade'] . ' - ' . $unU['estado']) ?>"
-                 loading="lazy">
+            <div class="unidade__mapa-canvas" id="unidadeMapa" hidden
+                 data-lat="<?= $unH((string)$unLat) ?>" data-lng="<?= $unH((string)$unLng) ?>"
+                 data-exato="<?= $unTemCoord ? '1' : '0' ?>"
+                 data-endereco="<?= $unH($unEnderecoLinha1 . ', ' . $unU['bairro'] . ', ' . $unU['cidade'] . ' - ' . $unU['estado'] . ', Brasil') ?>"
+                 role="region" aria-label="Mapa interativo da unidade"></div>
             <a class="unidade__mapa-link" href="<?= $unH($unMapaUrl) ?>" target="_blank" rel="noopener noreferrer">
               <?= $unSvg('local') ?><span>Ver no mapa</span>
             </a>
@@ -365,11 +375,9 @@ $unAvisoIcones = [
                 </div>
               </div>
               <div class="unidade__tile-acao">
-                <?php if ($unFoneHref !== ''): ?>
-                  <a class="unidade__btn" href="<?= $unH($unFoneHref) ?>"><?= $unSvg('telefone') ?><span>Ligar</span></a>
-                <?php else: ?>
-                  <span class="unidade__btn unidade__btn--desabilitado" aria-disabled="true"><?= $unSvg('telefone') ?><span>Ligar</span></span>
-                <?php endif; ?>
+                <button type="button" class="unidade__btn" data-copiar="<?= $unH($unU['telefone']) ?>">
+                  <?= $unSvg('copiar') ?><span data-copiar-texto>Copiar número</span>
+                </button>
               </div>
             </div>
             <div class="unidade__tile unidade__tile--coluna">
@@ -407,40 +415,6 @@ $unAvisoIcones = [
           </div>
         </section>
 
-        <!-- ============ CONTATOS DA UNIDADE ============ -->
-        <section class="unidade__card unidade__contatos" aria-labelledby="unidadeContatosTitulo">
-          <h2 class="unidade__card-titulo" id="unidadeContatosTitulo">Contatos da unidade</h2>
-          <div class="unidade__tiles">
-            <?php foreach ($unSetores as $unSlug => [$unSetorNome, $unSetorIcone]):
-              $unC = $un['contatos'][$unSlug] ?? null;
-              $unCEmail = trim((string)($unC['email'] ?? ''));
-              $unCFone  = preg_replace('/[^\d+]/', '', (string)($unC['telefone'] ?? ''));
-              if ($unCEmail !== '')      { $unCHref = 'mailto:' . $unCEmail; }
-              elseif ($unCFone !== '')   { $unCHref = 'tel:' . $unCFone; }
-              else                       { $unCHref = ''; }
-            ?>
-            <article class="unidade__tile unidade__contato">
-              <div class="unidade__contato-topo">
-                <span class="unidade__contato-icone"><?= $unSvg($unSetorIcone) ?></span>
-                <div class="unidade__tile-body">
-                  <p class="unidade__tile-label"><?= $unH($unSetorNome) ?></p>
-                  <?php if ($unC): ?>
-                    <p class="unidade__tile-valor"><?= $unH($unC['nome']) ?><?php if (trim((string)($unC['cargo'] ?? '')) !== ''): ?><br><?= $unH($unC['cargo']) ?><?php endif; ?></p>
-                  <?php else: ?>
-                    <p class="unidade__tile-valor unidade__tile-valor--vazio">Contato não cadastrado</p>
-                  <?php endif; ?>
-                </div>
-              </div>
-              <?php if ($unCHref !== ''): ?>
-                <a class="unidade__btn" href="<?= $unH($unCHref) ?>"><?= $unSvg('email') ?><span>Entrar em contato</span></a>
-              <?php else: ?>
-                <span class="unidade__btn unidade__btn--desabilitado" aria-disabled="true"><?= $unSvg('email') ?><span>Entrar em contato</span></span>
-              <?php endif; ?>
-            </article>
-            <?php endforeach; ?>
-          </div>
-        </section>
-
         <!-- ============ AVISOS DA UNIDADE ============ -->
         <section class="unidade__card unidade__avisos" aria-labelledby="unidadeAvisosTitulo">
           <h2 class="unidade__card-titulo" id="unidadeAvisosTitulo">Avisos da unidade</h2>
@@ -472,4 +446,4 @@ $unAvisoIcones = [
   </main>
 </div>
 
-<script src="conteudo/cadastrado/unidade/js/unidade.js?v=2"></script>
+<script src="conteudo/cadastrado/unidade/js/unidade.js?v=6"></script>

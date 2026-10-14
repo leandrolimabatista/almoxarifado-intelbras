@@ -12,13 +12,18 @@ if (empty($_SESSION['csrf_chamadas'])) {
     $_SESSION['csrf_chamadas'] = bin2hex(random_bytes(32));
 }
 $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
+// Ligação vinda do Chat (?ligar=<id>&origem=chat): a sala abre direto, sem mostrar o menu Chamadas.
+$diretoChat = (int)($_GET['ligar'] ?? 0) > 0 && (string)($_GET['origem'] ?? '') === 'chat';
+// Ligação vinda do canal da Equipe (?chamar_equipe=<slug>&origem=equipes): mesmo comportamento.
+$diretoEquipe = (string)($_GET['chamar_equipe'] ?? '') !== '' && (string)($_GET['origem'] ?? '') === 'equipes';
+$diretoChat = $diretoChat || $diretoEquipe;
 ?>
-<link rel="stylesheet" href="conteudo/cadastrado/chamadas/css/chamadas.css?v=2">
-<link rel="stylesheet" href="conteudo/cadastrado/chamadas/responsivo/chamadas.responsivo.css?v=2">
-<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=8">
+<link rel="stylesheet" href="conteudo/cadastrado/chamadas/css/chamadas.css?v=20261016">
+<link rel="stylesheet" href="conteudo/cadastrado/chamadas/responsivo/chamadas.responsivo.css?v=3">
+<link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
 
-<div class="chamadas" id="chRaiz" data-csrf="<?php echo htmlspecialchars($csrfChamadas, ENT_QUOTES, 'UTF-8'); ?>">
+<div class="chamadas<?php echo $diretoChat ? ' chamadas--direto' : ''; ?>" id="chRaiz" data-csrf="<?php echo htmlspecialchars($csrfChamadas, ENT_QUOTES, 'UTF-8'); ?>">
 
   <aside class="inicio__sidebar" id="sidebar">
     <nav class="inicio__nav">
@@ -60,9 +65,9 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
         <span>Loja</span>
       </a>
       <?php if ((int)($_SESSION['usuario_id'] ?? 0) === 1): ?>
-      <a href="index.php?pagina=usuarios" class="inicio__nav-item">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><circle cx="9" cy="8" r="3" stroke="currentColor" stroke-width="1.8"/><path d="M3 20c.6-3.6 3-5.5 6-5.5s5.4 1.9 6 5.5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/><circle cx="17" cy="9" r="2.2" stroke="currentColor" stroke-width="1.8"/><path d="M15.5 14.2c2.2.3 3.7 1.9 4.1 4.3" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
-        <span>Usuários</span>
+      <a href="index.php?pagina=dashboard" class="inicio__nav-item">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="3.5" y="3.5" width="7" height="8.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="3.5" width="7" height="5" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="13.5" y="11.5" width="7" height="9" rx="1.5" stroke="currentColor" stroke-width="1.8"/><rect x="3.5" y="15" width="7" height="5.5" rx="1.5" stroke="currentColor" stroke-width="1.8"/></svg>
+        <span>Dashboard</span>
       </a>
       <?php endif; ?>
     </nav>
@@ -70,50 +75,63 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">EQUIPES</span>
       <div class="inicio__channel-list">
+        <?php if (eqv_visivel('geral')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=geral" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'geral') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="geral">
           <span class="inicio__channel-dot" style="background:#00A859"></span>
           <span>Geral</span>
           <span class="inicio__channel-badge" data-badge-slug="geral" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('projetos')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=projetos" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'projetos') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="projetos">
           <span class="inicio__channel-dot" style="background:#3B82F6"></span>
           <span>Projetos</span>
           <span class="inicio__channel-badge" data-badge-slug="projetos" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('marketing')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=marketing" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'marketing') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="marketing">
           <span class="inicio__channel-dot" style="background:#F59E0B"></span>
           <span>Marketing</span>
           <span class="inicio__channel-badge" data-badge-slug="marketing" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('rh')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=rh" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'rh') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="rh">
           <span class="inicio__channel-dot" style="background:#8B5CF6"></span>
           <span>RH</span>
           <span class="inicio__channel-badge" data-badge-slug="rh" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('financeiro')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=financeiro" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'financeiro') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="financeiro">
           <span class="inicio__channel-dot" style="background:#EC4899"></span>
           <span>Financeiro</span>
           <span class="inicio__channel-badge" data-badge-slug="financeiro" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('ti')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=ti" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'ti') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="ti">
           <span class="inicio__channel-dot" style="background:#0EA5E9"></span>
           <span>TI</span>
           <span class="inicio__channel-badge" data-badge-slug="ti" hidden>0</span>
         </a>
+        <?php endif; ?>
+        <?php if (eqv_visivel('sac')): ?>
         <a href="index.php?pagina=equipes&amp;equipe=sac" class="inicio__channel-item<?php echo (($paginaSolicitada ?? '') === 'equipes' && ($_GET['equipe'] ?? 'geral') === 'sac') ? ' inicio__channel-item--active' : ''; ?>" data-equipe-slug="sac">
           <span class="inicio__channel-dot" style="background:#EF4444"></span>
           <span>SAC / Ouvidoria</span>
           <span class="inicio__channel-badge" data-badge-slug="sac" hidden>0</span>
         </a>
+        <?php endif; ?>
       </div>
-      <a href="index.php?pagina=equipes" class="inicio__see-all">+ Ver todos</a>
     </div>
 
     <div class="inicio__sidebar-section">
       <span class="inicio__sidebar-label">ATALHOS</span>
-      <a href="index.php?pagina=nova-conversa" class="inicio__shortcut" id="atalhoNovaConversaSidebar">
-        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 4l17 8-17 8 4-8-4-8z" stroke="currentColor" stroke-width="1.6" stroke-linejoin="round"/></svg>
-        <span>Nova conversa</span>
+      <a href="index.php?pagina=chat" class="inicio__shortcut" id="atalhoChatSidebar">
+        <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span>Chat</span>
       </a>
       <a href="index.php?pagina=agendar-reuniao" class="inicio__shortcut" id="atalhoAgendarReuniaoSidebar">
         <svg class="inicio__icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="4" y="5.5" width="16" height="15" rx="1.5" stroke="currentColor" stroke-width="1.6"/><path d="M4 9.5h16M8 3.5v3M16 3.5v3" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg>
@@ -126,6 +144,10 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
     </button>
   </aside>
 
+  <?php if ($diretoChat): ?>
+  <div class="chamadas__direto-carregando" role="status"><span class="chamadas__spinner"></span> Iniciando chamada…</div>
+  <?php endif; ?>
+
   <main class="chamadas__main">
 
     <div class="chamadas__erro-conexao" id="chErroConexao" role="alert" hidden>
@@ -134,18 +156,17 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
       <button type="button" class="chamadas__link-btn" id="chErroTentar">Tentar novamente</button>
     </div>
 
-    <nav class="chamadas__breadcrumb" aria-label="Você está em"><span>Chamadas</span></nav>
     <h1 class="chamadas__title">Chamadas</h1>
     <p class="chamadas__subtitle">Conecte-se com sua equipe de forma rápida e segura, tudo dentro da plataforma Intelbras.</p>
 
     <!-- ===== 3 CARDS DE AÇÃO ===== -->
     <section class="chamadas__acoes" aria-label="Ações de chamada">
-      <article class="chamadas__acao" id="cardNova">
-        <span class="chamadas__acao-icone"><span data-ic="video"></span></span>
+      <article class="chamadas__acao" id="cardNova" tabindex="-1">
+        <span class="chamadas__acao-icone"><span data-ic="phone"></span></span>
         <div class="chamadas__acao-corpo">
           <h2 class="chamadas__acao-titulo">Nova chamada</h2>
           <p class="chamadas__acao-texto">Iniciar uma chamada instantânea com alguém da sua equipe</p>
-          <button type="button" class="chamadas__btn chamadas__btn--primario" id="btnNovaChamada">Iniciar chamada <span data-ic="video"></span></button>
+          <button type="button" class="chamadas__btn chamadas__btn--primario" id="btnNovaChamada">Iniciar chamada <span data-ic="phone"></span></button>
         </div>
       </article>
 
@@ -159,8 +180,8 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
         <div class="chamadas__tooltip" id="tipEquipe" role="tooltip" hidden>Apenas Diretores, Gerentes e CEO podem chamar a equipe toda.</div>
       </article>
 
-      <article class="chamadas__acao" id="cardAgendar">
-        <span class="chamadas__acao-icone"><span data-ic="calendar"></span></span>
+      <article class="chamadas__acao" id="cardAgendar" tabindex="-1">
+        <span class="chamadas__acao-icone"><span data-ic="calendar" id="icoAgendar"></span></span>
         <div class="chamadas__acao-corpo">
           <h2 class="chamadas__acao-titulo">Agendar chamada</h2>
           <p class="chamadas__acao-texto">Planeje e convide sua equipe para uma chamada</p>
@@ -228,8 +249,8 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
         </label>
         <div class="chamadas__modal-lista" id="mdNovaLista" role="radiogroup" aria-label="Membros da equipe"></div>
         <div class="chamadas__segmento" role="radiogroup" aria-label="Tipo de chamada">
-          <button type="button" class="chamadas__segmento-op" data-midia="voz" role="radio" aria-checked="false"><span data-ic="phone"></span> Voz</button>
-          <button type="button" class="chamadas__segmento-op chamadas__segmento-op--ativo" data-midia="video" role="radio" aria-checked="true"><span data-ic="video"></span> Vídeo</button>
+          <button type="button" class="chamadas__segmento-op chamadas__segmento-op--ativo" data-midia="voz" role="radio" aria-checked="true"><span data-ic="phone"></span> Voz</button>
+          <button type="button" class="chamadas__segmento-op" data-midia="video" role="radio" aria-checked="false"><span data-ic="video"></span> Vídeo</button>
         </div>
       </div>
       <footer class="chamadas__modal-rodape">
@@ -249,7 +270,6 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
       <div class="chamadas__modal-corpo">
         <div class="chamadas__avatares" id="mdEquipeAvatares"></div>
         <label class="chamadas__toggle"><input type="checkbox" id="mdEquipeMic" checked><span class="chamadas__toggle-trilho"></span><span>Entrar com microfone ligado</span></label>
-        <label class="chamadas__toggle"><input type="checkbox" id="mdEquipeCam" checked><span class="chamadas__toggle-trilho"></span><span>Entrar com câmera ligada</span></label>
         <p class="chamadas__aviso"><span data-ic="bell"></span> Todos os membros online serão notificados.</p>
       </div>
       <footer class="chamadas__modal-rodape">
@@ -349,6 +369,8 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
 
     <div class="sala__corpo">
       <div class="sala__palco">
+        <button type="button" class="sala__maos" id="salaMaos" hidden></button>
+        <div class="sala__toasts" id="salaToasts" aria-live="polite"></div>
         <div class="sala__grade" id="salaGrade"></div>
         <div class="sala__pager" id="salaPager" hidden>
           <button type="button" class="sala__icone-btn" id="salaPagAnt" aria-label="Página anterior"><span data-ic="chevron-left"></span></button>
@@ -364,11 +386,20 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
           <button type="button" class="sala__icone-btn sala__painel-fechar" id="salaPainelFechar" aria-label="Recolher painel"><span data-ic="x"></span></button>
         </div>
         <div class="sala__aba-corpo" id="painelChat" hidden>
-          <div class="sala__msgs" id="salaMsgs" aria-live="polite"></div>
+          <div class="sala__chat-corpo">
+            <div class="sala__chat-vazio" id="salaChatVazio">
+              <span class="sala__chat-vazio-ico"><span data-ic="message"></span></span>
+              <strong>Nenhuma mensagem ainda</strong>
+              <span>As mensagens ficam visíveis só para quem está na chamada.</span>
+            </div>
+            <div class="sala__msgs" id="salaMsgs" aria-live="polite"></div>
+            <button type="button" class="sala__chat-novas" id="salaChatNovas" hidden>Novas mensagens ↓</button>
+          </div>
           <form class="sala__msg-form" id="salaMsgForm" autocomplete="off">
-            <input type="text" id="salaMsgInput" maxlength="1000" placeholder="Escreva uma mensagem" aria-label="Mensagem do chat da chamada">
-            <button type="submit" class="chamadas__btn chamadas__btn--primario chamadas__btn--icone" aria-label="Enviar mensagem"><span data-ic="send"></span></button>
+            <textarea id="salaMsgInput" rows="1" maxlength="1000" placeholder="Escreva uma mensagem" aria-label="Mensagem do chat da chamada"></textarea>
+            <button type="submit" class="sala__msg-enviar" id="salaMsgEnviar" aria-label="Enviar mensagem" disabled><span data-ic="send"></span></button>
           </form>
+          <p class="sala__msg-dica">Enter envia · Shift+Enter quebra a linha</p>
         </div>
         <div class="sala__aba-corpo" id="painelPart" hidden><ul class="sala__parts" id="salaParts"></ul></div>
       </aside>
@@ -404,6 +435,37 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
     </div>
   </div>
 
+  <!-- Compartilhar tela (pop-out antes do seletor do navegador) -->
+  <div class="chamadas__modal chamadas__modal--alto" id="mdTela" hidden>
+    <div class="chamadas__modal-caixa" role="dialog" aria-modal="true" aria-labelledby="mdTelaTitulo">
+      <header class="chamadas__modal-topo">
+        <h2 id="mdTelaTitulo">Compartilhar tela</h2>
+        <button type="button" class="chamadas__modal-fechar" data-fechar aria-label="Fechar"><span data-ic="x"></span></button>
+      </header>
+      <div class="chamadas__modal-corpo">
+        <p class="chamadas__modal-ajuda">Escolha o que os participantes vão ver. Em seguida o navegador pede a confirmação.</p>
+        <div class="tela__opcoes" role="radiogroup" aria-label="O que compartilhar">
+          <button type="button" class="tela__op tela__op--sel" data-superficie="monitor" role="radio" aria-checked="true"><span data-ic="monitor"></span><strong>Tela inteira</strong><span>Tudo o que aparece no monitor</span></button>
+          <button type="button" class="tela__op" data-superficie="window" role="radio" aria-checked="false"><span data-ic="app-window"></span><strong>Janela</strong><span>Um programa específico</span></button>
+          <button type="button" class="tela__op" data-superficie="browser" role="radio" aria-checked="false"><span data-ic="browser-tab"></span><strong>Aba do navegador</strong><span>Uma aba do Chrome ou Edge</span></button>
+        </div>
+        <p class="tela__aviso"><span data-ic="shield-check"></span> Você pode parar a qualquer momento pelo aviso verde no topo da tela.</p>
+      </div>
+      <footer class="chamadas__modal-rodape">
+        <button type="button" class="chamadas__btn chamadas__btn--secundario" data-fechar>Cancelar</button>
+        <button type="button" class="chamadas__btn chamadas__btn--primario" id="telaConfirmar">Escolher e compartilhar</button>
+      </footer>
+    </div>
+  </div>
+
+  <!-- Aviso flutuante: você está compartilhando a tela (fica visível mesmo com a sala minimizada) -->
+  <div class="sala__compart" id="salaCompart" hidden role="status">
+    <span class="sala__compart-ponto"></span>
+    <strong>Você está compartilhando a sua tela</strong>
+    <button type="button" id="salaCompartVoltar">Voltar à chamada</button>
+    <button type="button" class="sala__compart-parar" id="salaCompartParar">Parar compartilhamento</button>
+  </div>
+
   <!-- Pós-chamada -->
   <div class="chamadas__modal chamadas__modal--alto" id="chPos" hidden>
     <div class="chamadas__modal-caixa chamadas__modal-caixa--estreita" role="dialog" aria-modal="true" aria-labelledby="posTitulo">
@@ -424,5 +486,5 @@ $csrfChamadas = (string)$_SESSION['csrf_chamadas'];
   <div class="chamadas__avisos" id="chAvisos" aria-live="polite"></div>
 </div>
 
-<script src="conteudo/cadastrado/chamadas/js/chamadas.js?v=2"></script>
-<script src="conteudo/cadastrado/chamadas/js/chamadas-sala.js?v=2"></script>
+<script src="conteudo/cadastrado/chamadas/js/chamadas.js?v=13"></script>
+<script src="conteudo/cadastrado/chamadas/js/chamadas-sala.js?v=6"></script>

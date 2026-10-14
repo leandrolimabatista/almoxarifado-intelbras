@@ -60,7 +60,7 @@
 /* ----- <768: uma coluna (lista de equipes OU chat em tela cheia) ----- */
 @media (max-width: 767px) {
   .equipes {
-    min-height: calc(100vh - 60px);
+    min-height: calc(100vh - 73px);
   }
 
   .equipes__canal-icone {

@@ -6,16 +6,17 @@
 ============================================================= -->
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="cabecalho/css/cabecalho.css?v=1789997600">
+<link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="cabecalho/css/cabecalho.css?v=20261016">
 <link rel="stylesheet" href="cabecalho/responsivo/cabecalho.responsivo.css?v=1789997600">
 
 <header class="header">
   <div class="header__container">
 
     <!-- Logo: troque o arquivo dentro de Cabecalho/img/ pela foto oficial da Intelbras -->
-    <a href="/" class="header__logo" aria-label="Intelbras - Página inicial">
-      <img src="cabecalho/img/Logo.png" alt="Intelbras">
+    <a href="" class="header__logo" aria-label="Intelbras - Página inicial">
+      <img class="logo-claro" src="cabecalho/img/Logo.png" alt="Intelbras">
+      <img class="logo-escuro" src="cabecalho/img/Logo-escuro.png" alt="Intelbras">
     </a>
 
     <!-- Barra de busca -->
@@ -59,14 +60,14 @@
       // Quais ícones aparecem em cada página (a ordem no HTML é sempre:
       // notificação/carrinho, chat, chamada — o posicionamento vem do CSS).
       //   Loja     -> Carrinho + Chat
-      //   Usuários -> Notificação + Chat + Chamada
+      //   Dashboard -> Notificação + Chat + Chamada
       //   Equipes  -> Notificação + Chamada
       //   Demais   -> Notificação + Chat
       $cabPagina   = $paginaSolicitada ?? 'inicio';
       $cabCarrinho = ($cabPagina === 'loja');
       $cabNotif    = !$cabCarrinho;
       $cabChat     = ($cabPagina !== 'equipes');
-      $cabChamada  = in_array($cabPagina, ['usuarios', 'equipes'], true);
+      $cabChamada  = in_array($cabPagina, ['dashboard', 'equipes'], true);
     ?>
     <div class="header__quick-icons">
       <?php if ($cabNotif): ?>
@@ -75,7 +76,7 @@
           <path d="M6 9.5a6 6 0 0112 0v4.2c0 .5.16.98.47 1.38l.9 1.15c.6.77.05 1.9-.93 1.9H5.56c-.98 0-1.53-1.13-.93-1.9l.9-1.15c.3-.4.47-.88.47-1.38V9.5z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
           <path d="M9.5 19a2.5 2.5 0 005 0" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/>
         </svg>
-        <span class="header__icon-badge" id="notificacoesBadge">3</span>
+        <span class="header__icon-badge" id="notificacoesBadge" hidden>0</span>
       </button>
       <?php endif; ?>
       <?php if ($cabCarrinho): ?>
@@ -93,11 +94,11 @@
       </button>
       <?php endif; ?>
       <?php if ($cabChat): ?>
-      <button type="button" class="header__icon-btn" id="btnChat" aria-label="Chat" aria-haspopup="true" aria-expanded="false">
+      <a href="index.php?pagina=chat" class="header__icon-btn" id="btnChat" aria-label="Chat" title="Chat">
         <svg width="22" height="22" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
           <path d="M4 12a8 8 0 1114.6 4.6L20 20l-3.6-1.4A8 8 0 014 12z" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
-      </button>
+      </a>
       <?php endif; ?>
       <?php if ($cabChamada): ?>
       <!-- Chamada rápida (Chamadas): abre a tela de Chamadas já com o modal "Nova chamada" -->
@@ -114,7 +115,7 @@
     <div class="header__user">
       <?php if (!empty($_SESSION['usuario_id'])): ?>
         <?php $primeiroNome = htmlspecialchars(explode(' ', (string)$_SESSION['usuario_nome'])[0], ENT_QUOTES, 'UTF-8'); ?>
-        <span class="header__avatar" aria-hidden="true"><?php echo mb_strtoupper(mb_substr($primeiroNome, 0, 1)); ?></span>
+        <button type="button" class="header__avatar header__avatar--btn" id="btnUsuarioAvatar" aria-label="Menu do usuário" aria-haspopup="true" aria-expanded="false"><?php echo mb_strtoupper(mb_substr($primeiroNome, 0, 1)); ?></button>
         <button type="button" class="header__user-text header__user-menu-trigger" id="btnUsuarioMenu" aria-haspopup="true" aria-expanded="false">
           <span class="header__user-greeting">Olá, Bem-Vindo!</span>
           <span class="header__user-login"><?php echo $primeiroNome; ?>
@@ -127,7 +128,6 @@
           <span class="user-menu__arrow" aria-hidden="true"></span>
           <div class="user-menu__card" role="menu">
             <a href="index.php?pagina=configuracoes" class="user-menu__item" role="menuitem">Meu perfil</a>
-            <a href="index.php?pagina=configuracoes" class="user-menu__item" role="menuitem">Configurações</a>
             <a href="api/logout.php" class="user-menu__item user-menu__item--sair" id="btnSairConta" role="menuitem">Sair</a>
           </div>
         </div>
@@ -206,6 +206,7 @@
               </div>
             </div>
 
+            <span class="login-modal__field-ok" id="okLoginRedefinido" aria-live="polite"></span>
             <span class="login-modal__field-error" id="erroLogin" aria-live="polite"></span>
 
             <a href="#" class="login-modal__forgot" id="linkEsqueciSenha">Esqueci minha senha</a>
@@ -219,6 +220,92 @@
               </button>
 
               <button type="submit" class="login-modal__submit">Entrar</button>
+            </div>
+          </form>
+
+          <!-- Etapa: "Esqueci minha senha" — pede o email e envia o link (Brevo) -->
+          <form class="login-modal__step login-modal__step--form" id="esqueciStepForm" novalidate hidden>
+            <p class="login-modal__hint">Informe o email da sua conta e enviaremos um link para criar uma nova senha.</p>
+
+            <div class="login-modal__field">
+              <label class="login-modal__label" for="esqueciEmail">Email</label>
+              <input
+                type="email"
+                name="email"
+                id="esqueciEmail"
+                class="login-modal__input"
+                placeholder="Ex.: exemplo@mail.com"
+                autocomplete="email"
+                required
+              >
+            </div>
+
+            <span class="login-modal__field-error" id="erroEsqueci" aria-live="polite"></span>
+            <span class="login-modal__field-ok" id="okEsqueci" aria-live="polite"></span>
+
+            <div class="login-modal__actions">
+              <button type="button" class="login-modal__back" id="btnVoltarEsqueci">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M15 6L9 12L15 18" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/>
+                </svg>
+                Voltar
+              </button>
+
+              <button type="submit" class="login-modal__submit">Enviar link</button>
+            </div>
+          </form>
+
+          <!-- Etapa: nova senha (aberta pelo link do email: index.php?redefinir_senha=TOKEN) -->
+          <form class="login-modal__step login-modal__step--form" id="redefinirStepForm" novalidate hidden>
+            <p class="login-modal__hint">Use ao menos 8 caracteres, com letras e números.</p>
+
+            <div class="login-modal__field login-modal__field--senha">
+              <label class="login-modal__label" for="redefinirSenha">Nova senha</label>
+              <div class="login-modal__input-wrap">
+                <input
+                  type="password"
+                  name="senha"
+                  id="redefinirSenha"
+                  class="login-modal__input"
+                  placeholder="Mínimo de 8 caracteres"
+                  autocomplete="new-password"
+                  required
+                >
+                <button type="button" class="login-modal__toggle-senha" data-target="redefinirSenha" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg class="login-modal__eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="login-modal__field login-modal__field--senha">
+              <label class="login-modal__label" for="redefinirRepetirSenha">Repetir nova senha</label>
+              <div class="login-modal__input-wrap">
+                <input
+                  type="password"
+                  name="repetir_senha"
+                  id="redefinirRepetirSenha"
+                  class="login-modal__input"
+                  placeholder="Repita a nova senha"
+                  autocomplete="new-password"
+                  required
+                >
+                <button type="button" class="login-modal__toggle-senha" data-target="redefinirRepetirSenha" aria-label="Mostrar senha" aria-pressed="false">
+                  <svg class="login-modal__eye-icon" width="18" height="18" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <path d="M2 12C2 12 5.5 5 12 5C18.5 5 22 12 22 12C22 12 18.5 19 12 19C5.5 19 2 12 2 12Z" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/>
+                    <circle cx="12" cy="12" r="3" stroke="currentColor" stroke-width="2"/>
+                  </svg>
+                </button>
+              </div>
+            </div>
+
+            <span class="login-modal__field-error" id="erroRedefinir" aria-live="polite"></span>
+
+            <div class="login-modal__actions">
+              <span></span>
+              <button type="submit" class="login-modal__submit">Salvar senha</button>
             </div>
           </form>
 
@@ -412,4 +499,4 @@
 <?php if (!empty($_SESSION['usuario_id'])): ?>
 <script src="assets/js/equipes-badges.js?v=1"></script>
 <?php endif; ?>
-<script src="cabecalho/js/cabecalho.js?v=1787771373"></script>
+<script src="cabecalho/js/cabecalho.js?v=1791920000"></script>

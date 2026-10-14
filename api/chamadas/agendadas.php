@@ -36,6 +36,7 @@ try {
                FROM tb_chamadas_agendadas a
               WHERE a.cancelada_em IS NULL
                 AND DATE_ADD(a.data_hora, INTERVAL a.duracao_min MINUTE) > NOW()
+                " . ($uid !== 1 ? 'AND a.criador_id <> 1' : '') . "
                 AND (a.criador_id = :u
                      OR EXISTS (SELECT 1 FROM tb_chamadas_agendadas_participantes p WHERE p.agendamento_id = a.id AND p.usuario_id = :u)
                      OR (a.toda_equipe = 1 AND a.equipe_slug = :eq))
@@ -80,6 +81,14 @@ try {
     }
 
     if ($acao === 'criar') {
+        $admin = ch_e_super_admin($uid);
+        // Administrador (id 1) agenda com qualquer equipe; os demais, só com a própria.
+        $eqPedida = strtolower(trim((string)($corpo['equipe'] ?? '')));
+        if ($admin && isset(CH_EQUIPES[$eqPedida])) {
+            $equipe = $eqPedida;
+        } elseif ($admin && $equipe === '') {
+            $equipe = 'geral';
+        }
         if ($equipe === '') {
             ch_erro(403, 'Você ainda não pertence a uma equipe.');
         }
@@ -119,8 +128,13 @@ try {
             }
             // REGRA 1: só participantes da mesma equipe.
             $in = implode(',', array_fill(0, count($ids), '?'));
-            $st = $pdo->prepare("SELECT COUNT(*) FROM tb_usuarios WHERE status = 'ativo' AND equipe_slug = ? AND id IN ($in)");
-            $st->execute(array_merge([$equipe], $ids));
+            if ($admin) {
+                $st = $pdo->prepare("SELECT COUNT(*) FROM tb_usuarios WHERE status = 'ativo' AND id IN ($in)");
+                $st->execute($ids);
+            } else {
+                $st = $pdo->prepare("SELECT COUNT(*) FROM tb_usuarios WHERE status = 'ativo' AND equipe_slug = ? AND id IN ($in)");
+                $st->execute(array_merge([$equipe], $ids));
+            }
             if ((int)$st->fetchColumn() !== count($ids)) {
                 ch_erro(403, CH_MSG_REGRA_MESMA_EQUIPE);
             }
