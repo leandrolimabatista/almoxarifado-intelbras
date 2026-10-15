@@ -1,7 +1,16 @@
 /* ============================================================
    CONTEÚDO — Inteligência Artificial (área CADASTRADO) — Estilos responsivos
-   Breakpoints do site: 1180 / 860 / 600 / 480
+
+   Notebook/tablet largo : chat + painel lateral lado a lado
+   ≤ 1180px              : painel desce para baixo do chat (coluna única)
+   ≤ 860px               : margens menores
+   ≤ 600px               : chat de ponta a ponta, cabeçalho de uma linha,
+                           sugestões em carrossel, Recursos em grade 2x2
+   ≤ 480px               : botões do campo de entrada só com o ícone
+   A altura já usa dvh no CSS base; --ia-topo segue o cabeçalho (zoom.css).
 ============================================================= */
+
+/* ===================== TABLET PAISAGEM (≤ 1180px) ===================== */
 
 @media (max-width: 1180px) {
   /* Painel desce para baixo do chat (coluna única) */
@@ -15,6 +24,8 @@
     overflow-y: visible;
   }
 }
+
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
 
 @media (max-width: 860px) {
   .inteligencia-artificial {
@@ -35,50 +46,226 @@
   }
 }
 
+/* ===================== CELULAR GRANDE (≤ 600px) =====================
+   Chat ocupa a tela inteira (sem "card" flutuante), cabeçalho compacto de
+   uma linha, sugestões em carrossel horizontal e painel logo abaixo. */
+
 @media (max-width: 600px) {
+  .inteligencia-artificial__main {
+    padding: 0;
+    gap: 12px;
+  }
+
+  /* Chat de ponta a ponta, na altura visível da tela */
+  .inteligencia-artificial__chat {
+    border: 0;
+    border-radius: 0;
+    box-shadow: none;
+    min-height: 0;
+    height: calc(100vh - var(--ia-topo));
+    height: calc(100dvh - var(--ia-topo));
+  }
+
+  /* Cabeçalho: logo + título + botão "Nova conversa" só com o ícone */
   .inteligencia-artificial__chat-header {
-    flex-wrap: wrap;
+    flex-wrap: nowrap;
+    gap: 10px;
+    padding: 10px 14px;
+  }
+
+  .inteligencia-artificial__logo {
+    width: 34px;
+    height: 34px;
   }
 
   .inteligencia-artificial__chat-titulos {
-    flex-basis: calc(100% - 60px);
+    flex: 1;
+    flex-basis: auto;
   }
 
+  .inteligencia-artificial__titulo {
+    font-size: 17px;
+    margin: 0;
+  }
+
+  .inteligencia-artificial__subtitulo {
+    display: none;
+  }
+
+  /* Botão "Nova conversa": círculo verde com só o "+" (o ícone original já traz
+     um círculo; sem esconder o dele, ficava um anel dentro do outro) */
   .inteligencia-artificial__btn-nova {
-    width: 100%;
+    flex-shrink: 0;
+    width: 40px;
+    min-width: 40px;
+    height: 40px;
+    padding: 0;
     justify-content: center;
+    border: 0;
+    border-radius: 50%;
+    background: var(--intelbras-verde);
+    color: #fff;
+    box-shadow: 0 2px 6px rgba(0, 168, 89, 0.3);
+  }
+
+  .inteligencia-artificial__btn-nova:hover,
+  .inteligencia-artificial__btn-nova:active {
+    background: var(--intelbras-verde-escuro);
+  }
+
+  .inteligencia-artificial__btn-nova svg circle {
+    display: none;
+  }
+
+  /* Tema escuro: mantém o círculo verde (o tema escuro pinta o botão de cinza-azulado) */
+  html[data-tema="escuro"] .inteligencia-artificial__btn-nova {
+    background: var(--intelbras-verde);
+    color: #fff;
+  }
+
+  html[data-tema="escuro"] .inteligencia-artificial__btn-nova:hover,
+  html[data-tema="escuro"] .inteligencia-artificial__btn-nova:active {
+    background: var(--intelbras-verde-escuro);
+  }
+
+  .inteligencia-artificial__btn-nova span {
+    position: absolute;
+    width: 1px;
+    height: 1px;
+    overflow: hidden;
+    clip: rect(0 0 0 0);
+    white-space: nowrap;
+  }
+
+  .inteligencia-artificial__btn-nova svg {
+    width: 24px;
+    height: 24px;
+  }
+
+  /* Boas-vindas no topo e sugestões em carrossel colado ao campo de entrada */
+  .inteligencia-artificial__mensagens {
+    padding: 14px 0 8px;
+  }
+
+  .inteligencia-artificial__inicial {
+    gap: 14px;
+    justify-content: space-between;
+  }
+
+  .inteligencia-artificial__inicial > .inteligencia-artificial__msg {
+    padding: 0 14px;
+  }
+
+  .inteligencia-artificial__lista {
+    padding: 0 14px;
   }
 
   .inteligencia-artificial__sugestoes {
-    grid-template-columns: minmax(0, 1fr);
-    gap: 12px;
+    display: flex;
+    gap: 10px;
+    max-width: none;
+    margin: auto 0 0;
+    padding: 4px 14px 6px;
+    overflow-x: auto;
+    scroll-snap-type: x proximity;
+    scroll-padding: 0 14px;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .inteligencia-artificial__sugestoes::-webkit-scrollbar {
+    display: none;
+  }
+
+  .inteligencia-artificial__sugestao {
+    flex: 0 0 auto;
+    width: 232px;
+    min-height: 0;
+    gap: 10px;
+    padding: 10px 12px;
+    font-size: 13px;
+    line-height: 1.3;
+    box-shadow: none;
+    scroll-snap-align: start;
+  }
+
+  .inteligencia-artificial__sugestao:hover {
+    transform: none;
+  }
+
+  .inteligencia-artificial__sugestao-icone {
+    width: 32px;
+    height: 32px;
+  }
+
+  .inteligencia-artificial__entrada {
+    padding: 6px 12px 10px;
+    border-top: 1px solid var(--content-border);
+  }
+
+  .inteligencia-artificial__aviso {
+    margin-top: 6px;
+    font-size: 11px;
   }
 
   .inteligencia-artificial__conteudo {
     max-width: 92%;
   }
-}
 
-@media (max-width: 480px) {
-  .inteligencia-artificial__main {
-    padding: 16px;
-  }
-
-  .inteligencia-artificial__chat-header {
-    padding: 16px;
-  }
-
-  .inteligencia-artificial__mensagens {
-    padding: 16px;
-  }
-
-  .inteligencia-artificial__entrada {
-    padding: 8px 16px 12px;
+  /* Painel (Recursos + Conversas recentes) abaixo do chat */
+  .inteligencia-artificial__painel {
+    gap: 12px;
+    padding: 0 14px 20px;
   }
 
   .inteligencia-artificial__card {
-    padding: 20px 16px;
+    padding: 16px 16px 14px;
+    border-radius: 14px;
   }
+
+  .inteligencia-artificial__card-titulo {
+    margin-bottom: 12px;
+    font-size: 16px;
+  }
+
+  /* Recursos: grade 2x2 compacta (ícone + nome), sem a linha de descrição */
+  .inteligencia-artificial__recursos {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 10px;
+  }
+
+  .inteligencia-artificial__recurso {
+    gap: 10px;
+    padding: 10px;
+    border: 1px solid var(--content-border);
+    border-radius: 12px;
+  }
+
+  .inteligencia-artificial__recurso-icone {
+    width: 34px;
+    height: 34px;
+    flex-shrink: 0;
+  }
+
+  .inteligencia-artificial__recurso-icone svg {
+    width: 18px;
+    height: 18px;
+  }
+
+  .inteligencia-artificial__recurso-textos strong {
+    font-size: 13px;
+    line-height: 1.25;
+  }
+
+  .inteligencia-artificial__recurso-textos > span {
+    display: none;
+  }
+}
+
+/* ===================== CELULAR (≤ 480px) ===================== */
+
+@media (max-width: 480px) {
 
   /* Botões do campo de entrada ficam só com o ícone */
   .inteligencia-artificial__acao {
@@ -94,5 +281,45 @@
     overflow: hidden;
     clip: rect(0 0 0 0);
     white-space: nowrap;
+  }
+}
+
+/* Imagem anexada (uma só) não passa de 220px (veio do CSS base) */
+@media (max-width: 480px) {
+  .inteligencia-artificial__anexos:not(.inteligencia-artificial__anexos--varios) .inteligencia-artificial__anexo-img {
+    max-width: 220px;
+  }
+}
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
+
+@media (max-width: 360px) {
+  .inteligencia-artificial__sugestao {
+    width: 208px;
+  }
+
+  .inteligencia-artificial__recursos {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .inteligencia-artificial__conteudo {
+    max-width: 96%;
+  }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .inteligencia-artificial__mensagens {
+    padding-top: 10px;
+    padding-bottom: 10px;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+@media (hover: none) and (pointer: coarse) {
+  .inteligencia-artificial__acao {
+    min-height: 40px;
   }
 }

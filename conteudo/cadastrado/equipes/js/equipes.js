@@ -45,6 +45,7 @@
   let leituraAnterior = 0;
   let novasInseridas = false;
   let pollTimer = null;
+  let editandoId = null; // id da mensagem em edição (pausa o redesenho automático)
   let digitandoTimerEnvio = null;
   let anexoSelecionado = null;
   let respostaAtual = null; // { id, autor, trecho }
@@ -166,7 +167,7 @@
     $('equipesCanalIcone').style.background = equipe.cor;
     $('equipesCanalTitulo').textContent = equipe.nome;
     $('equipesCanalSubtitulo').textContent = 'Conversas da equipe ' + equipe.nome;
-    document.title = equipe.nome + ' — Intelbras';
+    document.title = equipe.nome + ' - Intelbras';
 
     const btnFav = $('equipesBtnFavorito');
     btnFav.setAttribute('aria-pressed', String(equipe.favorita));
@@ -405,7 +406,7 @@
     $('equipesFixadosCount').textContent = String(lista.length);
     const el = $('equipesFixadosLista');
     el.innerHTML = lista.map((f) => `
-      <a class="equipes__fixado-item" href="api/equipes/arquivo.php?id=${f.anexo_id}" target="_blank" rel="noopener">
+      <a class="equipes__fixado-item" href="api/equipes/arquivo.php?id=${f.anexo_id}${['pdf', 'txt', 'png', 'jpg', 'jpeg', 'webp'].includes(f.extensao) ? '&modo=ver' : ''}" target="_blank" rel="noopener">
         <span style="width:22px;height:22px;border-radius:5px;background:${CORES_ARQUIVO[f.extensao] || '#6B7280'};color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:9px;font-weight:700;flex-shrink:0">${ROTULO_ARQUIVO[f.extensao] || f.extensao.toUpperCase()}</span>
         <span style="overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(f.nome)}</span>
       </a>`).join('');
@@ -527,6 +528,9 @@
     if (dados.ultimo_id > ultimoIdVisto) ultimoIdVisto = dados.ultimo_id;
 
     renderizarDigitando(dados.digitando || []);
+    // Editando uma mensagem: guarda as novidades, mas só redesenha quando terminar
+    // (senão a atualização automática apagava a caixa de edição a cada poucos segundos)
+    if (editandoId && !inicial) return;
     renderizarLista(inicial);
   }
 
@@ -544,8 +548,10 @@
     return messagesEl.scrollHeight - messagesEl.scrollTop - messagesEl.clientHeight < 120;
   }
 
-  function renderizarLista() {
+  function renderizarLista(inicial) {
+    editandoId = null; // qualquer redesenho descarta a caixa de edição aberta
     const pertoDoFim = estaPertoDoFim();
+    const topoAnterior = messagesEl.scrollTop; // preserva a posição de rolagem entre redesenhos
     const ids = Array.from(mensagensPorId.keys()).filter((id) => id > 0).sort((a, b) => a - b);
 
     if (!ids.length) {
@@ -602,9 +608,14 @@
     listaEl.innerHTML = html;
     ligarEventosMensagens();
 
-    if (pertoDoFim || novasInseridas === false) {
+    // Só vai ao fim na carga inicial (sem divisor de novas) ou se o usuário já estava no fim;
+    // nos demais casos mantém onde ele estava, para a atualização automática não "puxar" a tela.
+    if (pertoDoFim || (inicial && novasInseridas === false)) {
       messagesEl.scrollTop = messagesEl.scrollHeight;
+    } else {
+      messagesEl.scrollTop = topoAnterior;
     }
+    irFimBtn.hidden = estaPertoDoFim();
   }
 
   function renderizarAberturaGrupo(m, dataMsg) {
@@ -637,7 +648,10 @@
     }
 
     const citacao = m.resposta_a ? `
-      <div class="equipes__citacao"><span>Respondendo a <strong>${escapeHtml(m.resposta_a.autor)}</strong>: ${escapeHtml(m.resposta_a.trecho)}</span></div>` : '';
+      <div class="equipes__citacao">
+        <span class="equipes__citacao-autor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7L4.5 11.5 9 16"/><path d="M4.5 11.5H14a5.5 5.5 0 015.5 5.5v1"/></svg>${escapeHtml(m.resposta_a.autor)}</span>
+        <span class="equipes__citacao-trecho">${escapeHtml(m.resposta_a.trecho)}</span>
+      </div>` : '';
 
     const anexosHtml = (m.anexos || []).map((a) => {
       const ehImagem = ['png', 'jpg', 'jpeg', 'webp'].includes(a.extensao);
@@ -648,7 +662,9 @@
       }
       const cor = CORES_ARQUIVO[a.extensao] || '#6B7280';
       const rotulo = ROTULO_ARQUIVO[a.extensao] || a.extensao.toUpperCase();
-      return `<a class="equipes__anexo-card" href="${urlBaixar}">
+      // PDF, imagem e texto abrem em outra aba; os demais formatos (Word, Excel…) o navegador não exibe, então baixam.
+      const abreNaAba = ['pdf', 'txt'].includes(a.extensao);
+      return `<a class="equipes__anexo-card" href="${abreNaAba ? urlVer : urlBaixar}" target="_blank" rel="noopener">
         <span class="equipes__anexo-icone" style="background:${cor}">${rotulo}</span>
         <span class="equipes__anexo-info">
           <span class="equipes__anexo-nome">${escapeHtml(a.nome)}</span>
@@ -662,7 +678,7 @@
         <button type="button" class="equipes__reacao ${r.reagiu ? 'equipes__reacao--minha' : ''}" data-reagir="${r.emoji}">${r.emoji} ${r.total}</button>
       `).join('')}</div>` : '<div class="equipes__reacoes" data-reacoes></div>';
 
-    const statusHtml = m.status ? `<span class="equipes__status ${m.status === 'lida' ? 'equipes__status--lida' : ''}">${m.status === 'lida' ? '✔✔ Lida' : '✔ Enviada'}</span>` : '';
+    const statusHtml = m.status ? `<span class="equipes__status ${m.status === 'lida' ? 'equipes__status--lida' : ''}">${m.status === 'lida' ? 'Lida' : 'Enviada'}</span>` : '';
     const editadaHtml = m.editada ? '<span class="equipes__editada-rotulo">(editada)</span>' : '';
     const podeApagarOuEditar = m.minha;
     const podeFixar = (m.anexos || []).length > 0 && dadosCanal && dadosCanal.eh_admin;
@@ -671,11 +687,10 @@
       <div class="equipes__msg ${m.minha ? 'equipes__msg--minha' : ''}" data-msg-id="${m.id}">
         <div class="equipes__toolbar-wrap">
           <div class="equipes__toolbar">
-            <button type="button" class="equipes__toolbar-btn" data-acao="reagir-abrir" title="Reagir">😊</button>
-            <button type="button" class="equipes__toolbar-btn" data-acao="responder" title="Responder">↩</button>
-            <button type="button" class="equipes__toolbar-btn" data-acao="encaminhar" title="Encaminhar">➦</button>
-            ${podeFixar ? `<button type="button" class="equipes__toolbar-btn" data-acao="${m.fixada ? 'desfixar' : 'fixar'}" title="${m.fixada ? 'Desfixar' : 'Fixar'}">📌</button>` : ''}
-            <button type="button" class="equipes__toolbar-btn" data-acao="mais-abrir" title="Mais">⋯</button>
+            <button type="button" class="equipes__toolbar-btn" data-acao="reagir-abrir" title="Reagir" aria-label="Reagir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14c.9 1.2 2 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9.2 9.8h.01M14.8 9.8h.01"/></svg></button>
+            <button type="button" class="equipes__toolbar-btn" data-acao="responder" title="Responder" aria-label="Responder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7L4.5 11.5 9 16"/><path d="M4.5 11.5H14a5.5 5.5 0 015.5 5.5v1"/></svg></button>
+            ${podeFixar ? `<button type="button" class="equipes__toolbar-btn" data-acao="${m.fixada ? 'desfixar' : 'fixar'}" title="${m.fixada ? 'Desfixar' : 'Fixar'}" aria-label="${m.fixada ? 'Desfixar' : 'Fixar'}"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 4h6l-1 5.5 3 3V14H7v-1.5l3-3L9 4z"/><path d="M12 14v6"/></svg></button>` : ''}
+            <button type="button" class="equipes__toolbar-btn" data-acao="mais-abrir" title="Mais" aria-label="Mais opções"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg></button>
           </div>
         </div>
         <div class="equipes__bolha" data-conteudo>
@@ -729,10 +744,14 @@
       if (btnReagirAbrir) btnReagirAbrir.addEventListener('click', (e) => abrirPickerReacao(e, id));
 
       const btnResponder = el.querySelector('[data-acao="responder"]');
-      if (btnResponder) btnResponder.addEventListener('click', () => iniciarResposta(id));
-
-      const btnEncaminhar = el.querySelector('[data-acao="encaminhar"]');
-      if (btnEncaminhar) btnEncaminhar.addEventListener('click', () => mostrarToast('Encaminhar mensagens chega em breve.'));
+      if (btnResponder) btnResponder.addEventListener('click', () => {
+        if (respostaAtual && respostaAtual.id === id) { // segundo clique: cancela a resposta
+          respostaAtual = null;
+          $('equipesRespostaPreview').hidden = true;
+        } else {
+          iniciarResposta(id);
+        }
+      });
 
       const btnFixar = el.querySelector('[data-acao="fixar"], [data-acao="desfixar"]');
       if (btnFixar) btnFixar.addEventListener('click', () => alternarFixado(id, btnFixar.getAttribute('data-acao') === 'fixar'));
@@ -743,30 +762,201 @@
   }
 
   function abrirPickerReacao(evento, id) {
+    const ancora = evento.currentTarget;
+    const wrap = ancora.closest('.equipes__toolbar-wrap');
+    if (wrap.querySelector('.equipes__reacao-picker')) { // segundo clique no botão: fecha
+      fecharPopoversFlutuantes();
+      evento.stopPropagation();
+      return;
+    }
     fecharPopoversFlutuantes();
-    const wrap = evento.currentTarget.closest('.equipes__toolbar-wrap');
     const picker = document.createElement('div');
     picker.className = 'equipes__reacao-picker';
-    picker.innerHTML = EMOJIS_RAPIDOS.map((e) => `<button type="button">${e}</button>`).join('');
-    picker.querySelectorAll('button').forEach((b, i) => {
-      b.addEventListener('click', (ev) => { ev.stopPropagation(); reagir(id, EMOJIS_RAPIDOS[i]); picker.remove(); });
+    picker.innerHTML = EMOJIS_RAPIDOS.map((e) => `<button type="button" data-rapido="${e}" aria-label="Reagir com ${e}">${e}</button>`).join('')
+      + '<button type="button" class="equipes__reacao-mais" data-mais-emojis aria-label="Mais emojis" title="Mais emojis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>';
+    picker.querySelectorAll('[data-rapido]').forEach((b) => {
+      b.addEventListener('click', (ev) => { ev.stopPropagation(); reagir(id, b.getAttribute('data-rapido')); picker.remove(); });
+    });
+    picker.querySelector('[data-mais-emojis]').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      picker.remove();
+      abrirPickerCompleto(ancora, id);
     });
     wrap.appendChild(picker);
+    // Abre abaixo da barra; sem espaço embaixo (última mensagem), abre acima dela
+    const caixaMsgs = messagesEl.getBoundingClientRect();
+    if (picker.getBoundingClientRect().bottom > caixaMsgs.bottom) {
+      picker.style.top = (-picker.offsetHeight - 4) + 'px';
+    }
     setTimeout(() => document.addEventListener('click', function fechar() { picker.remove(); document.removeEventListener('click', fechar); }), 0);
     evento.stopPropagation();
   }
 
+  // Seletor COMPLETO de emojis para reagir (como o do Teams): busca, tom de pele, categorias e recentes.
+  // Usa a mesma lista, os mesmos recentes e o mesmo tom de pele do seletor do campo de texto.
+  function abrirPickerCompleto(ancora, id) {
+    fecharPopoversFlutuantes();
+    const pop = document.createElement('div');
+    pop.className = 'equipes__popover equipes__popover--emoji equipes__reacao-completo';
+    pop.innerHTML = `
+      <div class="equipes__emoji-abas"><button type="button" class="equipes__emoji-aba equipes__emoji-aba--ativa">Emoji</button></div>
+      <div class="equipes__emoji-busca-linha">
+        <div class="equipes__emoji-busca">
+          <input type="text" placeholder="Encontre algo divertido" autocomplete="off" aria-label="Buscar emoji">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="equipes__emoji-tom-wrap">
+          <button type="button" class="equipes__emoji-tom-btn" aria-label="Tom de pele" aria-haspopup="true" aria-expanded="false" title="Tom de pele">✋</button>
+          <div class="equipes__emoji-tom-menu" hidden></div>
+        </div>
+      </div>
+      <div class="equipes__emoji-grade"></div>
+      <div class="equipes__emoji-categorias"></div>`;
+    document.body.appendChild(pop);
+
+    const busca = pop.querySelector('input');
+    const grade = pop.querySelector('.equipes__emoji-grade');
+    const barra = pop.querySelector('.equipes__emoji-categorias');
+    const tomBtn = pop.querySelector('.equipes__emoji-tom-btn');
+    const tomMenu = pop.querySelector('.equipes__emoji-tom-menu');
+
+    const AMOSTRA_TOM = '\u270B';
+    const MODIFICADORES = ['', '\u{1F3FB}', '\u{1F3FC}', '\u{1F3FD}', '\u{1F3FE}', '\u{1F3FF}'];
+    const NOMES_TOM = ['Padrão', 'Claro', 'Médio-claro', 'Médio', 'Médio-escuro', 'Escuro'];
+    let tom = 0;
+    try { tom = Math.min(5, Math.max(0, parseInt(localStorage.getItem(EMOJI_TOM_CHAVE) || '0', 10) || 0)); } catch (e) { tom = 0; }
+    const comTom = (e) => (tom ? ((EMOJI_TONS[e] && EMOJI_TONS[e][tom - 1]) || e) : e);
+    const botao = (e, n) => { const x = comTom(e); return `<button type="button" data-emoji="${x}" title="${escapeHtml(n || '')}">${x}</button>`; };
+
+    function atualizarBotaoTom() {
+      tomBtn.textContent = AMOSTRA_TOM + MODIFICADORES[tom];
+      tomMenu.innerHTML = MODIFICADORES.map((m, i) =>
+        `<button type="button" data-tom="${i}" class="${i === tom ? 'equipes__emoji-tom--ativo' : ''}" title="${NOMES_TOM[i]}" aria-label="${NOMES_TOM[i]}">${AMOSTRA_TOM}${m}</button>`
+      ).join('');
+    }
+    function recentes() {
+      try { return JSON.parse(localStorage.getItem(EMOJI_RECENTES_CHAVE) || '[]'); } catch (e) { return []; }
+    }
+    function guardarRecente(e) {
+      const lista = recentes().filter((x) => x !== e);
+      lista.unshift(e);
+      try { localStorage.setItem(EMOJI_RECENTES_CHAVE, JSON.stringify(lista.slice(0, EMOJI_RECENTES_MAX))); } catch (err) { /* sem storage */ }
+    }
+    function marcarAtiva() {
+      const titulos = Array.from(grade.querySelectorAll('[data-sec]'));
+      if (!titulos.length) return;
+      let ativa = titulos[0].getAttribute('data-sec');
+      titulos.forEach((t) => { if (t.offsetTop - grade.scrollTop <= 12) ativa = t.getAttribute('data-sec'); });
+      barra.querySelectorAll('[data-cat]').forEach((b) => b.classList.toggle('equipes__emoji-categoria--ativa', b.getAttribute('data-cat') === ativa));
+    }
+    function desenharTudo() {
+      const secoes = [];
+      const rec = recentes();
+      if (rec.length) secoes.push({ id: 'recentes', icone: '🕒', titulo: 'Usados recentemente', itens: rec.map((e) => [e, 'recente']) });
+      EMOJI_CATEGORIAS.forEach((c) => secoes.push(c));
+      grade.innerHTML = secoes.map((c) => `<div class="equipes__emoji-grade-titulo" data-sec="${c.id}">${escapeHtml(c.titulo)}</div>` + c.itens.map(([e, n]) => botao(e, n)).join('')).join('');
+      barra.innerHTML = secoes.map((c) => `<button type="button" class="equipes__emoji-categoria" data-cat="${c.id}" title="${escapeHtml(c.titulo)}" aria-label="${escapeHtml(c.titulo)}">${c.icone}</button>`).join('');
+      barra.hidden = false;
+      grade.scrollTop = 0;
+      marcarAtiva();
+    }
+    function desenharBusca(termo) {
+      barra.hidden = true;
+      const achados = [];
+      EMOJI_CATEGORIAS.forEach((c) => c.itens.forEach((item) => { if (semAcento(item[1]).includes(termo)) achados.push(item); }));
+      grade.innerHTML = achados.length
+        ? '<div class="equipes__emoji-grade-titulo">Resultados</div>' + achados.map(([e, n]) => botao(e, n)).join('')
+        : '<div class="equipes__emoji-grade-vazio">Nenhum emoji encontrado.</div>';
+      grade.scrollTop = 0;
+    }
+
+    atualizarBotaoTom();
+    desenharTudo();
+    grade.addEventListener('scroll', marcarAtiva);
+    grade.addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-emoji]');
+      if (!b) return;
+      const e = b.getAttribute('data-emoji');
+      guardarRecente(e);
+      fechar();
+      reagir(id, e);
+    });
+    barra.addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-cat]');
+      const alvo = b && grade.querySelector(`[data-sec="${b.getAttribute('data-cat')}"]`);
+      if (alvo) grade.scrollTo({ top: alvo.offsetTop, behavior: 'smooth' });
+    });
+    busca.addEventListener('input', () => {
+      const termo = semAcento(busca.value.trim());
+      if (termo) desenharBusca(termo); else desenharTudo();
+    });
+
+    // Tom de pele (mesmo botão ✋ do seletor do campo de texto)
+    tomBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      tomMenu.hidden = !tomMenu.hidden;
+      tomBtn.setAttribute('aria-expanded', String(!tomMenu.hidden));
+    });
+    tomMenu.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const b = ev.target.closest('[data-tom]');
+      if (!b) return;
+      tom = parseInt(b.getAttribute('data-tom'), 10) || 0;
+      try { localStorage.setItem(EMOJI_TOM_CHAVE, String(tom)); } catch (err) { /* sem storage */ }
+      tomMenu.hidden = true;
+      tomBtn.setAttribute('aria-expanded', 'false');
+      atualizarBotaoTom();
+      const termo = semAcento(busca.value.trim());
+      const topo = grade.scrollTop;
+      if (termo) desenharBusca(termo); else { desenharTudo(); grade.scrollTop = topo; marcarAtiva(); }
+    });
+    pop.addEventListener('click', () => { tomMenu.hidden = true; tomBtn.setAttribute('aria-expanded', 'false'); });
+
+    // Posição: ao lado da barra de ações da mensagem (mesma altura), longe do balão,
+    // e sempre dentro da área da conversa (nunca por cima da lista lateral).
+    const barraEl = ancora.closest('.equipes__toolbar') || ancora;
+    const r = barraEl.getBoundingClientRect();
+    const area = messagesEl.getBoundingClientRect();
+    const larg = pop.offsetWidth || 330;
+    const alt = pop.offsetHeight || 380;
+    const minhaMsg = !!ancora.closest('.equipes__msg--minha');
+    const limEsq = Math.max(8, area.left + 8);
+    const limDir = Math.max(limEsq, Math.min(window.innerWidth - larg - 8, area.right - larg - 8));
+    const desejado = minhaMsg ? r.right - larg : r.left;
+    pop.style.left = Math.min(Math.max(limEsq, desejado), limDir) + 'px';
+    pop.style.top = Math.max(8, Math.min(r.top, window.innerHeight - alt - 8)) + 'px';
+    setTimeout(() => busca.focus(), 0);
+
+    function fechar() {
+      pop.remove();
+      document.removeEventListener('mousedown', fora, true);
+      document.removeEventListener('keydown', tecla, true);
+      messagesEl.removeEventListener('scroll', fechar);
+    }
+    function fora(ev) { if (!pop.contains(ev.target)) fechar(); }
+    function tecla(ev) { if (ev.key === 'Escape') { ev.stopPropagation(); fechar(); } }
+    document.addEventListener('mousedown', fora, true);
+    document.addEventListener('keydown', tecla, true);
+    messagesEl.addEventListener('scroll', fechar);
+  }
+
   function abrirMenuMais(evento, id) {
+    const wrap = evento.currentTarget.closest('.equipes__toolbar-wrap');
+    if (wrap.querySelector('.equipes__msg-menu')) { // segundo clique no botão: fecha
+      fecharPopoversFlutuantes();
+      evento.stopPropagation();
+      return;
+    }
     fecharPopoversFlutuantes();
     const m = mensagensPorId.get(id);
-    const wrap = evento.currentTarget.closest('.equipes__toolbar-wrap');
     const menu = document.createElement('div');
     menu.className = 'equipes__msg-menu';
     const itens = [];
     if (m.minha) itens.push('<button type="button" data-op="editar">Editar</button>');
     itens.push('<button type="button" data-op="copiar">Copiar texto</button>');
     if (m.minha) itens.push('<button type="button" data-op="apagar">Apagar</button>');
-    menu.innerHTML = itens.map((i) => i.replace('<button', '<button class="equipes__menu-item" style="width:100%;text-align:left;border:none;background:none;cursor:pointer;padding:8px 10px;font-size:13px;border-radius:6px"')).join('');
+    menu.setAttribute('role', 'menu');
+    menu.innerHTML = itens.map((i) => i.replace('<button', '<button class="equipes__msg-menu-item" role="menuitem"')).join('');
     menu.querySelector('[data-op="editar"]')?.addEventListener('click', (ev) => { ev.stopPropagation(); menu.remove(); iniciarEdicao(id); });
     menu.querySelector('[data-op="copiar"]')?.addEventListener('click', (ev) => {
       ev.stopPropagation(); menu.remove();
@@ -774,14 +964,19 @@
     });
     menu.querySelector('[data-op="apagar"]')?.addEventListener('click', (ev) => { ev.stopPropagation(); menu.remove(); apagarMensagem(id); });
     wrap.appendChild(menu);
+    // Abre abaixo da barra; se não couber (última mensagem), abre acima dela
+    if (menu.getBoundingClientRect().bottom > messagesEl.getBoundingClientRect().bottom) {
+      menu.style.top = (-menu.offsetHeight - 4) + 'px';
+    }
     setTimeout(() => document.addEventListener('click', function fechar() { menu.remove(); document.removeEventListener('click', fechar); }), 0);
     evento.stopPropagation();
   }
 
   function fecharPopoversFlutuantes() {
-    document.querySelectorAll('.equipes__reacao-picker, .equipes__msg-menu').forEach((el) => el.remove());
+    document.querySelectorAll('.equipes__reacao-picker, .equipes__msg-menu, .equipes__reacao-completo').forEach((el) => el.remove());
   }
 
+  const menuMsgFechado = { id: null, em: 0 };
   // Botão direito numa mensagem: mesmas ações da barra "⋯", no menu padronizado do site
   // (assets/js/menu-contexto.js). Links, imagens e a edição inline mantêm o menu do navegador.
   listaEl.addEventListener('contextmenu', (e) => {
@@ -794,6 +989,8 @@
     if (!m || m.apagada || id < 0) return; // apagada ou ainda sendo enviada
     e.preventDefault();
     fecharPopoversFlutuantes();
+    // Segundo botão direito na mesma mensagem: o menu já foi fechado pelo clique; não reabre.
+    if (menuMsgFechado.id === id && Date.now() - menuMsgFechado.em < 500) { menuMsgFechado.id = null; return; }
     const pos = M.posicao(e, el);
 
     const opcoes = [
@@ -815,6 +1012,7 @@
       aria: 'Opções da mensagem',
       cabeca: M.cabeca('mensagem', m.minha ? 'Você' : (m.autor || 'Mensagem')),
       opcoes: opcoes,
+      aoFechar: () => { menuMsgFechado.id = id; menuMsgFechado.em = Date.now(); },
     });
   });
 
@@ -860,17 +1058,24 @@
     const el = listaEl.querySelector('[data-msg-id="' + id + '"] [data-conteudo]');
     if (!m || !el) return;
     const textoAtual = m.conteudo;
+    editandoId = id;
     el.innerHTML = `
-      <textarea class="equipes__campo" style="width:100%;border-radius:10px" rows="2">${escapeHtml(textoAtual)}</textarea>
-      <div style="display:flex;gap:8px;margin-top:6px">
-        <button type="button" class="equipes__restrito-btn" data-op="salvar" style="padding:6px 14px;font-size:12px">Salvar</button>
-        <button type="button" class="equipes__resposta-fechar" data-op="cancelar" style="font-size:13px">Cancelar</button>
+      <div class="equipes__edicao">
+        <textarea rows="2" aria-label="Editar mensagem">${escapeHtml(textoAtual)}</textarea>
+        <div class="equipes__edicao-acoes">
+          <button type="button" class="equipes__edicao-cancelar" data-op="cancelar">Cancelar</button>
+          <button type="button" class="equipes__edicao-salvar" data-op="salvar">Salvar</button>
+        </div>
       </div>`;
     const textarea = el.querySelector('textarea');
     textarea.focus();
     textarea.setSelectionRange(textoAtual.length, textoAtual.length);
+    const ajustarAltura = () => { textarea.style.height = 'auto'; textarea.style.height = Math.min(textarea.scrollHeight + 2, 200) + 'px'; };
+    textarea.addEventListener('input', ajustarAltura);
+    ajustarAltura();
+    el.scrollIntoView({ block: 'nearest' }); // mantém campo e botões visíveis
 
-    el.querySelector('[data-op="cancelar"]').addEventListener('click', () => renderizarLista());
+    el.querySelector('[data-op="cancelar"]').addEventListener('click', () => { editandoId = null; renderizarLista(); });
     el.querySelector('[data-op="salvar"]').addEventListener('click', async () => {
       const novoTexto = textarea.value.trim();
       if (!novoTexto) return;
@@ -880,6 +1085,7 @@
           body: JSON.stringify({ id, slug: EQUIPE, acao: 'editar', conteudo: novoTexto }),
         });
         if (dados.mensagem) mensagensPorId.set(id, dados.mensagem);
+        editandoId = null;
         renderizarLista();
       } catch (e) {
         mostrarToast(e.message, true);
@@ -1158,7 +1364,7 @@
     });
 
     $('equipesIrFim').addEventListener('click', () => {
-      messagesEl.scrollTop = messagesEl.scrollHeight;
+      messagesEl.scrollTo({ top: messagesEl.scrollHeight, behavior: 'smooth' });
     });
     messagesEl.addEventListener('scroll', () => {
       irFimBtn.hidden = estaPertoDoFim();
@@ -1605,6 +1811,7 @@
       anexos: [], reacoes: [], fixada: false, status: 'enviando',
     });
     renderizarLista();
+    messagesEl.scrollTop = messagesEl.scrollHeight; // ao enviar, sempre desce até a própria mensagem
 
     const formData = new FormData();
     formData.append('slug', EQUIPE);

@@ -109,11 +109,7 @@
   color: var(--intelbras-verde);
 }
 
-@media (max-width: 420px) {
-  .acesso-negado {
-    width: calc(100vw - 24px);
-  }
-}
+
 
 /* Variante usada só pelo popout "Cadastrado concluído ✅" — mesmo
    estilo do "Acesso negado" (mesma largura, mesmo título), só com
@@ -125,11 +121,7 @@
   white-space: nowrap;
 }
 
-@media (max-width: 420px) {
-  .acesso-negado--cadastro .acesso-negado__btn {
-    white-space: normal;
-  }
-}
+
 
 /* Texto usado pelo popout "... já cadastrado ⚠️" — sem caixa/pílula
    ao redor (era o "círculo" em volta do texto que não queríamos):
@@ -159,8 +151,4 @@
   white-space: nowrap;
 }
 
-@media (max-width: 420px) {
-  .acesso-negado--duplicado .acesso-negado__msg {
-    white-space: normal;
-  }
-}
+

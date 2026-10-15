@@ -25,8 +25,9 @@ $meuIdChat = (int)($_SESSION['usuario_id'] ?? 0);
      Menu lateral: o mesmo componente das demais páginas (Equipes e
      Atalhos dinâmicos), com "Chat" ativo em ATALHOS.
 ============================================================= -->
-<link rel="stylesheet" href="conteudo/cadastrado/chat/css/chat.css?v=20261021">
-<link rel="stylesheet" href="conteudo/cadastrado/chat/responsivo/chat.responsivo.css?v=20261007">
+<link rel="stylesheet" href="conteudo/cadastrado/chat/css/chat.css?v=20261035">
+<link rel="stylesheet" href="conteudo/cadastrado/chat/responsivo/chat.responsivo.css?v=20261035">
+<link rel="stylesheet" href="assets/css/historico-chamadas.css?v=1">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
 
@@ -210,6 +211,7 @@ $meuIdChat = (int)($_SESSION['usuario_id'] ?? 0);
               <div class="chat__menu" id="chatMenuMais" role="menu" hidden>
                 <button type="button" class="chat__menu-item" id="chatMenuSilenciar" role="menuitem">Silenciar conversa</button>
                 <button type="button" class="chat__menu-item" id="chatMenuDocumentos" role="menuitem">Ver arquivos da conversa</button>
+                <button type="button" class="chat__menu-item" id="chatMenuChamadas" role="menuitem">Ver histórico de chamadas</button>
               </div>
             </div>
           </div>
@@ -219,6 +221,7 @@ $meuIdChat = (int)($_SESSION['usuario_id'] ?? 0);
         <nav class="chat__tabs" id="chatTabs" aria-label="Seções da conversa">
           <button type="button" class="chat__tab chat__tab--ativa" data-aba="chat">Chat</button>
           <button type="button" class="chat__tab" data-aba="arquivos">Arquivos</button>
+          <button type="button" class="chat__tab" data-aba="chamadas">Chamadas</button>
         </nav>
 
         <!-- Corpo da aba Chat -->
@@ -237,10 +240,27 @@ $meuIdChat = (int)($_SESSION['usuario_id'] ?? 0);
           </div>
         </div>
 
+        <!-- Âncora de altura zero logo acima do campo de envio -->
+        <div class="chat__ir-fim-ancora">
+          <button type="button" class="chat__ir-fim" id="chatIrFim" hidden>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4v14M6 12l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Ir para o fim
+          </button>
+        </div>
+
         <!-- Campo de envio (mesmo padrão de Equipes) -->
         <div class="chat__composer-wrap">
 
           <form class="chat__composer" id="chatComposer">
+
+            <!-- Prévia de "respondendo a" -->
+            <div class="chat__resposta-preview" id="chatRespostaPreview" hidden>
+              <span class="chat__resposta-barra" aria-hidden="true"></span>
+              <span class="chat__resposta-texto">
+                Respondendo a <strong id="chatRespostaAutor"></strong>: <span id="chatRespostaTrecho"></span>
+              </span>
+              <button type="button" class="chat__resposta-fechar" id="chatRespostaFechar" aria-label="Cancelar resposta">&times;</button>
+            </div>
 
             <!-- Prévia do anexo escolhido -->
             <div class="chat__anexo-preview" id="chatAnexoPreview" hidden>
@@ -354,6 +374,11 @@ $meuIdChat = (int)($_SESSION['usuario_id'] ?? 0);
           <ul class="chat__arquivos-lista" id="chatArquivosLista"></ul>
           <p class="chat__arquivos-vazio" id="chatArquivosVazio" hidden>Nenhum arquivo foi compartilhado nesta conversa ainda.</p>
         </div>
+
+        <!-- Corpo da aba Chamadas: histórico de chamadas com esta pessoa -->
+        <div class="chat__corpo-aba chat__chamadas" data-corpo-aba="chamadas" hidden>
+          <div id="chatChamadasHist"></div>
+        </div>
       </div>
     </section>
 
@@ -393,4 +418,5 @@ $meuIdChat = (int)($_SESSION['usuario_id'] ?? 0);
 </div>
 
 <script src="conteudo/cadastrado/equipes/js/emojis-dados.js?v=2"></script>
-<script src="conteudo/cadastrado/chat/js/chat.js?v=20261026"></script>
+<script src="assets/js/historico-chamadas.js?v=1"></script>
+<script src="conteudo/cadastrado/chat/js/chat.js?v=20261036"></script>

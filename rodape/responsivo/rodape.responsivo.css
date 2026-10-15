@@ -1,10 +1,52 @@
 /* ============================================================
    RODAPÉ — Intelbras — Estilos responsivos
+
+   ≤ 860px : margens iguais às do cabeçalho
+   ≤ 600px : texto e links centralizados, links podem quebrar linha
+   Respeita a área segura do celular (barra de gestos / notch): ver
+   assets/css/responsivo.css (.footer).
 ============================================================= */
 
-@media (max-width: 560px) {
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
+@media (max-width: 860px) {
+  .footer {
+    padding-left: 14px;
+    padding-right: 14px;
+  }
+}
+
+/* ===================== CELULAR GRANDE (≤ 600px) ===================== */
+
+@media (max-width: 600px) {
   .footer {
     justify-content: center;
     text-align: center;
+  }
+
+  .footer__links {
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 6px 22px;
+  }
+}
+
+/* ===================== CELULAR (≤ 480px) ===================== */
+
+@media (max-width: 480px) {
+  .footer {
+    padding-left: 10px;
+    padding-right: 10px;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+/* Links com altura de toque confortável */
+@media (hover: none) and (pointer: coarse) {
+  .footer__links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
   }
 }

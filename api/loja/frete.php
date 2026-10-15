@@ -62,7 +62,8 @@ if ($destino === '') {
 }
 
 try {
-    $catalogo = require __DIR__ . '/_catalogo_frete.php';
+    require_once __DIR__ . '/_produtos.php';
+    $catalogo = loja_catalogo_frete();   // _catalogo_frete.php + produtos cadastrados na Loja (banco)
     $itens    = frete_validar_itens($corpo['itens'] ?? null, $catalogo);
 } catch (FreteErro $e) {
     frete_resposta(422, ['sucesso' => false, 'motivo' => 'carrinho_invalido']);

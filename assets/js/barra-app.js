@@ -420,14 +420,14 @@
   }
 
   // ---- Recolher automaticamente ao escolher um app -----------------
-  // O menu lateral lembra aberto/fechado em localStorage("sidebarOpen")
+  // O menu lateral lembra aberto/fechado em sessionStorage("sidebarOpen") (só na aba atual)
   // (ver cabecalho.js e o script inline do index.php). Gravar "0" antes
   // de navegar faz a próxima página abrir com o menu fechado.
   nav.addEventListener('click', (e) => {
     if (!estado.autoRecolher) return;
     if (e.button !== 0 || e.metaKey || e.ctrlKey || e.shiftKey || e.altKey) return;
     if (!e.target.closest('.inicio__nav-item')) return;
-    try { localStorage.setItem('sidebarOpen', '0'); } catch (err) { /* ignora */ }
+    try { sessionStorage.setItem('sidebarOpen', '0'); } catch (err) { /* ignora */ }
   }, true);
 
   // ---- Gatilho externo (ex.: Configurações → Aparência) -------------

@@ -483,11 +483,11 @@
   background: #FAFAFB;
 }
 
-.documentos__col-nome   { width: 40%; }
+.documentos__col-nome   { width: 37%; }
 .documentos__col-equipe { width: 17%; }
 .documentos__col-data   { width: 14%; }
 .documentos__col-por    { width: 18%; }
-.documentos__col-acoes  { width: 11%; }
+.documentos__col-acoes  { width: 14%; }
 
 .documentos__tabela td.documentos__col-por {
   color: #3A3A3A;
@@ -1287,9 +1287,26 @@
 
 .documentos__ver-aviso {
   margin: auto;
-  max-width: 380px;
-  padding: 24px;
+  width: min(420px, calc(100% - 32px));
+  padding: 32px 28px;
   text-align: center;
+  background: #fff;
+  border: 1px solid var(--content-border);
+  border-radius: 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.documentos__ver-carregando {
+  margin: auto;
+  font-size: 14px;
+  color: var(--intelbras-cinza);
+}
+
+.documentos__btn[aria-disabled="true"] {
+  opacity: .5;
+  cursor: not-allowed;
 }
 
 .documentos__ver-aviso .documentos__ficon {

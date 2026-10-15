@@ -7,7 +7,7 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@400;500;600;700;800&family=Nunito+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
-<link rel="stylesheet" href="cabecalho/css/cabecalho.css?v=20261016">
+<link rel="stylesheet" href="cabecalho/css/cabecalho.css?v=20261019">
 <link rel="stylesheet" href="cabecalho/responsivo/cabecalho.responsivo.css?v=1789997600">
 
 <header class="header">
@@ -257,7 +257,7 @@
 
           <!-- Etapa: nova senha (aberta pelo link do email: index.php?redefinir_senha=TOKEN) -->
           <form class="login-modal__step login-modal__step--form" id="redefinirStepForm" novalidate hidden>
-            <p class="login-modal__hint">Use ao menos 8 caracteres, com letras e números.</p>
+            <p class="login-modal__hint">Use ao menos 8 caracteres, com uma letra maiúscula, um número e um caractere especial.</p>
 
             <div class="login-modal__field login-modal__field--senha">
               <label class="login-modal__label" for="redefinirSenha">Nova senha</label>
@@ -363,6 +363,12 @@
                 </button>
               </div>
               <span class="login-modal__field-error" id="erroCadastroSenha" aria-live="polite"></span>
+              <ul class="login-modal__senha-regras" id="regrasCadastroSenha" aria-label="Requisitos da senha">
+                <li data-regra="tamanho">Mínimo de 8 caracteres</li>
+                <li data-regra="maiuscula">Uma letra maiúscula</li>
+                <li data-regra="numero">Um número</li>
+                <li data-regra="especial">Um caractere especial (! @ # $ %...)</li>
+              </ul>
             </div>
 
             <div class="login-modal__field login-modal__field--senha">
@@ -499,4 +505,4 @@
 <?php if (!empty($_SESSION['usuario_id'])): ?>
 <script src="assets/js/equipes-badges.js?v=1"></script>
 <?php endif; ?>
-<script src="cabecalho/js/cabecalho.js?v=1791920000"></script>
+<script src="cabecalho/js/cabecalho.js?v=1791920003"></script>

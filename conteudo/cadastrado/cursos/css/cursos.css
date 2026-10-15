@@ -899,7 +899,7 @@
 .leitura__concluir:not(:disabled):hover{box-shadow:var(--mv-brilho-verde,0 3px 8px rgba(0,168,89,.28))}
 .modulo-principal{padding:0;background:transparent;box-shadow:none}
 .leitura__acoes{padding:18px 4px 0;border-top:0}
-@media (max-width:640px){.leitura__corpo{padding:20px 18px 24px}.leitura__titulo{font-size:22px}.leitura__cabecalho{padding:14px 18px}}
+
 @media (prefers-reduced-motion:reduce){.leitura__corpo>*{animation:none}}
 
 /* ---- Leitura rica (módulos longos) ---- */

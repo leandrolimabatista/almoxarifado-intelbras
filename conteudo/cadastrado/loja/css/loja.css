@@ -740,3 +740,119 @@
 .lck__tot--total small { font-size: 11px; font-weight: 500; color: var(--loja-texto-faint); margin-right: 4px; }
 .lck__linhas { margin-bottom: 4px; }
 .lck__resumo .lck__cupom { margin-top: 4px; }
+
+/* ============================================================
+   ADMINISTRADOR — Adicionar / editar / remover item
+   Popout = diálogo padrão do site (dialogo.css): mesma caixa, animação (.16s fade + scale),
+   botões (.ib-dialogo__btn) e campos do checkout (.lck__field).
+============================================================ */
+.loja__add-item {
+  display: inline-flex; align-items: center; gap: 7px;
+  background: linear-gradient(180deg, #00A859 0%, #008F4C 100%);
+  border: none; color: #fff; cursor: pointer; white-space: nowrap; flex-shrink: 0;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 700; letter-spacing: 0.01em;
+  padding: 10px 16px; border-radius: 999px;
+  box-shadow: 0 2px 6px rgba(0, 143, 76, 0.30), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  transition: background 0.15s ease, box-shadow 0.15s ease, transform 0.15s ease;
+}
+.loja__add-item:hover { background: linear-gradient(180deg, #009651 0%, #007A40 100%); box-shadow: 0 4px 12px rgba(0, 122, 64, 0.38), inset 0 1px 0 rgba(255, 255, 255, 0.18); transform: translateY(-1px); }
+.loja__add-item:active { transform: translateY(0); box-shadow: 0 1px 3px rgba(0, 122, 64, 0.35); }
+.loja__add-item:focus-visible { outline: 2px solid #00A859; outline-offset: 2px; }
+
+/* botões editar/remover no card (aparecem ao passar o mouse; sempre visíveis no toque) */
+.loja__card-admin {
+  position: absolute; top: 10px; right: 10px; z-index: 2; display: flex; gap: 6px;
+  opacity: 0; transform: translateY(-4px); transition: opacity 0.15s ease, transform 0.15s ease;
+}
+.loja__card:hover .loja__card-admin, .loja__card:focus-within .loja__card-admin { opacity: 1; transform: none; }
+@media (hover: none) { .loja__card-admin { opacity: 1; transform: none; } }
+.loja__card-btn {
+  width: 30px; height: 30px; display: inline-flex; align-items: center; justify-content: center;
+  background: #fff; border: 1px solid var(--loja-linha); border-radius: 8px; color: var(--loja-texto-dim);
+  cursor: pointer; box-shadow: 0 2px 6px rgba(27, 39, 51, 0.12);
+  transition: color 0.15s ease, border-color 0.15s ease, background 0.15s ease;
+}
+.loja__card-btn:hover { color: var(--loja-verde-escuro); border-color: var(--loja-verde-escuro); }
+.loja__card-btn--perigo:hover { color: #E5484D; border-color: #E5484D; background: #FDEDEE; }
+.loja__card-btn:focus-visible { outline: 2px solid #00A859; outline-offset: 2px; }
+
+.loja__card.is-novo { animation: lojaItemNovo 2.2s ease; }
+@keyframes lojaItemNovo {
+  0%, 60% { box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.45), 0 8px 24px rgba(0, 143, 76, 0.22); }
+  100% { box-shadow: none; }
+}
+
+/* popout */
+body.lprod-aberto { overflow: hidden; }
+.lprod {
+  position: fixed; inset: 0; z-index: 4000; display: flex; align-items: center; justify-content: center; padding: 16px;
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; color: #1B2733;
+  opacity: 0; transition: opacity 0.16s ease;
+}
+.lprod.is-open { opacity: 1; }
+.lprod__fundo { position: absolute; inset: 0; background: rgba(27, 39, 51, 0.45); }
+.lprod__caixa {
+  position: relative; width: min(560px, 100%); max-height: calc(100vh - 32px); box-sizing: border-box;
+  display: flex; flex-direction: column; background: #fff; border-radius: 12px; padding: 24px;
+  box-shadow: 0 20px 40px rgba(27, 39, 51, 0.25); transform: scale(0.97); transition: transform 0.16s ease;
+}
+.lprod.is-open .lprod__caixa { transform: scale(1); }
+.lprod__caixa.is-busy { pointer-events: none; }
+.lprod__caixa:focus { outline: none; }
+.lprod__titulo { margin: 0 0 6px; font-size: 18px; font-weight: 700; line-height: 1.3; color: inherit; }
+.lprod__sub { margin: 0 0 16px; font-size: 14px; line-height: 1.5; color: #5B6B7A; }
+/* folga de 6px em cima/embaixo e nas laterais: o contorno de foco (3px) dos campos nunca é cortado ao rolar */
+.lprod__corpo { overflow-y: auto; margin: -6px -8px 0; padding: 6px 8px 6px; scroll-padding: 10px 0; }
+
+.lprod__imagem { margin-bottom: 12px; }
+.lprod__drop {
+  display: flex; align-items: center; gap: 14px; padding: 12px; cursor: pointer;
+  border: 1.5px dashed var(--loja-linha); border-radius: var(--loja-raio-sm); background: var(--loja-bg);
+  transition: border-color 0.15s ease, background 0.15s ease;
+}
+.lprod__drop:hover, .lprod__drop.is-sobre { border-color: var(--loja-verde-escuro); background: #F0FAF5; }
+.lprod__drop:focus-visible { outline: 2px solid #00A859; outline-offset: 2px; }
+.lprod__preview {
+  width: 72px; height: 72px; flex-shrink: 0; display: flex; align-items: center; justify-content: center;
+  background: linear-gradient(180deg, #F8FAFB 0%, #EEF2F6 100%); border: 1px solid #EDF1F5; border-radius: 10px;
+  overflow: hidden; color: var(--loja-verde-escuro);
+}
+.lprod__preview img { width: 100%; height: 100%; object-fit: contain; }
+.lprod__preview svg { width: 55%; height: 55%; }
+.lprod__drop-txt { display: flex; flex-direction: column; gap: 3px; min-width: 0; font-size: 12.5px; line-height: 1.45; color: var(--loja-texto-dim); }
+.lprod__drop-txt strong { font-size: 14px; color: var(--loja-texto); }
+.lprod__link {
+  margin-top: 6px; padding: 0; background: none; border: none; cursor: pointer; font: inherit; font-size: 12.5px; font-weight: 700; color: var(--loja-verde-escuro);
+}
+.lprod__link--perigo { color: #E5484D; }
+.lprod__link:hover { text-decoration: underline; }
+.lprod__link[hidden] { display: none; }
+
+.lprod .lck__field textarea {
+  width: 100%; box-sizing: border-box; min-height: 92px; resize: none; padding: 24px 13px 22px;
+  border: 1px solid var(--loja-linha); border-radius: var(--loja-raio-sm); background: #fff;
+  font: inherit; font-size: 14.5px; line-height: 1.45; color: var(--loja-texto);
+}
+.lprod .lck__field textarea:focus { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.18); }
+.lprod .lck__field textarea:focus + label,
+.lprod .lck__field textarea:not(:placeholder-shown) + label { top: 8px; font-size: 11px; color: var(--loja-texto-dim); }
+.lprod .lck__field.has-erro textarea { border-color: var(--loja-vermelho); }
+.lprod__contador { position: absolute; right: 12px; bottom: 8px; font-size: 11px; color: var(--loja-texto-faint); pointer-events: none; }
+.lprod__desc .lck__erro { margin-bottom: 2px; }
+.lprod__sufixo { position: absolute; right: 13px; top: 28px; font-size: 13px; color: var(--loja-texto-faint); pointer-events: none; }
+/* mesmo raio dos campos de texto (o seletor padrão usa 10px) */
+.lprod .lck__field .seletor__botao { border-radius: var(--loja-raio-sm); }
+.lprod .lck__field input:disabled { background: var(--loja-bg); color: var(--loja-texto-dim); cursor: not-allowed; }
+
+.lprod__acoes { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-top: 18px; }
+.lprod__acoes-dir { display: flex; gap: 10px; margin-left: auto; }
+@media (max-width: 560px) {
+  .lprod__caixa { padding: 20px 16px; }
+  .lprod__acoes, .lprod__acoes-dir { flex-direction: column-reverse; align-items: stretch; width: 100%; }
+  .lprod__acoes .ib-dialogo__btn { width: 100%; }
+  .lprod .lck__row { grid-template-columns: 1fr; gap: 0; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .lprod, .lprod__caixa, .loja__card-admin { transition: none; }
+  .loja__card.is-novo { animation: none; }
+}

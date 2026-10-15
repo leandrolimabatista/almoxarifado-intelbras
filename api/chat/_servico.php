@@ -139,9 +139,10 @@ function chat_listar_conversas(PDO $pdo, int $meuId): array
     $sql = 'SELECT
                 c.id, c.usuario1_id, c.usuario2_id, c.criado_em AS conversa_criado_em,
                 IF(c.usuario1_id = :meuId1, c.leitura1_em, c.leitura2_em) AS minha_leitura,
+                IF(c.usuario1_id = :meuId8, c.leitura2_em, c.leitura1_em) AS outro_leitura,
                 outro.id AS outro_id, outro.nome AS outro_nome, outro.email AS outro_email, outro.cargo AS outro_cargo,
                 ultima.id AS ultima_id, ultima.texto AS ultima_texto, ultima.remetente_id AS ultima_remetente_id,
-                ultima.criado_em AS ultima_criado_em, ultima.documento_id AS ultima_documento_id,
+                ultima.criado_em AS ultima_criado_em, ultima.documento_id AS ultima_documento_id, ultima.excluida_em AS ultima_excluida_em,
                 doc.nome AS ultima_doc_nome,
                 (SELECT COUNT(*) FROM tb_mensagens m2
                    WHERE m2.conversa_id = c.id
@@ -163,13 +164,15 @@ function chat_listar_conversas(PDO $pdo, int $meuId): array
     $stmt = $pdo->prepare($sql);
     $stmt->execute([
         'meuId1' => $meuId, 'meuId2' => $meuId, 'meuId3' => $meuId, 'meuId4' => $meuId,
-        'meuId5' => $meuId, 'meuId6' => $meuId, 'meuId7' => $meuId,
+        'meuId5' => $meuId, 'meuId6' => $meuId, 'meuId7' => $meuId, 'meuId8' => $meuId,
     ]);
 
     return array_map(static function (array $l) use ($meuId): array {
         $previa = null;
         if ($l['ultima_id'] !== null) {
-            if ($l['ultima_texto'] !== null && $l['ultima_texto'] !== '') {
+            if ($l['ultima_excluida_em'] !== null) {
+                $previa = 'Mensagem apagada';
+            } elseif ($l['ultima_texto'] !== null && $l['ultima_texto'] !== '') {
                 $previa = (string)$l['ultima_texto'];
             } elseif ($l['ultima_doc_nome'] !== null) {
                 $previa = '📎 ' . (string)$l['ultima_doc_nome'];
@@ -188,48 +191,128 @@ function chat_listar_conversas(PDO $pdo, int $meuId): array
             'ultima_de_mim'   => $l['ultima_remetente_id'] !== null ? (int)$l['ultima_remetente_id'] === $meuId : null,
             'ultima_em'       => chat_iso((string)($l['ultima_criado_em'] ?? $l['conversa_criado_em'])),
             'nao_lidas'       => (int)$l['nao_lidas'],
+            // Até quando a outra pessoa leu a conversa (null = nunca abriu): base do "Enviada / Lida"
+            'outro_leitura'   => $l['outro_leitura'] !== null ? chat_iso((string)$l['outro_leitura']) : null,
         ];
     }, $stmt->fetchAll());
 }
 
+const CHAT_EMOJIS_MAX = 16; // cabe em VARCHAR(16); sequências com tom de pele/ZWJ passam de 8 caracteres
+
 /**
  * Mensagens de uma conversa, da mais antiga pra mais nova. Se $depoisDeId
  * for informado, só devolve mensagens com id maior (usado pelo polling).
+ * Se $alteradasDesde (Y-m-d H:i:s) for informado, devolve também as mais
+ * antigas que foram editadas, apagadas ou reagidas desde então.
  */
-function chat_listar_mensagens(PDO $pdo, int $conversaId, int $depoisDeId = 0): array
+function chat_listar_mensagens(PDO $pdo, int $conversaId, int $meuId, int $depoisDeId = 0, ?string $alteradasDesde = null): array
 {
-    $sql = 'SELECT m.id, m.remetente_id, m.texto, m.criado_em,
-                   d.id AS doc_id, d.nome AS doc_nome, d.extensao AS doc_extensao, d.tamanho AS doc_tamanho
-            FROM tb_mensagens m
-            LEFT JOIN tb_documentos d ON d.id = m.documento_id
-            WHERE m.conversa_id = :conversaId' . ($depoisDeId > 0 ? ' AND m.id > :depoisDeId' : '') . '
-            ORDER BY m.id ASC
-            LIMIT 500';
-    $stmt = $pdo->prepare($sql);
+    $filtro = '';
     $parametros = ['conversaId' => $conversaId];
     if ($depoisDeId > 0) {
+        $filtro = ' AND (m.id > :depoisDeId' . ($alteradasDesde !== null ? ' OR m.atualizada_em >= :desde' : '') . ')';
         $parametros['depoisDeId'] = $depoisDeId;
+        if ($alteradasDesde !== null) {
+            $parametros['desde'] = $alteradasDesde;
+        }
     }
+
+    $stmt = $pdo->prepare(chat_sql_mensagens() . ' WHERE m.conversa_id = :conversaId' . $filtro . ' ORDER BY m.id ASC LIMIT 500');
     $stmt->execute($parametros);
 
-    return array_map(static function (array $m): array {
+    return chat_formatar_mensagens($pdo, $stmt->fetchAll(), $meuId);
+}
+
+/** SELECT base das mensagens (com anexo e a mensagem citada). */
+function chat_sql_mensagens(): string
+{
+    return 'SELECT m.id, m.remetente_id, m.texto, m.criado_em, m.editada_em, m.excluida_em,
+                   d.id AS doc_id, d.nome AS doc_nome, d.extensao AS doc_extensao, d.tamanho AS doc_tamanho,
+                   r.id AS resp_id, r.remetente_id AS resp_remetente_id, r.texto AS resp_texto,
+                   r.excluida_em AS resp_excluida_em, rd.nome AS resp_doc_nome, ru.nome AS resp_autor
+            FROM tb_mensagens m
+            LEFT JOIN tb_documentos d ON d.id = m.documento_id
+            LEFT JOIN tb_mensagens r ON r.id = m.resposta_a
+            LEFT JOIN tb_documentos rd ON rd.id = r.documento_id
+            LEFT JOIN tb_usuarios ru ON ru.id = r.remetente_id';
+}
+
+/** Linhas do SELECT acima -> formato da API (com reações do usuário $meuId). */
+function chat_formatar_mensagens(PDO $pdo, array $linhas, int $meuId): array
+{
+    $reacoes = [];
+    if ($linhas) {
+        $ids = array_map(static fn(array $l): int => (int)$l['id'], $linhas);
+        $marcas = implode(',', array_fill(0, count($ids), '?'));
+        $stmt = $pdo->prepare(
+            'SELECT mensagem_id, emoji, COUNT(*) AS total, SUM(usuario_id = ?) AS reagiu
+             FROM tb_mensagens_reacoes
+             WHERE mensagem_id IN (' . $marcas . ')
+             GROUP BY mensagem_id, emoji
+             ORDER BY MIN(criado_em) ASC'
+        );
+        $stmt->execute(array_merge([$meuId], $ids));
+        foreach ($stmt->fetchAll() as $r) {
+            $reacoes[(int)$r['mensagem_id']][] = [
+                'emoji'  => (string)$r['emoji'],
+                'total'  => (int)$r['total'],
+                'reagiu' => (int)$r['reagiu'] > 0,
+            ];
+        }
+    }
+
+    return array_map(static function (array $m) use ($reacoes, $meuId): array {
+        $apagada = $m['excluida_em'] !== null;
+
+        $resposta = null;
+        if ($m['resp_id'] !== null) {
+            if ($m['resp_excluida_em'] !== null) {
+                $trecho = 'Mensagem apagada';
+            } elseif ($m['resp_texto'] !== null && $m['resp_texto'] !== '') {
+                $trecho = mb_substr((string)$m['resp_texto'], 0, 140);
+            } else {
+                $trecho = '📎 ' . (string)$m['resp_doc_nome'];
+            }
+            $resposta = [
+                'id'     => (int)$m['resp_id'],
+                'autor'  => (int)$m['resp_remetente_id'] === $meuId ? 'Você' : (string)$m['resp_autor'],
+                'trecho' => $trecho,
+            ];
+        }
+
         return [
-            'id'          => (int)$m['id'],
+            'id'           => (int)$m['id'],
             'remetente_id' => (int)$m['remetente_id'],
-            'texto'       => $m['texto'] !== null ? (string)$m['texto'] : null,
-            'criado_em'   => chat_iso((string)$m['criado_em']),
-            'anexo'       => $m['doc_id'] !== null ? [
+            // Mensagem apagada não devolve o conteúdo
+            'texto'        => !$apagada && $m['texto'] !== null ? (string)$m['texto'] : null,
+            'criado_em'    => chat_iso((string)$m['criado_em']),
+            'editada'      => !$apagada && $m['editada_em'] !== null,
+            'apagada'      => $apagada,
+            'resposta_a'   => $apagada ? null : $resposta,
+            'reacoes'      => $apagada ? [] : ($reacoes[(int)$m['id']] ?? []),
+            'anexo'        => !$apagada && $m['doc_id'] !== null ? [
                 'documento_id' => (int)$m['doc_id'],
                 'nome'         => (string)$m['doc_nome'],
                 'extensao'     => (string)$m['doc_extensao'],
                 'tamanho'      => (int)$m['doc_tamanho'],
             ] : null,
         ];
-    }, $stmt->fetchAll());
+    }, $linhas);
+}
+
+/** A mensagem citada precisa existir e ser da MESMA conversa. */
+function chat_validar_resposta(PDO $pdo, int $conversaId, ?int $respostaA): ?int
+{
+    if ($respostaA === null || $respostaA <= 0) {
+        return null;
+    }
+    $stmt = $pdo->prepare('SELECT 1 FROM tb_mensagens WHERE id = :id AND conversa_id = :c AND excluida_em IS NULL LIMIT 1');
+    $stmt->execute(['id' => $respostaA, 'c' => $conversaId]);
+    return $stmt->fetchColumn() ? $respostaA : null;
 }
 
 /** Envia uma mensagem de texto. Devolve a mensagem já formatada. */
-function chat_enviar_texto(PDO $pdo, int $conversaId, int $remetenteId, string $texto): array
+function chat_enviar_texto(PDO $pdo, int $conversaId, int $remetenteId, string $texto, ?int $respostaA = null): array
 {
     $texto = trim($texto);
     if ($texto === '') {
@@ -239,50 +322,97 @@ function chat_enviar_texto(PDO $pdo, int $conversaId, int $remetenteId, string $
         throw new InvalidArgumentException('Mensagem muito longa (máximo 4000 caracteres).');
     }
 
-    $stmt = $pdo->prepare('INSERT INTO tb_mensagens (conversa_id, remetente_id, texto) VALUES (:c, :r, :t)');
-    $stmt->execute(['c' => $conversaId, 'r' => $remetenteId, 't' => $texto]);
+    $stmt = $pdo->prepare('INSERT INTO tb_mensagens (conversa_id, remetente_id, texto, resposta_a) VALUES (:c, :r, :t, :ra)');
+    $stmt->execute(['c' => $conversaId, 'r' => $remetenteId, 't' => $texto, 'ra' => chat_validar_resposta($pdo, $conversaId, $respostaA)]);
     $id = (int)$pdo->lastInsertId();
 
-    return chat_buscar_mensagem($pdo, $id);
+    return chat_buscar_mensagem($pdo, $id, $remetenteId);
 }
 
 /** Vincula um documento já salvo (tb_documentos) como mensagem/anexo. */
-function chat_enviar_anexo(PDO $pdo, int $conversaId, int $remetenteId, int $documentoId, ?string $texto): array
+function chat_enviar_anexo(PDO $pdo, int $conversaId, int $remetenteId, int $documentoId, ?string $texto, ?int $respostaA = null): array
 {
     $texto = $texto !== null ? trim($texto) : null;
     if ($texto === '') {
         $texto = null;
     }
 
-    $stmt = $pdo->prepare('INSERT INTO tb_mensagens (conversa_id, remetente_id, texto, documento_id) VALUES (:c, :r, :t, :d)');
-    $stmt->execute(['c' => $conversaId, 'r' => $remetenteId, 't' => $texto, 'd' => $documentoId]);
+    $stmt = $pdo->prepare('INSERT INTO tb_mensagens (conversa_id, remetente_id, texto, documento_id, resposta_a) VALUES (:c, :r, :t, :d, :ra)');
+    $stmt->execute(['c' => $conversaId, 'r' => $remetenteId, 't' => $texto, 'd' => $documentoId, 'ra' => chat_validar_resposta($pdo, $conversaId, $respostaA)]);
     $id = (int)$pdo->lastInsertId();
 
-    return chat_buscar_mensagem($pdo, $id);
+    return chat_buscar_mensagem($pdo, $id, $remetenteId);
 }
 
-function chat_buscar_mensagem(PDO $pdo, int $mensagemId): array
+function chat_buscar_mensagem(PDO $pdo, int $mensagemId, int $meuId): array
 {
-    $stmt = $pdo->prepare('SELECT m.id, m.remetente_id, m.texto, m.criado_em,
-                                   d.id AS doc_id, d.nome AS doc_nome, d.extensao AS doc_extensao, d.tamanho AS doc_tamanho
-                            FROM tb_mensagens m
-                            LEFT JOIN tb_documentos d ON d.id = m.documento_id
-                            WHERE m.id = :id');
+    $stmt = $pdo->prepare(chat_sql_mensagens() . ' WHERE m.id = :id');
+    $stmt->execute(['id' => $mensagemId]);
+
+    return chat_formatar_mensagens($pdo, $stmt->fetchAll(), $meuId)[0];
+}
+
+/** Mensagem + conversa, ou erro 404 se o usuário não participa da conversa. */
+function chat_mensagem_do_participante(PDO $pdo, int $mensagemId, int $usuarioId): array
+{
+    $stmt = $pdo->prepare('SELECT id, conversa_id, remetente_id, texto, excluida_em FROM tb_mensagens WHERE id = :id LIMIT 1');
     $stmt->execute(['id' => $mensagemId]);
     $m = $stmt->fetch();
+    if (!$m || !chat_eh_participante($pdo, (int)$m['conversa_id'], $usuarioId)) {
+        throw new InvalidArgumentException('Mensagem não encontrada.', 404);
+    }
+    return $m;
+}
 
-    return [
-        'id'           => (int)$m['id'],
-        'remetente_id' => (int)$m['remetente_id'],
-        'texto'        => $m['texto'] !== null ? (string)$m['texto'] : null,
-        'criado_em'    => chat_iso((string)$m['criado_em']),
-        'anexo'        => $m['doc_id'] !== null ? [
-            'documento_id' => (int)$m['doc_id'],
-            'nome'         => (string)$m['doc_nome'],
-            'extensao'     => (string)$m['doc_extensao'],
-            'tamanho'      => (int)$m['doc_tamanho'],
-        ] : null,
-    ];
+function chat_editar_mensagem(PDO $pdo, int $usuarioId, int $mensagemId, string $texto): void
+{
+    $m = chat_mensagem_do_participante($pdo, $mensagemId, $usuarioId);
+    $texto = trim($texto);
+    if ($texto === '') {
+        throw new InvalidArgumentException('A mensagem não pode ficar vazia.', 422);
+    }
+    if (mb_strlen($texto) > 4000) {
+        throw new InvalidArgumentException('Mensagem muito longa (máximo 4000 caracteres).', 422);
+    }
+    if ((int)$m['remetente_id'] !== $usuarioId) {
+        throw new InvalidArgumentException('Você só pode editar as suas próprias mensagens.', 403);
+    }
+    if ($m['excluida_em'] !== null) {
+        throw new InvalidArgumentException('Esta mensagem foi apagada.', 422);
+    }
+    $pdo->prepare('UPDATE tb_mensagens SET texto = :t, editada_em = NOW() WHERE id = :id')
+        ->execute(['t' => $texto, 'id' => $mensagemId]);
+}
+
+function chat_apagar_mensagem(PDO $pdo, int $usuarioId, int $mensagemId): void
+{
+    $m = chat_mensagem_do_participante($pdo, $mensagemId, $usuarioId);
+    if ((int)$m['remetente_id'] !== $usuarioId) {
+        throw new InvalidArgumentException('Você só pode apagar as suas próprias mensagens.', 403);
+    }
+    $pdo->prepare('UPDATE tb_mensagens SET excluida_em = NOW() WHERE id = :id AND excluida_em IS NULL')
+        ->execute(['id' => $mensagemId]);
+}
+
+/** Reagir: clicar de novo no mesmo emoji remove a reação. */
+function chat_alternar_reacao(PDO $pdo, int $usuarioId, int $mensagemId, string $emoji): void
+{
+    $m = chat_mensagem_do_participante($pdo, $mensagemId, $usuarioId);
+    if ($emoji === '' || mb_strlen($emoji) > CHAT_EMOJIS_MAX) {
+        throw new InvalidArgumentException('Reação inválida.', 422);
+    }
+    if ($m['excluida_em'] !== null) {
+        throw new InvalidArgumentException('Esta mensagem foi apagada.', 422);
+    }
+
+    $stmt = $pdo->prepare('DELETE FROM tb_mensagens_reacoes WHERE mensagem_id = :m AND usuario_id = :u AND emoji = :e');
+    $stmt->execute(['m' => $mensagemId, 'u' => $usuarioId, 'e' => $emoji]);
+    if ($stmt->rowCount() === 0) {
+        $pdo->prepare('INSERT IGNORE INTO tb_mensagens_reacoes (mensagem_id, usuario_id, emoji) VALUES (:m, :u, :e)')
+            ->execute(['m' => $mensagemId, 'u' => $usuarioId, 'e' => $emoji]);
+    }
+    // Reação não altera a linha da mensagem: marca como atualizada para o polling da outra pessoa
+    $pdo->prepare('UPDATE tb_mensagens SET atualizada_em = NOW() WHERE id = :id')->execute(['id' => $mensagemId]);
 }
 
 /** Marca a conversa como lida (até agora) pelo usuário informado. */

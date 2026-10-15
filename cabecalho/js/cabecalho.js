@@ -9,14 +9,19 @@
 (function () {
   const btnCategorias = document.getElementById('btnCategorias');
   if (btnCategorias) {
-    btnCategorias.addEventListener('click', () => {
+    btnCategorias.addEventListener('click', (ev) => {
+      // Clique/toque (detail > 0): tira o foco para o anel verde de foco
+      // (movimento.css) não ficar "preso" em volta do ícone. Pelo teclado
+      // (Enter/Espaço: detail = 0) o foco continua visível.
+      if (ev.detail > 0) btnCategorias.blur();
       const aberto = document.body.classList.toggle('sidebar-open');
       // Lembra a preferência entre navegações (cada troca de aba é um
       // reload de página PHP) para o menu continuar aberto/fechado do
       // jeito que o usuário deixou.
       // Em tela estreita (gaveta) o estado não é lembrado: só vale na página atual.
+      // Só vale enquanto a aba estiver aberta (sessionStorage): ao abrir o site de novo, começa fechado.
       if (!window.matchMedia('(max-width: 860px)').matches) {
-        localStorage.setItem('sidebarOpen', aberto ? '1' : '0');
+        try { sessionStorage.setItem('sidebarOpen', aberto ? '1' : '0'); } catch (err) { /* ignora */ }
       }
     });
   }
@@ -27,7 +32,7 @@
   const btnSearchClose = document.getElementById('btnSearchClose');
 
   if (btnSearchToggle && headerSearch) {
-    btnSearchToggle.addEventListener('click', () => {
+    btnSearchToggle.addEventListener('click', (ev) => {
       const isOpen = headerSearch.classList.toggle('is-open');
       btnSearchToggle.setAttribute('aria-expanded', String(isOpen));
       if (isOpen) {
@@ -551,9 +556,9 @@
 
       const senha = campoSenha.value;
       const rep = campoRep.value;
-      if (senha.length < 8 || !/[A-Za-z]/.test(senha) || !/\d/.test(senha)) {
+      if (!senhaForte(senha)) {
         campoSenha.classList.add('is-invalid');
-        erro.textContent = 'Use ao menos 8 caracteres, com letras e números.';
+        erro.textContent = 'Use ao menos 8 caracteres, com uma letra maiúscula, um número e um caractere especial.';
         return;
       }
       if (senha !== rep) {
@@ -797,6 +802,28 @@
     return true;
   }
 
+  // Regras da senha forte (usadas no cadastro e na redefinição)
+  const REGRAS_SENHA = {
+    tamanho:    (v) => v.length >= 8,
+    maiuscula:  (v) => /\p{Lu}/u.test(v),
+    numero:     (v) => /\d/.test(v),
+    especial:   (v) => /[^\p{L}\p{N}\s]/u.test(v),
+  };
+
+  function senhaForte(v) {
+    return Object.values(REGRAS_SENHA).every((fn) => fn(v));
+  }
+
+  // Atualiza o checklist (✓ / ✗) enquanto a pessoa digita
+  function atualizarChecklistSenha(valor, lista) {
+    if (!lista) return;
+    lista.classList.toggle('is-visible', valor.length > 0);
+    lista.querySelectorAll('[data-regra]').forEach((li) => {
+      const ok = REGRAS_SENHA[li.dataset.regra](valor);
+      li.classList.toggle('is-ok', ok);
+    });
+  }
+
   function validarCadastroSenha() {
     const valor = cadastroSenha.value;
     const span = document.getElementById('erroCadastroSenha');
@@ -804,8 +831,20 @@
       mostrarErroCampo(cadastroSenha, span, 'Crie uma senha.');
       return false;
     }
-    if (valor.length < 6) {
-      mostrarErroCampo(cadastroSenha, span, 'A senha precisa ter no mínimo 6 caracteres.');
+    if (valor.length < 8) {
+      mostrarErroCampo(cadastroSenha, span, 'A senha precisa ter no mínimo 8 caracteres.');
+      return false;
+    }
+    if (!REGRAS_SENHA.maiuscula(valor)) {
+      mostrarErroCampo(cadastroSenha, span, 'A senha precisa ter pelo menos uma letra maiúscula.');
+      return false;
+    }
+    if (!REGRAS_SENHA.numero(valor)) {
+      mostrarErroCampo(cadastroSenha, span, 'A senha precisa ter pelo menos um número.');
+      return false;
+    }
+    if (!REGRAS_SENHA.especial(valor)) {
+      mostrarErroCampo(cadastroSenha, span, 'A senha precisa ter pelo menos um caractere especial (ex.: ! @ # $ %).');
       return false;
     }
     limparErroCampo(cadastroSenha, span);
@@ -921,8 +960,14 @@
   if (cadastroNome) cadastroNome.addEventListener('blur', validarCadastroNome);
   if (cadastroEmail) cadastroEmail.addEventListener('blur', validarCadastroEmail);
   if (cadastroSenha) {
+    if (cadastroSenha.form) {
+      cadastroSenha.form.addEventListener('reset', () => {
+        setTimeout(() => atualizarChecklistSenha('', document.getElementById('regrasCadastroSenha')), 0);
+      });
+    }
     cadastroSenha.addEventListener('blur', validarCadastroSenha);
     cadastroSenha.addEventListener('input', () => {
+      atualizarChecklistSenha(cadastroSenha.value, document.getElementById('regrasCadastroSenha'));
       if (cadastroRepetirSenha.value) validarCadastroRepetirSenha();
     });
   }
@@ -1645,6 +1690,9 @@
     }
 
     function abrirNotif() {
+      // Em tela estreita o menu lateral é uma gaveta por cima da página: fecha ao abrir o sino,
+      // senão a gaveta cobre o painel de notificações.
+      document.body.classList.remove('sidebar-open');
       desenharNotif();
       posicionarNotif();
       popoutNotif.hidden = false;

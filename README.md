@@ -260,3 +260,45 @@ O site inteiro tem os três temas, escolhidos em **Configurações > Aparência*
 - **Imagens com versão escura** (mesmo nome + `-escuro`): logo (`Logo.png` / `Logo-escuro.png`, duas `<img>` com as classes `logo-claro` / `logo-escuro`), banners do Início (cadastrado e não cadastrado) e capas dos cursos (`capa-….webp` / `capa-…-escuro.webp`, também `-640`). Se criar uma imagem nova com variante escura, siga o mesmo padrão de nome.
 - **Mapa da Unidade:** usa o estilo `positron` no claro e `dark` no escuro (troca ao vivo).
 - **Banco de dados:** nenhuma alteração.
+
+
+## Responsivo (celular · tablet · notebook)
+
+Todo o código responsivo fica em arquivos próprios, nunca nos CSS base (que guardam só o desktop):
+
+| Onde | O que tem |
+|---|---|
+| `assets/css/responsivo.css` + `assets/js/responsivo.js` | Base global: toque, área segura, altura visível (`--app-h`), componentes globais (diálogo, busca, menu de contexto, popouts, alertas) e ajustes do tema escuro que dependem da largura. Carregados no `index.php`, `index.html` e páginas legais. |
+| `cabecalho/responsivo/`, `rodape/responsivo/` | Cabeçalho e rodapé. |
+| `conteudo/**/<tela>/responsivo/<tela>.responsivo.css` | Uma tela por arquivo (13 telas logadas, início do visitante e páginas legais). |
+| `assets/css/zoom.css` | Zoom do navegador até 500% e gaveta do menu lateral (já existia; carrega por último). |
+
+**Escada de breakpoints** (usar só estes, desktop-first): 1440 · 1366 · 1280 · 1180 · 1024 · 860 (menu vira gaveta) · 768 (cabeçalho compacto) · 600 · 480 · 360. Ganchos: `(hover: none) and (pointer: coarse)` = toque; `(max-height: 500px) and (orientation: landscape)` = celular deitado. Valores fora da escada (1279/1439/767/900) existem só onde há acoplamento com JS ou com o tema escuro, e estão comentados no próprio arquivo.
+
+**Padrão de cada arquivo:** cabeçalho explicando o que muda por faixa e seções na ordem NOTEBOOK → TABLET PAISAGEM → TABLET RETRATO → CELULAR GRANDE → CELULAR → CELULAR PEQUENO → CELULAR DEITADO → APARELHOS DE TOQUE. Novas `@media` de tamanho entram sempre aí.
+
+## Histórico de chamadas (Chamadas, Chat e Equipes)
+
+Lista as chamadas de voz/vídeo já feitas, recebidas e perdidas. **Não precisa de tabela nova**: lê `tb_chamadas` e `tb_chamadas_participantes` (já criadas por `database/chamadas.sql`).
+
+**Onde aparece**
+
+| Tela | Onde | O que mostra |
+|---|---|---|
+| Chamadas (`?pagina=chamadas`) | seção "Histórico de chamadas" abaixo de Contatos/Próximas chamadas | todas as suas chamadas, com busca |
+| Chat | aba **Chamadas** da conversa (e item "Ver histórico de chamadas" no menu ⋮) | só as chamadas com a pessoa da conversa |
+| Equipes | aba **Chamadas** do canal | chamadas da equipe (instantâneas e reuniões em que você foi convidado) |
+
+**Endpoint** — `GET api/chamadas/historico.php` (exige sessão, só leitura)
+
+| Parâmetro | Valores |
+|---|---|
+| `escopo` | `todas` (padrão), `contato` (+ `usuario_id`), `equipe` (+ `equipe`, só membros) |
+| `filtro` | `todas`, `recebidas`, `realizadas`, `perdidas` (= recebidas que você não atendeu nem recusou) |
+| `busca`, `limite` (máx. 50), `offset` | opcionais |
+
+Resposta: `itens[]` (direção, resultado, duração, a outra pessoa, equipe/título), `contagens` (números dos chips) e `tem_mais`.
+
+**Ligar de volta:** botões Ligar/Vídeo em cada linha. Pela tela Chamadas usa `origem: "historico"` em `api/chamadas/chamada.php` (permite mesma equipe **ou** quem já tem conversa no Chat).
+
+**Arquivos:** `api/chamadas/historico.php`, `assets/js/historico-chamadas.js` e `assets/css/historico-chamadas.css` (componente compartilhado, com tema escuro e responsivo).

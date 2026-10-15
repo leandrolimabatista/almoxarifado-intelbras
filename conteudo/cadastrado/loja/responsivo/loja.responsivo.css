@@ -1,19 +1,32 @@
 /* ============================================================
    CONTEÚDO — Loja (área CADASTRADO) — Estilos responsivos
-   Grid: 6 colunas (desktop) -> 4 -> 3 -> 2 -> 1 (mobile)
+
+   Grade de produtos: 6 colunas (desktop) → 4 → 3 → 2 → 1 (celular pequeno)
+   Gaveta do carrinho vira tela cheia no celular.
+   Checkout (.lck__*): resumo do pedido sobe para o topo em ≤ 1024px.
 ============================================================= */
 
-/* Telas grandes: já é 6 no loja.css. Reduz a partir daqui. */
-@media (max-width: 1400px) {
+/* ===================== NOTEBOOK (≤ 1366px) ===================== */
+
+@media (max-width: 1366px) {
   .loja__grid { grid-template-columns: repeat(4, 1fr); }
 }
+
+/* ===================== TABLET PAISAGEM (≤ 1180px / ≤ 1024px) ===================== */
 
 @media (max-width: 1180px) {
   body.sidebar-open .loja__grid { grid-template-columns: repeat(3, 1fr); }
 }
 
-@media (max-width: 860px) {
+/* Checkout: resumo do pedido sobe para o topo */
+@media (max-width: 1024px) {
+  .lck__wrap { grid-template-columns: 1fr; }
+  .lck__resumo { position: static; order: -1; }
+}
 
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
+@media (max-width: 860px) {
   .loja__main { padding: 20px 16px 48px; }
   .loja__grid { grid-template-columns: repeat(3, 1fr); }
 
@@ -23,35 +36,51 @@
   .loja__page-head-actions .seletor { flex: 1; min-width: 0; }
 }
 
-@media (max-width: 680px) {
+/* ===================== CELULAR GRANDE (≤ 600px) ===================== */
+
+@media (max-width: 600px) {
   .loja__grid { grid-template-columns: repeat(2, 1fr); }
   .loja__filtros { flex-direction: column; }
   .loja__cat-wrap { width: 100%; }
   .loja__cat-btn { width: 100%; justify-content: space-between; padding: 11px 14px; }
   .loja__cat-panel { left: 0; right: 0; width: auto; }
+
+  /* Checkout */
+  .lck__card { padding: 18px 16px; }
+  .lck__row--num { grid-template-columns: 1fr 100px; }
 }
+
+/* ===================== CELULAR (≤ 480px) ===================== */
 
 @media (max-width: 480px) {
   .loja__grid { grid-template-columns: repeat(2, 1fr); gap: 10px; }
   .loja__page-head-title h1 { font-size: 19px; }
   .loja__saldo-pill { font-size: 11.5px; }
+
+  /* Gaveta do carrinho em tela cheia */
   .loja__drawer { width: 100%; max-width: 100%; }
+
+  /* Checkout: campos em uma coluna */
+  .lck__row { grid-template-columns: 1fr; gap: 0; }
+  .lck__row--num { grid-template-columns: 1fr 96px; gap: 10px; }
 }
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
 
 @media (max-width: 360px) {
   .loja__grid { grid-template-columns: 1fr; }
+  .loja__main { padding: 16px 12px 40px; }
 }
 
-/* ---------------- Compra: checkout ---------------- */
-@media (max-width: 980px) {
-  .lck__wrap { grid-template-columns: 1fr; }
-  .lck__resumo { position: static; order: -1; }
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .loja__drawer { max-width: 100%; }
 }
-@media (max-width: 560px) {
-  .lck__card { padding: 18px 16px; }
-  .lck__row--num { grid-template-columns: 1fr 100px; }
-}
-@media (max-width: 420px) {
-  .lck__row { grid-template-columns: 1fr; gap: 0; }
-  .lck__row--num { grid-template-columns: 1fr 96px; gap: 10px; }
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+@media (hover: none) and (pointer: coarse) {
+  .loja__cat-btn,
+  .loja__tab { min-height: 44px; }
 }

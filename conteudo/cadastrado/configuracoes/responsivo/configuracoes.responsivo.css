@@ -4,9 +4,19 @@
    css/configuracoes.css. A largura do menu lateral aberto
    (200px/220px) já é tratada por inicio.responsivo.css, que o
    próprio configuracoes.html carrega.
+
+   ≤ 1439px : cards laterais descem para baixo do cartão principal
+              (valor próprio da tela: notebooks de 1366/1440 já usavam)
+   ≤ 1024px : menu de abas vira barra horizontal (tablet)
+   ≤ 767px  : celular — acoplado ao configuracoes.js (matchMedia 767px,
+              menu/ação no celular) e ao ajuste do tema escuro; por isso
+              este é o único valor fora da escada padrão
+   ≤ 480px  : título menor
 ============================================================= */
 
-/* ---------- Notebook (1024–1439px): cards laterais descem ---------- */
+/* ===================== NOTEBOOK (≤ 1439px) ===================== */
+
+/* Cards laterais descem */
 @media (max-width: 1439px) {
   .configuracoes__grade {
     grid-template-columns: minmax(0, 1fr);
@@ -23,8 +33,10 @@
   }
 }
 
-/* ---------- Tablet (768–1023px): menu de abas vira barra horizontal ---------- */
-@media (max-width: 1023px) {
+/* ===================== TABLET PAISAGEM (≤ 1024px) ===================== */
+
+/* Menu de abas vira barra horizontal */
+@media (max-width: 1024px) {
   .configuracoes__main {
     padding: 20px 18px 36px;
   }
@@ -43,6 +55,13 @@
     border-bottom: 1px solid var(--cfg-borda);
     overflow-x: auto;
     white-space: nowrap;
+    /* sem a barra de rolagem aparente: as abas continuam deslizando com o dedo */
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+  }
+
+  .configuracoes__menu::-webkit-scrollbar {
+    display: none;
   }
 
   .configuracoes__menu-item {
@@ -58,7 +77,7 @@
   }
 }
 
-/* ---------- Mobile (<768px) ---------- */
+/* ===================== CELULAR GRANDE (≤ 767px) ===================== */
 @media (max-width: 767px) {
   .configuracoes__foto {
     flex-wrap: wrap;
@@ -111,9 +130,33 @@
   }
 }
 
-/* ---------- Celular pequeno (mesmo ajuste do título de Documentos) ---------- */
+/* ===================== CELULAR (≤ 480px) ===================== */
+
+/* Mesmo ajuste do título de Documentos */
 @media (max-width: 480px) {
   .configuracoes__titulo {
     font-size: calc(22px * var(--cfg-fs, 1));
+  }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .configuracoes__acoes {
+    position: static;
+  }
+
+  .configuracoes__modal-caixa {
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+@media (hover: none) and (pointer: coarse) {
+  .configuracoes__menu-item,
+  .configuracoes__btn {
+    min-height: 44px;
   }
 }

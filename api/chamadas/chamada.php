@@ -2,7 +2,7 @@
 /**
  * POST api/chamadas/chamada.php   (corpo JSON, header X-CSRF-Token)
  *
- *   { "acao": "iniciar", "tipo": "individual", "alvo_id": 7, "midia": "voz|video" }
+ *   { "acao": "iniciar", "tipo": "individual", "alvo_id": 7, "midia": "voz|video", "origem": "chat|historico" }
  *   { "acao": "iniciar", "tipo": "equipe", "midia": "voz|video" }   // só gerente/diretor/CEO
  *   { "acao": "atender", "chamada_id": 12 }    // atender chamada ou entrar num convite
  *   { "acao": "recusar", "chamada_id": 12 }    // recusar / dispensar convite
@@ -25,6 +25,9 @@ $acao = (string)($corpo['acao'] ?? '');
 $midia = (($corpo['midia'] ?? 'video') === 'voz') ? 'voz' : 'video';
 // Chamada feita a partir do Chat: qualquer usuário liga para quem está na sua lista de conversas.
 $deChat = (string)($corpo['origem'] ?? '') === 'chat';
+// Ligar de volta a partir do Histórico de chamadas: vale para quem é da mesma equipe
+// OU para quem já tem conversa no Chat (a chamada original pode ter vindo do Chat).
+$deHistorico = (string)($corpo['origem'] ?? '') === 'historico';
 
 /** true se o usuário já está dentro de alguma chamada ativa. */
 function ch_em_chamada(PDO $pdo, int $uid, int $exceto = 0): bool
@@ -83,7 +86,7 @@ try {
         if ($admin && isset(CH_EQUIPES[$eqPedida])) {
             $equipe = $eqPedida;
         }
-        if ($equipe === '' && !(($admin || $deChat) && $tipo === 'individual')) {
+        if ($equipe === '' && !(($admin || $deChat || $deHistorico) && $tipo === 'individual')) {
             ch_erro(403, 'Você ainda não pertence a uma equipe.');
         }
         if (ch_em_chamada($pdo, $uid)) {
@@ -112,6 +115,18 @@ try {
                     ch_erro(403, 'Você só pode ligar para pessoas da sua lista de conversas.');
                 }
                 $equipe = (string)$alvo['equipe_slug'] !== '' ? (string)$alvo['equipe_slug'] : ($equipe !== '' ? $equipe : 'geral');
+            } elseif ($deHistorico) {
+                $mesmaEquipe = $equipe !== '' && (string)$alvo['equipe_slug'] === $equipe;
+                if (!$mesmaEquipe) {
+                    $a = min($uid, $alvoId);
+                    $b = max($uid, $alvoId);
+                    $cv = $pdo->prepare('SELECT 1 FROM tb_conversas WHERE usuario1_id = ? AND usuario2_id = ? LIMIT 1');
+                    $cv->execute([$a, $b]);
+                    if (!$cv->fetchColumn()) {
+                        ch_erro(403, CH_MSG_REGRA_MESMA_EQUIPE);
+                    }
+                    $equipe = (string)$alvo['equipe_slug'] !== '' ? (string)$alvo['equipe_slug'] : ($equipe !== '' ? $equipe : 'geral');
+                }
             } elseif ((string)$alvo['equipe_slug'] !== $equipe) {
                 ch_erro(403, CH_MSG_REGRA_MESMA_EQUIPE);
             }
@@ -243,11 +258,11 @@ try {
     if ($acao === 'entrar_agendada') {
         $agId = (int)($corpo['agendamento_id'] ?? 0);
         $st = $pdo->prepare(
-            "SELECT a.*, (a.criador_id = :u OR EXISTS (SELECT 1 FROM tb_chamadas_agendadas_participantes p WHERE p.agendamento_id = a.id AND p.usuario_id = :u)
+            "SELECT a.*, (a.criador_id = :u1 OR EXISTS (SELECT 1 FROM tb_chamadas_agendadas_participantes p WHERE p.agendamento_id = a.id AND p.usuario_id = :u2)
                           OR (a.toda_equipe = 1 AND a.equipe_slug = :eq)) AS convidado
                FROM tb_chamadas_agendadas a WHERE a.id = :id AND a.cancelada_em IS NULL LIMIT 1"
         );
-        $st->execute(['u' => $uid, 'eq' => $equipe, 'id' => $agId]);
+        $st->execute(['u1' => $uid, 'u2' => $uid, 'eq' => $equipe, 'id' => $agId]);
         $ag = $st->fetch();
         if (!$ag || (int)$ag['convidado'] !== 1) {
             ch_erro(404, 'Reunião não encontrada.');

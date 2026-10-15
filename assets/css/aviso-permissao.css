@@ -7,4 +7,4 @@
   pointer-events: none; opacity: 0; transition: opacity .2s ease;
 }
 .aviso-perm--vis { opacity: 1; }
-@media (max-width: 720px) { .aviso-perm { bottom: 84px; } }
+

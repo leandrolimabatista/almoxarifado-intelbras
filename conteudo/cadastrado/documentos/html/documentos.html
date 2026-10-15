@@ -24,8 +24,8 @@ $csrfDocumentos = (string)$_SESSION['csrf_documentos'];
      não estiverem prontos, o JS entra sozinho em "modo demonstração"
      (dados fictícios em memória) e avisa na tela.
 ============================================================= -->
-<link rel="stylesheet" href="conteudo/cadastrado/documentos/css/documentos.css?v=20261007">
-<link rel="stylesheet" href="conteudo/cadastrado/documentos/responsivo/documentos.responsivo.css?v=2">
+<link rel="stylesheet" href="conteudo/cadastrado/documentos/css/documentos.css?v=20261016">
+<link rel="stylesheet" href="conteudo/cadastrado/documentos/responsivo/documentos.responsivo.css?v=3">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
 
@@ -479,6 +479,9 @@ $csrfDocumentos = (string)$_SESSION['csrf_documentos'];
     <td class="documentos__col-por"></td>
     <td class="documentos__col-acoes">
       <div class="documentos__acoes">
+        <button type="button" class="documentos__icone-btn documentos__baixar-btn" title="Baixar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14"/></svg>
+        </button>
         <button type="button" class="documentos__icone-btn documentos__estrela" aria-pressed="false">
           <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><path d="M12 3.8l2.5 5.2 5.7.8-4.1 4 1 5.6L12 16.7 6.9 19.4l1-5.6-4.1-4 5.7-.8L12 3.8z" stroke="currentColor" stroke-width="1.7" stroke-linejoin="round"/></svg>
         </button>
@@ -504,4 +507,4 @@ $csrfDocumentos = (string)$_SESSION['csrf_documentos'];
   </li>
 </template>
 
-<script src="conteudo/cadastrado/documentos/js/documentos.js?v=3"></script>
+<script src="conteudo/cadastrado/documentos/js/documentos.js?v=5"></script>

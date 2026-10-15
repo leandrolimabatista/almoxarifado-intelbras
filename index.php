@@ -42,7 +42,7 @@ $paginasCadastrado = [
     'configuracoes'           => 'conteudo/cadastrado/configuracoes/html/configuracoes.html',
 ];
 
-// Título da aba: sempre "Página — Intelbras" (mesmo padrão das páginas legais).
+// Título da aba: sempre "Página - Intelbras" (mesmo padrão das páginas legais).
 $titulosPagina = [
     'inicio'                  => 'Início',
     'servicos'                => 'Serviços',
@@ -116,7 +116,7 @@ if ($logado) {
 <html lang="pt-BR"<?php echo $logado ? ' data-tema-pref="' . $temaPref . '"' : ''; ?>>
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
   <link rel="icon" href="assets/img/favicon/favicon.ico?v=2" sizes="any">
   <link rel="icon" type="image/png" sizes="32x32" href="assets/img/favicon/favicon-32.png?v=2">
   <link rel="icon" type="image/png" sizes="192x192" href="assets/img/favicon/favicon-192.png?v=2">
@@ -125,13 +125,16 @@ if ($logado) {
   <!-- Tema (Claro/Escuro/Automático): script síncrono + CSS, antes de todo o resto, para não piscar -->
   <script src="assets/js/tema.js?v=1"></script>
   <script src="assets/js/dialogo.js?v=1"></script>
-  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=2">
-  <!-- Ativa a transição nativa do navegador (crossfade) entre navegações
-       de página inteira (troca de aba do menu lateral, ex.: Início -> Loja).
-       Suportado em navegadores baseados em Chromium recentes; nos demais,
-       a navegação simplesmente ocorre sem a transição, sem quebrar nada. -->
-  <meta name="view-transition" content="same-origin">
-  <title><?php echo htmlspecialchars((($logado ? ($titulosPagina[$paginaSolicitada] ?? 'Início') : 'Início')) . ' — Intelbras', ENT_QUOTES, 'UTF-8'); ?></title>
+  <!-- Responsivo: marca o <html> com o tipo de tela (toque, retrato, faixa) e a altura visível -->
+  <script src="assets/js/responsivo.js?v=1"></script>
+  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=6">
+  <link rel="stylesheet" href="assets/css/barra-rolagem.css?v=2">
+  <!-- Troca de página sem "HTML cru": o navegador só mostra a página nova quando o
+       marcador #mv-fim (último elemento do <body>, depois de TODOS os CSS) já foi lido.
+       Sem isso, na transição entre páginas aparecia o HTML antes do CSS carregar.
+       Chromium 124+; nos demais navegadores é ignorado e nada quebra. -->
+  <link rel="expect" href="#mv-fim" blocking="render">
+  <title><?php echo htmlspecialchars((($logado ? ($titulosPagina[$paginaSolicitada] ?? 'Início') : 'Início')) . ' - Intelbras', ENT_QUOTES, 'UTF-8'); ?></title>
   <!-- Anti-flash da camada de movimento: esconde o <main> até o movimento.js
        classificar a página (1ª varredura). Se algo falhar, libera em 1,5s. -->
   <script>document.documentElement.classList.add('mv-boot');setTimeout(function(){document.documentElement.classList.remove('mv-boot')},1500);</script>
@@ -160,11 +163,17 @@ if ($logado) {
     // existe, antes do menu ser desenhado), lendo a preferência salva
     // pelo cabecalho.js. Isso mantém o menu lateral aberto ao trocar de
     // aba, em vez de fechar e exigir clicar em "Todas categorias" de novo.
+    // Ao ABRIR o site (nova aba/janela ou novo acesso) o menu começa sempre
+    // fechado, em qualquer tela: a preferência fica só em sessionStorage, que
+    // vale apenas enquanto aquela aba está aberta (trocar de página mantém).
     // Em tela estreita (zoom alto / celular) o menu é uma gaveta por cima do
     // conteúdo e começa sempre fechado (ver assets/css/zoom.css e zoom.js).
-    if (localStorage.getItem('sidebarOpen') === '1' && !window.matchMedia('(max-width: 860px)').matches) {
-      document.body.classList.add('sidebar-open');
-    }
+    try {
+      localStorage.removeItem('sidebarOpen'); // valor antigo, de quando era permanente
+      if (sessionStorage.getItem('sidebarOpen') === '1' && !window.matchMedia('(max-width: 860px)').matches) {
+        document.body.classList.add('sidebar-open');
+      }
+    } catch (e) { /* sem storage: menu fechado */ }
   </script>
 
   <?php include 'cabecalho/html/cabecalho.html'; ?>
@@ -190,17 +199,23 @@ if ($logado) {
   <script src="assets/js/chamadas-alerta.js?v=1"></script>
   <script src="assets/js/aviso-permissao.js?v=1"></script>
   <!-- Botão direito nas categorias do menu lateral (mover, desafixar, personalizar...) -->
-  <script src="assets/js/menu-contexto.js?v=13"></script>
+  <script src="assets/js/menu-contexto.js?v=14"></script>
 
   <!-- Camada global de animação + padronização visual (vale para todas as páginas).
        Fica por último para ter a palavra final na cascata. -->
-  <link rel="stylesheet" href="assets/css/movimento.css?v=12">
-  <script src="assets/js/movimento.js?v=9"></script>
+  <link rel="stylesheet" href="assets/css/movimento.css?v=13">
+  <script src="assets/js/movimento.js?v=12"></script>
+
+  <!-- Responsivo global (celular · tablet · notebook): componentes de assets/ e base de toque.
+       Antes do zoom.css, que continua com a palavra final. -->
+  <link rel="stylesheet" href="assets/css/responsivo.css?v=1">
 
   <!-- Zoom do navegador até 500%: cabeçalho compacto, menu lateral em gaveta e
        altura do cabeçalho em --hdr-h. Por último, para ter a palavra final. -->
   <link rel="stylesheet" href="assets/css/zoom.css?v=4">
   <script src="assets/js/zoom.js?v=1"></script>
 
+  <!-- Marcador de fim de página (ver <link rel="expect"> no <head>). Deve ser o ÚLTIMO elemento. -->
+  <div id="mv-fim" hidden></div>
 </body>
 </html>

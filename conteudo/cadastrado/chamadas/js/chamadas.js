@@ -567,6 +567,28 @@
   }
 
   // ------------------------------------------------------------
+  // Histórico de chamadas (componente em assets/js/historico-chamadas.js)
+  // ------------------------------------------------------------
+  let historico = null;
+  function recarregarHistorico() { if (historico) historico.recarregar(); }
+
+  function montarHistorico() {
+    if (!window.HistoricoChamadas || !$('chHistorico')) return;
+    historico = window.HistoricoChamadas.montar($('chHistorico'), {
+      escopo: 'todas',
+      busca: true,
+      aoLigar: (it, midia) => {
+        if (it.tipo === 'individual') {
+          if (it.outro) iniciarIndividual(it.outro.id, midia, 'historico');
+          return;
+        }
+        // Chamada da equipe: entra na que está em andamento ou inicia outra (só Diretor/Gerente/CEO).
+        chamarEquipeDoCanal(it.equipe_slug, midia, false);
+      },
+    });
+  }
+
+  // ------------------------------------------------------------
   // Eventos da interface
   // ------------------------------------------------------------
   $('btnNovaChamada').addEventListener('click', () => abrirNova());
@@ -584,7 +606,7 @@
   $('chBusca').addEventListener('input', (e) => { E.busca = e.target.value; renderContatos(); });
   $('chFiltroStatus').addEventListener('change', (e) => { E.filtro = e.target.value; renderContatos(); });
   $('chErroTentar').addEventListener('click', () => { falhas = 0; tickAgora(); });
-  $('posVoltar').addEventListener('click', () => { fecharModal('chPos'); if (diretoChat || diretoEquipe) { voltarAoChat(); return; } carregarContatos(); carregarAgendadas(); });
+  $('posVoltar').addEventListener('click', () => { fecharModal('chPos'); if (diretoChat || diretoEquipe) { voltarAoChat(); return; } carregarContatos(); carregarAgendadas(); recarregarHistorico(); });
 
   $('mdNovaLista').addEventListener('click', (e) => {
     const b = e.target.closest('.chamadas__opcao');
@@ -745,7 +767,7 @@
     preencherIcones: preencherIcones,
     tickAgora: tickAgora,
     dados: E,
-    recarregar: function () { carregarContatos(); carregarAgendadas(); },
+    recarregar: function () { carregarContatos(); carregarAgendadas(); recarregarHistorico(); },
     primeiroNome: primeiroNome,
     aposChamadaIndividual: function (resumo) { if (diretoChat || diretoEquipe) voltarAoChat(resumo); },
     modoDireto: function () { return !!(diretoChat || diretoEquipe); },
@@ -757,6 +779,7 @@
   // Início
   // ------------------------------------------------------------
   preencherIcones(document);
+  montarHistorico();
   carregarContatos().then(() => {
     const p = new URLSearchParams(window.location.search);
     if (p.get('nova') === '1') abrirNova();

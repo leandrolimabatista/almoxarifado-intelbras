@@ -613,3 +613,62 @@ body.chamada-ativa { overflow: hidden; }
   align-items: center; justify-content: center; gap: 10px; color: var(--intelbras-cinza); font-size: 14px; font-weight: 600;
 }
 .chamadas--direto .chamadas__direto-carregando { display: flex; }
+
+/* ===================== HISTÓRICO DE CHAMADAS ===================== */
+.chamadas__historico { margin-top: 28px; }
+
+/* =============================================================
+   Chat da chamada — emojis
+   Fonte de emoji colorido e lista compartilhadas com Equipes/Chat
+   (conteudo/cadastrado/equipes/fonts e js/emojis-dados.js).
+   ============================================================= */
+@font-face {
+  font-family: 'Noto Emoji Chamadas';
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url('../../equipes/fonts/NotoColorEmoji.woff2') format('woff2');
+  unicode-range: U+1F000-1FFFF, U+200D, U+FE0F, U+20E3, U+203C, U+2049, U+2139,
+    U+2194-21AA, U+231A-23FF, U+24C2, U+25AA-25AB, U+25B6, U+25C0, U+25FB-25FE,
+    U+2600-27BF, U+2934-2935, U+2B05-2B07, U+2B1B-2B1C, U+2B50, U+2B55,
+    U+3030, U+303D, U+3297, U+3299, U+E0020-E007F;
+}
+
+.sala__msg-texto,
+.sala__msg-form textarea,
+.sala__emoji-pop button,
+.sala__emoji-pop input {
+  font-family: 'Noto Emoji Chamadas', 'Nunito Sans', 'Poppins', 'Segoe UI', Arial, sans-serif;
+}
+
+/* mensagem só com 1 a 3 emojis: maior, sem bolha */
+.sala__msg-texto--emoji { font-size: 30px; line-height: 1.2; padding: 2px 6px; background: transparent !important; border-color: transparent !important; color: inherit !important; }
+
+.sala__msg-form { position: relative; }
+.sala__msg-emoji { width: 44px; height: 44px; flex-shrink: 0; border: 1px solid #D1D5DB; border-radius: 12px; background: #fff; color: #4B5563; display: inline-flex; align-items: center; justify-content: center; cursor: pointer; }
+.sala__msg-emoji svg { width: 22px; height: 22px; }
+.sala__msg-emoji:hover, .sala__msg-emoji[aria-expanded='true'] { background: var(--intelbras-verde-100, #E7F7EE); border-color: var(--intelbras-verde); color: var(--intelbras-verde-escuro); }
+
+.sala__emoji-pop { position: absolute; left: 8px; right: 8px; bottom: calc(100% + 6px); z-index: 20; display: flex; flex-direction: column; overflow: hidden; background: #fff; border: 1px solid var(--content-border); border-radius: 12px; box-shadow: 0 8px 28px rgba(16,24,40,.18); }
+.sala__emoji-pop[hidden] { display: none; }
+.sala__emoji-topo { display: flex; align-items: center; gap: 6px; padding: 10px 10px 4px; }
+.sala__emoji-busca { flex: 1; min-width: 0; }
+.sala__emoji-busca input { width: 100%; min-height: 36px; padding: 0 10px; border: 1px solid #D1D5DB; border-radius: 8px; font-size: 13.5px; outline: none; box-sizing: border-box; }
+.sala__emoji-busca input:focus { border-color: var(--intelbras-verde); box-shadow: 0 0 0 3px rgba(0,168,89,.15); }
+.sala__emoji-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; height: 230px; overflow-y: auto; padding: 0 10px 6px; }
+.sala__emoji-grade-titulo { grid-column: 1 / -1; font-size: 12.5px; color: #6B7280; padding: 10px 2px 4px; }
+.sala__emoji-grade-vazio { grid-column: 1 / -1; text-align: center; color: #6B7280; font-size: 12.5px; padding: 24px 8px; }
+.sala__emoji-grade button { border: 0; background: none; font-size: 22px; line-height: 1.15; padding: 5px 0; border-radius: 8px; cursor: pointer; }
+.sala__emoji-grade button:hover { background: #F3F4F6; }
+.sala__emoji-categorias { display: flex; gap: 2px; padding: 6px 8px; border-top: 1px solid var(--content-border); }
+.sala__emoji-categoria { flex: 1; border: 0; background: none; font-size: 16px; line-height: 1; padding: 7px 0; border-radius: 6px; cursor: pointer; filter: grayscale(1); opacity: .7; }
+.sala__emoji-categoria:hover { background: #F3F4F6; opacity: 1; }
+.sala__emoji-categoria--ativa { background: var(--intelbras-verde-100, #E7F7EE); filter: none; opacity: 1; }
+.sala__emoji-tom-wrap { position: relative; flex-shrink: 0; }
+.sala__emoji-tom-btn { width: 34px; height: 34px; border: 0; background: none; border-radius: 6px; font-size: 18px; line-height: 1; cursor: pointer; }
+.sala__emoji-tom-btn:hover { background: #F3F4F6; }
+.sala__emoji-tom-menu { position: absolute; top: calc(100% + 6px); right: 0; z-index: 5; display: flex; gap: 2px; padding: 6px; background: #fff; border: 1px solid var(--content-border); border-radius: 10px; box-shadow: 0 6px 20px rgba(16,24,40,.16); }
+.sala__emoji-tom-menu[hidden] { display: none; }
+.sala__emoji-tom-menu button { width: 34px; height: 34px; border: 0; background: none; border-radius: 8px; font-size: 20px; line-height: 1; cursor: pointer; }
+.sala__emoji-tom-menu button:hover { background: #F3F4F6; }
+.sala__emoji-tom-menu .sala__emoji-tom--ativo { background: var(--intelbras-verde-100, #E7F7EE); box-shadow: inset 0 0 0 2px var(--intelbras-verde); }

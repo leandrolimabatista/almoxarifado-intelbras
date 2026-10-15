@@ -1,0 +1,292 @@
+/* ============================================================
+   RESPONSIVO GLOBAL — Intelbras (celular · tablet · notebook)
+
+   Este é o ÚNICO lugar das regras responsivas que valem para o site
+   inteiro (componentes globais de assets/ + base de toque/tela).
+   As regras de cada bloco ficam na pasta responsivo/ dele:
+
+     cabecalho/responsivo/cabecalho.responsivo.css
+     rodape/responsivo/rodape.responsivo.css
+     conteudo/<area>/<tela>/responsivo/<tela>.responsivo.css
+
+   ── ESCADA PADRÃO DE BREAKPOINTS (usar SÓ estes valores) ───────
+     1440  notebook (MacBook 13/14", 1440×900)  — também "1439" (= abaixo de 1440)
+     1366  notebook compacto (1366×768, janela reduzida)
+     1280  notebook pequeno (1280×720)           — também "1279" (= abaixo de 1280)
+     1180  notebook pequeno / tablet grande em paisagem (iPad Pro 11")
+     1024  tablet em paisagem (iPad, Galaxy Tab)
+      860  tablet em retrato  ── menu lateral vira GAVETA (acoplado
+           ao zoom.css/zoom.js/cabecalho.js — NÃO mude este valor)
+      768  cabeçalho compacto (acoplado ao cabecalho.responsivo.css)
+      600  celular grande / celular em paisagem
+      480  celular comum (390, 393, 412, 430 …)
+      360  celular pequeno (iPhone SE, Galaxy A) e dobráveis fechados
+   Sempre "desktop-first": @media (max-width: Npx), do maior para
+   o menor dentro de cada arquivo.
+
+   ── OUTROS GANCHOS PADRÃO ──────────────────────────────────────
+     (hover: none) and (pointer: coarse)   aparelho de toque
+     (max-height: 500px) and (orientation: landscape)  celular deitado
+   Classes colocadas no <html> por assets/js/responsivo.js:
+     .is-toque  .is-retrato  .is-paisagem
+     [data-faixa="notebook|tablet|celular"]  (≤1180 tablet, ≤600 celular)
+
+   Carregado ANTES do zoom.css (que continua com a palavra final).
+============================================================= */
+
+/* ------------------------------------------------------------
+   0. BASE — vale em qualquer largura
+------------------------------------------------------------ */
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  /* A altura útil real (teclado virtual / barra do navegador) é mantida
+     por responsivo.js em --app-h; o 100dvh é o padrão sem JS. */
+  --app-h: 100dvh;
+}
+
+/* Conteúdo nunca "empurra" a página para os lados */
+main {
+  min-width: 0;
+  overflow-x: clip;
+}
+
+img,
+video,
+canvas,
+iframe {
+  max-width: 100%;
+}
+
+/* Textos longos (e-mails, URLs, nomes de arquivo) quebram em vez de estourar */
+main p,
+main li,
+main h1,
+main h2,
+main h3,
+main td {
+  overflow-wrap: anywhere;
+}
+
+/* Tabelas largas rolam por dentro do próprio bloco */
+main table {
+  max-width: 100%;
+}
+
+/* A altura mínima da área logada segue a janela real (celular com barra
+   de endereço que sobe/desce) */
+.inicio {
+  min-height: calc(100dvh - var(--hdr-h, 73px));
+}
+
+/* ------------------------------------------------------------
+   1. APARELHOS DE TOQUE
+------------------------------------------------------------ */
+@media (hover: none) and (pointer: coarse) {
+  html {
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  /* Sem atraso/zoom de duplo toque em controles */
+  a,
+  button,
+  summary,
+  [role="button"],
+  label,
+  select,
+  input {
+    touch-action: manipulation;
+  }
+
+  /* Alvos de toque confortáveis nos controles globais do cabeçalho */
+  .header__icon-btn,
+  .header__search-toggle,
+  .header__categories {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .header__search-toggle,
+  .header__categories {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  /* Itens de menu / listas suspensas maiores para o dedo */
+  .user-menu__item,
+  .seletor__opcao,
+  .seletor__opt {
+    min-height: 44px;
+    display: flex;
+    align-items: center;
+  }
+}
+
+/* iOS dá zoom na página ao focar campo com fonte < 16px: em telas de
+   toque estreitas, todo campo de texto fica com 16px */
+@media (hover: none) and (pointer: coarse) and (max-width: 860px) {
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]):not([type="file"]):not([type="button"]):not([type="submit"]),
+  select,
+  textarea {
+    font-size: 16px;
+  }
+}
+
+/* ------------------------------------------------------------
+   2. ÁREA SEGURA (notch, barra de gestos, celular deitado)
+------------------------------------------------------------ */
+@supports (padding: max(0px)) {
+  .header__container {
+    padding-left: max(var(--hdr-pad-x, 24px), env(safe-area-inset-left));
+    padding-right: max(var(--hdr-pad-x, 24px), env(safe-area-inset-right));
+  }
+
+  .footer {
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+}
+
+/* ------------------------------------------------------------
+   3. NOTEBOOK COMPACTO (≤ 1366px)
+------------------------------------------------------------ */
+@media (max-width: 1366px) {
+  :root {
+    --hdr-pad-x: 24px;
+  }
+}
+
+/* ------------------------------------------------------------
+   4. TABLET EM PAISAGEM / NOTEBOOK PEQUENO (≤ 1180px)
+------------------------------------------------------------ */
+@media (max-width: 1180px) {
+  :root {
+    --hdr-pad-x: 16px;
+  }
+}
+
+/* ------------------------------------------------------------
+   5. TABLET EM RETRATO (≤ 860px)
+------------------------------------------------------------ */
+@media (max-width: 860px) {
+  :root {
+    --hdr-pad-x: 14px;
+  }
+}
+
+/* ------------------------------------------------------------
+   6. CELULAR (≤ 480px) e CELULAR PEQUENO (≤ 360px)
+------------------------------------------------------------ */
+@media (max-width: 480px) {
+  :root {
+    --hdr-pad-x: 10px;
+  }
+}
+
+@media (max-width: 360px) {
+  :root {
+    --hdr-pad-x: 8px;
+  }
+}
+
+/* ------------------------------------------------------------
+   7. CELULAR DEITADO (altura curta em paisagem)
+      Painéis flutuantes não podem passar da altura da tela.
+------------------------------------------------------------ */
+@media (max-height: 500px) and (orientation: landscape) {
+  .notif-popout__lista {
+    max-height: calc(100dvh - 160px);
+  }
+
+  .header__search-results {
+    max-height: calc(100dvh - 140px);
+  }
+}
+
+/* ============================================================
+   COMPONENTES GLOBAIS (migrados dos CSS de assets/)
+   Cada bloco abaixo veio do arquivo indicado, sem mudar o valor.
+============================================================= */
+
+/* ---- assets/css/aviso-permissao.css ---- */
+@media (max-width: 720px) { .aviso-perm { bottom: 84px; } }
+
+/* ---- assets/css/busca-pagina.css (Ctrl+F do site) ---- */
+@media (max-width: 480px) {
+  .bp-barra { top: 10px; right: 12px; left: 12px; width: auto; max-width: none; }
+  .bp-card { padding: 6px; gap: 4px; }
+  .bp-campo-wrap { height: 38px; padding-left: 12px; }
+  .bp-btn { width: 32px; height: 32px; }
+  .bp-sep { margin: 0 2px; }
+}
+
+/* ---- assets/css/chamadas-alerta.css ---- */
+@media (max-width: 600px) { .ch-alerta-pilha { top: 76px; right: 12px; } }
+
+/* ---- assets/css/dialogo.css ---- */
+@media (max-width: 420px) {
+  .ib-dialogo__acoes { flex-direction: column-reverse; }
+  .ib-dialogo__btn { width: 100%; }
+}
+
+/* ---- assets/css/menu-contexto.css ---- */
+/* Celular: o menu fica mais largo e o modal vira "folha" na base da tela */
+@media (max-width: 600px) {
+  .ml-menu { min-width: min(280px, calc(100vw - 16px)); }
+  .ml-menu__item { padding: 12px 10px; }
+  .ml-modal-fundo { align-items: flex-end; padding: 0; }
+  .ml-modal { width: 100%; max-height: 88vh; border-radius: 18px 18px 0 0; }
+}
+
+/* ---- assets/css/popout-bloqueio.css ---- */
+@media (max-width: 420px) {
+  .acesso-negado {
+    width: calc(100vw - 24px);
+  }
+}
+
+@media (max-width: 420px) {
+  .acesso-negado--cadastro .acesso-negado__btn {
+    white-space: normal;
+  }
+}
+
+@media (max-width: 420px) {
+  .acesso-negado--duplicado .acesso-negado__msg {
+    white-space: normal;
+  }
+}
+
+/* ---- assets/css/tema-escuro.css (ajustes de cor que dependem da largura) ---- */
+@media (max-width: 1279px) {
+  html[data-tema="escuro"] .reuniao__item:nth-of-type(n) {
+    border-bottom: 1px solid #3b5165;
+  }
+}
+
+@media (max-width: 860px) {
+  html[data-tema="escuro"] .chat__coluna-thread {
+    background: #17222b;
+  }
+}
+
+@media (max-width: 767px) {
+  html[data-tema="escuro"] .configuracoes__acoes {
+    background: #17222b;
+  }
+}
+
+@media (max-width: 1180px) {
+  html[data-tema="escuro"] .documentos__por-inline {
+    color: #a1aeba;
+  }
+}
+
+@media (max-width: 768px) {
+  html[data-tema="escuro"] .documentos__tabela tbody tr {
+    border-bottom: 1px solid #334657;
+  }
+  html[data-tema="escuro"] .documentos__tabela td.documentos__col-data {
+    color: #a1aeba;
+  }
+}

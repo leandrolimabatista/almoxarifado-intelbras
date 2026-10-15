@@ -1,0 +1,128 @@
+/* ============================================================
+   Histórico de chamadas — componente compartilhado
+   (Chamadas, Chat e Equipes). Prefixo .hist__
+============================================================= */
+.hist { font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; color: #1A1A1A; }
+.hist *, .hist *::before, .hist *::after { box-sizing: border-box; }
+.hist button, .hist input { font-family: inherit; }
+.hist__ic { width: 18px; height: 18px; display: block; flex-shrink: 0; }
+
+.hist__topo { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-bottom: 14px; }
+.hist__filtros { display: flex; flex-wrap: wrap; gap: 6px; }
+.hist__chip {
+  display: inline-flex; align-items: center; gap: 6px; min-height: 32px; padding: 0 12px;
+  border-radius: 999px; border: 1px solid #D1D5DB; background: #fff; color: #374151;
+  font-size: 12.5px; font-weight: 600; cursor: pointer;
+}
+.hist__chip:hover { background: #F3F4F6; }
+.hist__chip--ativo, .hist__chip--ativo:hover { background: #00A859; border-color: #00A859; color: #fff; }
+.hist__chip-n {
+  min-width: 18px; padding: 0 5px; border-radius: 9px; background: rgba(0, 0, 0, .08);
+  font-size: 11px; line-height: 18px; text-align: center;
+}
+.hist__chip--ativo .hist__chip-n { background: rgba(255, 255, 255, .25); }
+.hist__chip--alerta:not(.hist__chip--ativo) .hist__chip-n { background: #FEE2E2; color: #B91C1C; }
+
+.hist__busca {
+  display: flex; align-items: center; gap: 8px; margin-left: auto; min-width: 220px; max-width: 320px; flex: 1;
+  height: 36px; padding: 0 12px; border: 1px solid #D1D5DB; border-radius: 10px; background: #fff; color: #6B6B6B;
+}
+.hist__busca:focus-within { border-color: #00A859; }
+.hist__busca input { flex: 1; min-width: 0; border: 0; outline: 0; background: transparent; font-size: 13.5px; color: #1A1A1A; }
+
+.hist__dia { margin: 18px 0 8px; font-size: 12px; font-weight: 700; letter-spacing: .02em; text-transform: uppercase; color: #6B6B6B; }
+.hist__dia:first-child { margin-top: 4px; }
+.hist__grupo { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 8px; }
+
+.hist__item {
+  display: grid; grid-template-columns: 40px minmax(0, 1fr) auto auto; gap: 12px; align-items: center;
+  padding: 10px 12px; background: #fff; border: 1px solid #ECECEC; border-radius: 12px;
+}
+.hist__item:hover { background: #FAFAFA; }
+.hist__item--perdida { border-color: #FECACA; }
+
+.hist__icone {
+  width: 40px; height: 40px; border-radius: 50%; display: inline-flex; align-items: center; justify-content: center;
+  background: #E7F7EE; color: #007A40;
+}
+.hist__icone--entrada { background: #E7F7EE; color: #007A40; }
+.hist__icone--saida { background: #EEF2FF; color: #4338CA; }
+.hist__icone--perdida { background: #FEE2E2; color: #B91C1C; }
+
+.hist__info { display: flex; flex-direction: column; min-width: 0; }
+.hist__nome { font-size: 14px; font-weight: 700; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.hist__item--perdida .hist__nome { color: #B91C1C; }
+.hist__meta { font-size: 12px; color: #6B6B6B; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.hist__quando { display: flex; flex-direction: column; align-items: flex-end; gap: 1px; text-align: right; white-space: nowrap; }
+.hist__res { font-size: 12.5px; font-weight: 700; color: #374151; }
+.hist__res--ruim { color: #B91C1C; }
+.hist__res--ativa { color: #007A40; }
+.hist__hora { font-size: 12px; color: #6B6B6B; }
+
+.hist__acoes { display: flex; align-items: center; gap: 6px; min-width: 0; }
+.hist__acao {
+  width: 36px; height: 36px; border-radius: 50%; border: 1px solid #D1D5DB; background: #fff; color: #007A40;
+  display: inline-flex; align-items: center; justify-content: center; cursor: pointer;
+}
+.hist__acao:hover { background: #E7F7EE; border-color: #00A859; }
+
+.hist__btn {
+  min-height: 34px; padding: 0 14px; border-radius: 8px; font-size: 13px; font-weight: 700; cursor: pointer;
+}
+.hist__btn--sec { background: #fff; color: #007A40; border: 1px solid #00A859; }
+.hist__btn--sec:hover:not(:disabled) { background: #E7F7EE; }
+.hist__btn:disabled { opacity: .6; cursor: default; }
+
+.hist__mais { display: flex; justify-content: center; margin-top: 14px; }
+.hist__mais[hidden] { display: none; }
+
+.hist__vazio {
+  display: flex; flex-direction: column; align-items: center; gap: 6px; padding: 32px 12px; text-align: center;
+  font-size: 13px; color: #6B6B6B;
+}
+.hist__vazio strong { color: #1A1A1A; font-size: 14px; }
+.hist__vazio .hist__ic { width: 30px; height: 30px; color: #9CA3AF; }
+.hist__vazio .hist__btn { margin-top: 8px; }
+p.hist__vazio { flex-direction: row; justify-content: center; }
+.hist__spinner {
+  width: 16px; height: 16px; border: 2px solid #D1D5DB; border-top-color: #00A859; border-radius: 50%;
+  animation: hist-gira .7s linear infinite;
+}
+@keyframes hist-gira { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) { .hist__spinner { animation-duration: 2s; } }
+
+.hist :focus-visible { outline: 3px solid #1A1A1A; outline-offset: 2px; }
+
+/* ---------- Responsivo ---------- */
+@media (max-width: 720px) {
+  .hist__busca { max-width: none; min-width: 0; width: 100%; margin-left: 0; }
+  .hist__item { grid-template-columns: 40px minmax(0, 1fr) auto; }
+  .hist__quando { grid-column: 2; grid-row: 2; align-items: flex-start; text-align: left; flex-direction: row; gap: 8px; }
+  .hist__acoes { grid-column: 3; grid-row: 1 / span 2; }
+}
+
+/* ---------- Tema escuro ---------- */
+html[data-tema="escuro"] .hist { color: var(--dk-texto, #e1e5e9); }
+html[data-tema="escuro"] .hist__chip,
+html[data-tema="escuro"] .hist__busca,
+html[data-tema="escuro"] .hist__acao { background: var(--dk-surface, #17222b); border-color: var(--dk-linha-2, #40586e); color: var(--dk-texto, #e1e5e9); }
+html[data-tema="escuro"] .hist__chip:hover { background: var(--dk-surface-2, #1c2a35); }
+html[data-tema="escuro"] .hist__chip--ativo,
+html[data-tema="escuro"] .hist__chip--ativo:hover { background: #00A859; border-color: #00A859; color: #fff; }
+html[data-tema="escuro"] .hist__busca input { color: var(--dk-texto, #e1e5e9); }
+html[data-tema="escuro"] .hist__item { background: var(--dk-surface, #17222b); border-color: var(--dk-linha, #374b5d); }
+html[data-tema="escuro"] .hist__item:hover { background: var(--dk-surface-2, #1c2a35); }
+html[data-tema="escuro"] .hist__item--perdida { border-color: #7f2d33; }
+html[data-tema="escuro"] .hist__item--perdida .hist__nome,
+html[data-tema="escuro"] .hist__res--ruim { color: #f28b8f; }
+html[data-tema="escuro"] .hist__meta,
+html[data-tema="escuro"] .hist__hora,
+html[data-tema="escuro"] .hist__dia { color: var(--dk-texto-dim, #a1aeba); }
+html[data-tema="escuro"] .hist__res { color: var(--dk-texto, #e1e5e9); }
+html[data-tema="escuro"] .hist__res--ativa { color: #4ade80; }
+html[data-tema="escuro"] .hist__icone--entrada { background: #123826; color: #4ade80; }
+html[data-tema="escuro"] .hist__icone--saida { background: #1e2547; color: #a5b4fc; }
+html[data-tema="escuro"] .hist__icone--perdida { background: #3b1c20; color: #f28b8f; }
+html[data-tema="escuro"] .hist__btn--sec { background: transparent; color: #4ade80; border-color: #00A859; }
+html[data-tema="escuro"] .hist__vazio strong { color: var(--dk-texto, #e1e5e9); }

@@ -602,6 +602,7 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
   max-width: 100%;
 }
@@ -619,6 +620,7 @@
   color: var(--eq-preto);
   word-break: break-word;
   max-width: 100%;
+  width: fit-content;
 }
 
 .equipes__bolha [data-texto] {
@@ -663,16 +665,44 @@
 /* Resposta citada, dentro da bolha */
 .equipes__citacao {
   display: flex;
-  gap: 8px;
+  flex-direction: column;
+  gap: 2px;
   border-left: 3px solid var(--eq-verde);
-  padding: 2px 0 2px 10px;
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.045);
+  padding: 6px 10px;
   margin-bottom: 8px;
   font-size: 12.5px;
+  line-height: 1.4;
   color: var(--eq-cinza);
 }
 
-.equipes__citacao strong {
-  color: var(--eq-preto);
+.equipes__msg--minha .equipes__citacao {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.equipes__citacao-autor {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--intelbras-verde-escuro, #007A40);
+}
+
+.equipes__citacao-autor svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.equipes__citacao-trecho {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
 }
 
 /* Card de arquivo anexado */
@@ -793,11 +823,10 @@
   color: var(--eq-verde);
 }
 
-/* Toolbar ao passar o mouse */
+/* Toolbar ao passar o mouse: fica AO LADO do balão (no nível do horário),
+   nunca por cima do texto. Mensagem recebida: à direita; minha: à esquerda. */
 .equipes__toolbar {
-  position: absolute;
-  top: -18px;
-  right: 8px;
+  position: static;
   display: flex;
   align-items: center;
   gap: 2px;
@@ -810,11 +839,6 @@
   pointer-events: none;
   transition: opacity .12s ease;
   z-index: 5;
-}
-
-.equipes__grupo--minha .equipes__toolbar {
-  right: auto;
-  left: 8px;
 }
 
 .equipes__msg:hover .equipes__toolbar,
@@ -834,22 +858,40 @@
   display: flex;
   align-items: center;
   justify-content: center;
-  color: var(--eq-preto);
+  color: var(--eq-cinza);
 }
 
 .equipes__toolbar-btn:hover {
   background: #F2F3F5;
+  color: var(--eq-preto);
+}
+
+.equipes__toolbar-btn svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
 }
 
 .equipes__toolbar-wrap {
-  position: relative;
+  position: absolute;
+  top: 0;
+  left: 100%;
+  padding-left: 6px; /* ponte de hover entre o balão e a barra */
+  z-index: 5;
+}
+
+.equipes__msg--minha .equipes__toolbar-wrap {
+  left: auto;
+  right: 100%;
+  padding-left: 0;
+  padding-right: 6px;
 }
 
 /* Seletor rápido de reações */
 .equipes__reacao-picker {
   position: absolute;
-  top: -40px;
-  right: 0;
+  top: calc(100% + 4px);
+  left: 6px;
   display: flex;
   gap: 2px;
   background: #fff;
@@ -876,8 +918,8 @@
 /* Menu "mais" (editar/copiar/apagar) por mensagem */
 .equipes__msg-menu {
   position: absolute;
-  top: -14px;
-  right: 4px;
+  top: calc(100% + 4px); /* abaixo da barra de ações, sem cobri-la */
+  left: 6px;
   background: #fff;
   border: 1px solid var(--eq-borda);
   border-radius: 8px;
@@ -887,9 +929,14 @@
   z-index: 20;
 }
 
-.equipes__grupo--minha .equipes__msg-menu {
-  right: auto;
-  left: 4px;
+.equipes__msg--minha .equipes__msg-menu {
+  left: auto;
+  right: 6px;
+}
+
+.equipes__msg--minha .equipes__reacao-picker {
+  left: auto;
+  right: 6px;
 }
 
 /* Vazio / digitando */
@@ -966,10 +1013,18 @@
 }
 
 /* Botão "Ir para o fim" */
+.equipes__ir-fim-ancora {
+  position: relative;
+  height: 0;
+  flex-shrink: 0;
+  z-index: 15;
+}
+
 .equipes__ir-fim {
   position: absolute;
-  bottom: 118px;
-  right: 32px;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
   display: flex;
   align-items: center;
   gap: 6px;
@@ -983,6 +1038,10 @@
   color: var(--eq-preto);
   cursor: pointer;
   z-index: 15;
+}
+
+.equipes__ir-fim[hidden] {
+  display: none;
 }
 
 .equipes__ir-fim svg {
@@ -2562,14 +2621,7 @@ button.equipes__cal-dia--sel:hover {
 .equipes__nota-titulo-input { flex: 0 0 auto; font-size: 16px; font-weight: 700; }
 .equipes__nota-texto { flex: 1; min-height: 260px; resize: vertical; line-height: 1.5; }
 
-@media (max-width: 860px) {
-  .equipes__aba-conteudo { padding: 12px 16px 0; }
-  .equipes__agenda-corpo { grid-template-columns: 1fr; }
-  .equipes__agenda-dia { min-height: 42px; }
-  .equipes__aba-form { flex-wrap: wrap; }
-  .equipes__aba-input--data,
-  .equipes__data { flex: 1 1 140px; }
-}
+
 
 
 /* ============================================================
@@ -2650,3 +2702,237 @@ body:has(#equipesRaiz) .footer {
   font-family: inherit; font-size: 13px; font-weight: 700; cursor: pointer; transition: background-color 0.15s;
 }
 .equipes__pos-btn:hover { background: #007A40; }
+
+/* ----- Aba Arquivos (lista dos anexos enviados no chat da equipe) ----- */
+.equipes__arquivos-busca { flex: 0 1 260px; }
+
+.equipes__arquivo {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--eq-borda);
+  border-radius: 10px;
+  background: #fff;
+  transition: border-color .15s, background-color .15s;
+}
+
+.equipes__arquivo:hover { border-color: var(--eq-verde); background: #FAFFFC; }
+
+.equipes__arquivo-link {
+  flex: 1;
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 6px 10px 12px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.equipes__arquivo-info { min-width: 0; flex: 1; }
+
+.equipes__arquivo-meta {
+  display: block;
+  margin-top: 2px;
+  font-size: 12px;
+  color: var(--eq-cinza);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.equipes__arquivo-baixar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  margin-right: 8px;
+  border-radius: 8px;
+  color: var(--eq-cinza);
+  text-decoration: none;
+  flex: none;
+}
+
+.equipes__arquivo-baixar svg { width: 19px; height: 19px; }
+.equipes__arquivo-baixar:hover { background: var(--eq-verde-100); color: var(--eq-verde-escuro); }
+
+/* Seletor completo de emojis para reagir (flutua sobre a tela, ancorado no botão) */
+.equipes__popover--emoji.equipes__reacao-completo {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  z-index: 1000;
+}
+
+/* O seletor completo é criado no <body>, fora de .equipes: reaplica fonte, box-sizing
+   e [hidden] para ficar IDÊNTICO ao seletor do campo de texto. */
+.equipes__reacao-completo {
+  font-family: 'Noto Emoji Equipes', 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  width: 330px;
+  max-width: calc(100vw - 16px);
+}
+
+.equipes__reacao-completo,
+.equipes__reacao-completo * {
+  box-sizing: border-box;
+}
+
+.equipes__reacao-completo [hidden] {
+  display: none !important;
+}
+
+.equipes__reacao-picker .equipes__reacao-mais {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 2px;
+  padding: 0;
+  border-left: 1px solid var(--eq-borda);
+  border-radius: 999px;
+  color: var(--eq-cinza);
+}
+
+.equipes__reacao-picker .equipes__reacao-mais svg {
+  width: 18px;
+  height: 18px;
+}
+
+.equipes__reacao-completo .equipes__emoji-grade {
+  flex: none;
+}
+
+/* Edição na própria bolha */
+.equipes__edicao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(360px, 70vw);
+}
+
+.equipes__edicao textarea {
+  width: 100%;
+  border: 1px solid var(--eq-borda);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  line-height: 1.4;
+  resize: vertical;
+  background: #fff;
+  color: var(--eq-preto);
+}
+
+.equipes__edicao textarea:focus {
+  outline: 2px solid var(--eq-verde);
+  outline-offset: 0;
+}
+
+.equipes__edicao-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.equipes__edicao-salvar {
+  border: none;
+  background: var(--eq-verde);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.equipes__edicao-salvar:hover {
+  background: var(--eq-verde-escuro);
+}
+
+/* ---- Edição na bolha: layout refinado ---- */
+.equipes__bolha:has(.equipes__edicao) {
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--eq-borda);
+  box-shadow: var(--eq-sombra-1);
+}
+
+.equipes__edicao {
+  min-width: min(380px, 72vw);
+  gap: 8px;
+}
+
+.equipes__edicao textarea {
+  min-height: 40px;
+  max-height: 200px;
+  resize: none;
+  overflow-y: auto;
+  border: 1px solid var(--eq-borda);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #fff;
+  outline: none;
+  box-shadow: none;
+}
+
+.equipes__edicao textarea:focus {
+  outline: none;
+  border-color: var(--eq-verde);
+  box-shadow: 0 0 0 3px var(--eq-verde-100);
+}
+
+.equipes__edicao-acoes {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.equipes__edicao-cancelar {
+  border: 1px solid var(--eq-borda);
+  background: #fff;
+  color: var(--eq-preto);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.equipes__edicao-cancelar:hover {
+  background: #F2F3F5;
+}
+
+.equipes__edicao-salvar {
+  font-family: inherit;
+}
+
+/* ---- Paridade com o Chat: menu "⋯", reações e fontes ---- */
+.equipes__msg-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  font-family: inherit;
+  font-size: 13px;
+  border-radius: 6px;
+  color: var(--eq-preto);
+  white-space: nowrap;
+}
+
+.equipes__msg-menu-item:hover {
+  background: #F2F3F5;
+}
+
+.equipes__reacoes:empty {
+  display: none;
+}
+
+.equipes__reacao-picker button {
+  font-family: 'Noto Emoji Equipes', 'Poppins', 'Segoe UI', Arial, sans-serif;
+}

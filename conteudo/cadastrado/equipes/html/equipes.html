@@ -28,8 +28,9 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
 ?>
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
-<link rel="stylesheet" href="conteudo/cadastrado/equipes/css/equipes.css?v=20261026">
-<link rel="stylesheet" href="conteudo/cadastrado/equipes/responsivo/equipes.responsivo.css?v=5">
+<link rel="stylesheet" href="conteudo/cadastrado/equipes/css/equipes.css?v=20261031">
+<link rel="stylesheet" href="conteudo/cadastrado/equipes/responsivo/equipes.responsivo.css?v=8">
+<link rel="stylesheet" href="assets/css/historico-chamadas.css?v=1">
 
 <div
   class="equipes"
@@ -251,6 +252,7 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
         <button type="button" class="equipes__tab" data-aba="tarefas">Tarefas</button>
         <button type="button" class="equipes__tab" data-aba="calendario">Calendário</button>
         <button type="button" class="equipes__tab" data-aba="notas">Notas</button>
+        <button type="button" class="equipes__tab" data-aba="chamadas">Chamadas</button>
       </nav>
 
       <!-- Corpo da aba Chat -->
@@ -274,10 +276,13 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
           </div>
         </div>
 
-        <button type="button" class="equipes__ir-fim" id="equipesIrFim" hidden>
-          <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4v14M6 12l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
-          Ir para o fim
-        </button>
+        <!-- Âncora de altura zero logo acima do campo de envio: o botão acompanha o composer e fica centralizado na conversa -->
+        <div class="equipes__ir-fim-ancora">
+          <button type="button" class="equipes__ir-fim" id="equipesIrFim" hidden>
+            <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg"><path d="M12 4v14M6 12l6 6 6-6" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg>
+            Ir para o fim
+          </button>
+        </div>
 
         <!-- Campo de envio -->
         <div class="equipes__composer-wrap">
@@ -413,13 +418,12 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
         </div>
       </div>
 
-      <!-- Corpo das demais abas (placeholders "em breve", mesmo padrão das seções ainda não desenvolvidas do projeto) -->
-      <div class="equipes__corpo-aba equipes__corpo-aba--placeholder" data-corpo-aba="arquivos" hidden>
-        <p>Os arquivos desta equipe já aparecem em <a href="index.php?pagina=documentos">Documentos</a>. Uma visão dedicada aqui está a caminho.</p>
-      </div>
+      <!-- Corpo das demais abas (conteúdo desenhado por js/equipes-abas.js) -->
+      <div class="equipes__corpo-aba equipes__aba-conteudo" data-corpo-aba="arquivos" hidden></div>
       <div class="equipes__corpo-aba equipes__aba-conteudo" data-corpo-aba="tarefas" hidden></div>
       <div class="equipes__corpo-aba equipes__aba-conteudo" data-corpo-aba="calendario" hidden></div>
       <div class="equipes__corpo-aba equipes__aba-conteudo" data-corpo-aba="notas" hidden></div>
+      <div class="equipes__corpo-aba equipes__aba-conteudo" data-corpo-aba="chamadas" hidden><div id="equipesChamadasHist"></div></div>
     </div>
 
     <!-- ----- Painel direito ----- -->
@@ -480,5 +484,6 @@ $equipeInicial = preg_replace('/[^a-z]/', '', $equipeInicial) ?: 'geral';
 </div>
 
 <script src="conteudo/cadastrado/equipes/js/emojis-dados.js?v=2"></script>
-<script src="conteudo/cadastrado/equipes/js/equipes.js?v=19"></script>
-<script src="conteudo/cadastrado/equipes/js/equipes-abas.js?v=4"></script>
+<script src="conteudo/cadastrado/equipes/js/equipes.js?v=24"></script>
+<script src="assets/js/historico-chamadas.js?v=1"></script>
+<script src="conteudo/cadastrado/equipes/js/equipes-abas.js?v=5"></script>

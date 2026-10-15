@@ -87,10 +87,7 @@
 .ib-dialogo__btn--perigo { background: #fff; border: 1px solid #E5484D; color: #E5484D; }
 .ib-dialogo__btn--perigo:hover { background: #FDEDEE; }
 
-@media (max-width: 420px) {
-  .ib-dialogo__acoes { flex-direction: column-reverse; }
-  .ib-dialogo__btn { width: 100%; }
-}
+
 
 @media (prefers-reduced-motion: reduce) {
   .ib-dialogo, .ib-dialogo__caixa { transition: none; }

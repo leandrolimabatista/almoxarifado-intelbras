@@ -123,6 +123,21 @@ function eq_garantir_membro(PDO $pdo, int $usuarioId, string $slug, string $orig
     $stmt->execute(['slug' => $slug, 'uid' => $usuarioId, 'origem' => $origem, 'fav' => $origem === 'principal' ? 1 : 0]);
 }
 
+/** Iniciais (até 2 letras: primeiro + último nome) pro avatar — igual ao Chat. */
+function eq_iniciais(string $nome): string
+{
+    $partes = preg_split('/\s+/', trim($nome)) ?: [];
+    $partes = array_values(array_filter($partes, static fn($p) => $p !== ''));
+    if (!$partes) {
+        return '?';
+    }
+    $iniciais = mb_strtoupper(mb_substr($partes[0], 0, 1));
+    if (count($partes) > 1) {
+        $iniciais .= mb_strtoupper(mb_substr($partes[count($partes) - 1], 0, 1));
+    }
+    return $iniciais;
+}
+
 /** Lista de membros reais da equipe (para o painel direito), com presença calculada. */
 function eq_listar_membros(PDO $pdo, string $slug): array
 {
@@ -144,7 +159,7 @@ function eq_listar_membros(PDO $pdo, string $slug): array
         return [
             'id'       => (int)$l['id'],
             'nome'     => (string)$l['nome'],
-            'inicial'  => mb_strtoupper(mb_substr((string)$l['nome'], 0, 1)),
+            'inicial'  => eq_iniciais((string)$l['nome']),
             'cargo'    => (string)$l['cargo'],
             'presenca' => eq_calcular_presenca((string)($l['presenca_status'] ?? 'auto'), $l['visto_em'] ?? null),
         ];
@@ -216,7 +231,7 @@ function eq_formatar_mensagem(array $l, int $usuarioAtualId): array
         'id'          => (int)$l['id'],
         'usuario_id'  => (int)$l['usuario_id'],
         'autor'       => (string)$l['autor_nome'],
-        'inicial'     => mb_strtoupper(mb_substr((string)$l['autor_nome'], 0, 1)),
+        'inicial'     => eq_iniciais((string)$l['autor_nome']),
         'minha'       => $minha,
         'conteudo'    => $apagada ? '' : (string)$l['conteudo'],
         'apagada'     => $apagada,
@@ -499,7 +514,7 @@ function eq_apagar_mensagem(PDO $pdo, int $usuarioId, int $mensagemId, bool $ehA
 
 function eq_alternar_reacao(PDO $pdo, int $usuarioId, int $mensagemId, string $emoji): void
 {
-    if (!in_array($emoji, EQ_EMOJIS_RAPIDOS, true) && mb_strlen($emoji) > 8) {
+    if ($emoji === '' || mb_strlen($emoji) > 16) { // cabe em VARCHAR(16); sequências com tom de pele/ZWJ passam de 8
         throw new EquipesErro('Reação inválida.', 422);
     }
     $stmt = $pdo->prepare(

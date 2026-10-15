@@ -1,6 +1,7 @@
 // ============================================================
-// Equipes — abas Tarefas, Calendário e Notas
-// Dados reais via api/equipes/abas.php (database/equipes_abas.sql).
+// Equipes — abas Arquivos, Tarefas, Calendário e Notas
+// Tarefas/Calendário/Notas: api/equipes/abas.php (database/equipes_abas.sql).
+// Arquivos: api/equipes/arquivos.php.
 // Carrega cada aba na primeira vez que ela é aberta.
 // ============================================================
 (function () {
@@ -511,9 +512,126 @@
   });
   corpo('notas').addEventListener('click', cliqueNotas);
 
+  // ============================================================ ARQUIVOS (do canal)
+  // Dados: api/equipes/arquivos.php?slug=<equipe> — só os anexos enviados no chat DESTA equipe.
+  // Clicar abre o arquivo em outra aba (api/equipes/arquivo.php?modo=ver); formatos que o
+  // navegador não exibe (Word, Excel, PowerPoint, ZIP) são baixados.
+  const COR_ARQ = {
+    pdf: '#DC2626', doc: '#2563EB', docx: '#2563EB', xls: '#16A34A', xlsx: '#16A34A', csv: '#16A34A',
+    ppt: '#EA580C', pptx: '#EA580C', zip: '#6B7280', txt: '#6B7280', md: '#6B7280',
+    png: '#7C3AED', jpg: '#7C3AED', jpeg: '#7C3AED', webp: '#7C3AED',
+  };
+  const ROT_ARQ = {
+    pdf: 'PDF', doc: 'W', docx: 'W', xls: 'X', xlsx: 'X', csv: 'X', ppt: 'P', pptx: 'P',
+    zip: 'ZIP', txt: 'TXT', md: 'MD', png: 'IMG', jpg: 'IMG', jpeg: 'IMG', webp: 'IMG',
+  };
+  const EXT_VER = ['pdf', 'txt', 'png', 'jpg', 'jpeg', 'webp'];
+  const arquivos = { itens: [], busca: '', carregado: false };
+
+  const semAcentoArq = (t) => String(t || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase();
+  const tamanhoArq = (b) => (b < 1024 ? b + ' B' : b < 1048576 ? Math.round(b / 1024) + ' KB' : (b / 1048576).toFixed(1) + ' MB');
+  const dataArq = (s) => {
+    const d = new Date(String(s).replace(' ', 'T'));
+    if (isNaN(d)) return '';
+    return d.toLocaleDateString('pt-BR') + ' ' + d.toLocaleTimeString('pt-BR', { hour: '2-digit', minute: '2-digit' });
+  };
+
+  function desenharArquivos(manterFoco) {
+    const el = corpo('arquivos');
+    const termo = semAcentoArq(arquivos.busca.trim());
+    const lista = termo
+      ? arquivos.itens.filter((a) => semAcentoArq(a.nome + ' ' + a.autor).includes(termo))
+      : arquivos.itens;
+
+    const linhas = lista.map((a) => {
+      const ext = String(a.extensao || '').toLowerCase();
+      const abre = EXT_VER.includes(ext);
+      const urlAbrir = 'api/equipes/arquivo.php?id=' + a.id + (abre ? '&modo=ver' : '');
+      const urlBaixar = 'api/equipes/arquivo.php?id=' + a.id;
+      return `<li class="equipes__arquivo">
+        <a class="equipes__arquivo-link" href="${urlAbrir}" target="_blank" rel="noopener" title="${abre ? 'Abrir em outra aba' : 'Baixar arquivo'}">
+          <span class="equipes__anexo-icone" style="background:${COR_ARQ[ext] || '#6B7280'}">${esc(ROT_ARQ[ext] || ext.toUpperCase())}</span>
+          <span class="equipes__arquivo-info">
+            <span class="equipes__anexo-nome">${esc(a.nome)}</span>
+            <span class="equipes__arquivo-meta">${esc(a.meu ? 'Você' : a.autor)} · ${esc(dataArq(a.criado_em))} · ${esc(tamanhoArq(a.tamanho))}</span>
+          </span>
+        </a>
+        <a class="equipes__arquivo-baixar" href="${urlBaixar}" aria-label="Baixar ${esc(a.nome)}" title="Baixar">
+          <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14"/></svg>
+        </a>
+      </li>`;
+    }).join('');
+
+    const vazio = arquivos.itens.length
+      ? 'Nenhum arquivo encontrado para essa busca.'
+      : 'Nenhum arquivo foi compartilhado nesta equipe ainda. Os anexos enviados no chat aparecem aqui.';
+
+    el.innerHTML = `
+      <div class="equipes__aba-topo">
+        <h2 class="equipes__aba-titulo">Arquivos${arquivos.itens.length ? ' (' + arquivos.itens.length + ')' : ''}</h2>
+        <input type="search" class="equipes__aba-input equipes__arquivos-busca" data-campo="busca-arquivos" placeholder="Buscar arquivo ou pessoa…" aria-label="Buscar arquivo" value="${esc(arquivos.busca)}">
+      </div>
+      <div class="equipes__aba-scroll">
+        ${linhas ? `<ul class="equipes__aba-lista">${linhas}</ul>` : `<p class="equipes__aba-vazio">${esc(vazio)}</p>`}
+      </div>`;
+
+    if (manterFoco) {
+      const campo = el.querySelector('[data-campo="busca-arquivos"]');
+      if (campo) { campo.focus(); campo.setSelectionRange(campo.value.length, campo.value.length); }
+    }
+  }
+
+  async function carregarArquivos() {
+    try {
+      const resp = await fetch('api/equipes/arquivos.php?slug=' + encodeURIComponent(EQUIPE), {
+        credentials: 'same-origin', headers: { Accept: 'application/json' },
+      });
+      let dados = null;
+      try { dados = await resp.json(); } catch (e) { /* vazio */ }
+      if (!resp.ok || !dados || !dados.sucesso) throw new Error((dados && dados.erro) || 'Não foi possível carregar os arquivos.');
+      arquivos.itens = dados.itens || [];
+      arquivos.carregado = true;
+      desenharArquivos(false);
+    } catch (e) {
+      if (!arquivos.carregado) corpo('arquivos').innerHTML = `<p class="equipes__aba-vazio">${esc(e.message)}</p>`;
+    }
+  }
+
+  corpo('arquivos').addEventListener('input', (e) => {
+    if (!e.target.matches('[data-campo="busca-arquivos"]')) return;
+    arquivos.busca = e.target.value;
+    desenharArquivos(true);
+  });
+
+  // ============================================================ CHAMADAS (histórico da equipe)
+  // Dados: api/chamadas/historico.php?escopo=equipe (componente em assets/js/historico-chamadas.js)
+  let historicoChamadas = null;
+  function abrirChamadas() {
+    if (historicoChamadas) { historicoChamadas.recarregar(); return; }
+    const alvo = document.getElementById('equipesChamadasHist');
+    if (!alvo || !window.HistoricoChamadas) return;
+    historicoChamadas = window.HistoricoChamadas.montar(alvo, {
+      escopo: 'equipe',
+      equipe: EQUIPE,
+      busca: true,
+      aoLigar: (it, midia) => {
+        // Em andamento: entra nela. Senão repete o botão de telefone/vídeo do canal
+        // (que já confere se o cargo pode chamar a equipe toda).
+        if (it.resultado === 'em_andamento') {
+          window.location.href = 'index.php?pagina=chamadas&atender=' + encodeURIComponent(it.id);
+          return;
+        }
+        const b = document.getElementById(midia === 'video' ? 'equipesBtnVideo' : 'equipesBtnVoz');
+        if (b) b.click();
+      },
+    });
+  }
+
   document.querySelectorAll('.equipes__tab').forEach((tab) => {
     tab.addEventListener('click', () => {
       const aba = tab.getAttribute('data-aba');
+      if (aba === 'chamadas') abrirChamadas();
+      if (aba === 'arquivos') carregarArquivos(); // recarrega a cada abertura: pega o que acabou de ser enviado
       if (aba === 'tarefas') carregarTarefas();
       else if (aba === 'calendario') carregarCalendario();
       else if (aba === 'notas' && notas.aberta === null) carregarNotas();

@@ -100,6 +100,6 @@ INSERT INTO tb_unidades
   (nome, endereco, numero, bairro, cidade, estado, telefone, horario_funcionamento, status)
 SELECT
   'Intelbras — Lapa Tito', 'Rua Tito', '1280', 'Vila Romana', 'São Paulo', 'SP',
-  '(48) 2106 0006', 'Segunda a sexta, das 08h às 18h', 'ativa'
+  '0800 882 4040', 'Segunda a sexta, das 08h às 18h', 'ativa'
 FROM DUAL
 WHERE NOT EXISTS (SELECT 1 FROM tb_unidades);

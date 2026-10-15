@@ -25,6 +25,7 @@
   const $ = (id) => document.getElementById(id);
 
   const INTERVALO_POLL_MS = 4000;
+  const EMOJIS_RAPIDOS = ['👍', '❤️', '😂', '😮', '😢', '🙌'];
 
   const refs = {
     aviso: $('chatAviso'),
@@ -40,9 +41,15 @@
     threadNome: $('chatThreadNome'),
     threadCargo: $('chatThreadCargo'),
     mensagens: $('chatMensagens'),
+    irFim: $('chatIrFim'),
     listaMsgs: $('chatMensagensLista'),
     threadVazio: $('chatThreadVazio'),
     threadVazioTitulo: $('chatThreadVazioTitulo'),
+
+    respostaPreview: $('chatRespostaPreview'),
+    respostaAutor: $('chatRespostaAutor'),
+    respostaTrecho: $('chatRespostaTrecho'),
+    respostaFechar: $('chatRespostaFechar'),
 
     anexoPreview: $('chatAnexoPreview'),
     anexoPreviewNome: $('chatAnexoPreviewNome'),
@@ -78,6 +85,9 @@
     arquivoSelecionado: null,
     abaAtiva: 'chat',
     pollTimer: null,
+    sincEm: null,        // "agora" do servidor na última consulta (sincroniza edições/reações)
+    respostaAtual: null, // { id, autor, trecho } da mensagem que está sendo respondida
+    editandoId: null,    // mensagem em edição inline (pausa o redesenho do polling)
     menuConversaId: null, // conversa com o menu de botão direito aberto
   };
 
@@ -238,8 +248,21 @@
     return !!(window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches);
   }
 
+  // "Enviada" / "Lida" nas minhas mensagens: lida quando a outra pessoa abriu a conversa depois do envio
+  function atualizarStatusLeitura() {
+    if (!refs.listaMsgs) return;
+    const conv = estado.conversas.find((c) => c.id === estado.conversaAtivaId);
+    const leitura = conv && conv.outro_leitura ? new Date(conv.outro_leitura).getTime() : 0;
+    refs.listaMsgs.querySelectorAll('[data-status]').forEach((el) => {
+      const lida = leitura && new Date(el.getAttribute('data-criado')).getTime() <= leitura;
+      el.textContent = lida ? 'Lida' : 'Enviada';
+      el.classList.toggle('chat__status--lida', !!lida);
+    });
+  }
+
   // animar === true: as conversas deslizam até o novo lugar (ex.: ao fixar)
   function renderLista(animar) {
+    atualizarStatusLeitura();
     const filtro = (refs.buscaConversas.value || '').trim().toLowerCase();
     let itens = filtro
       ? estado.conversas.filter((c) => c.usuario.nome.toLowerCase().includes(filtro))
@@ -322,13 +345,16 @@
     estado.conversaAtivaId = conversaId;
     estado.usuarioAtivo = usuario;
     estado.ultimoMensagemId = 0;
+    estado.sincEm = null;
+    estado.editandoId = null;
+    cancelarResposta();
     limparAnexoSelecionado();
 
     refs.vazio.hidden = true;
     refs.thread.hidden = false;
     refs.threadAvatar.textContent = usuario.iniciais;
     refs.threadNome.textContent = usuario.nome;
-    document.title = usuario.nome + ' — Intelbras';
+    document.title = usuario.nome + ' - Intelbras';
     refs.threadCargo.textContent = usuario.cargo ? rotuloCargo(usuario.cargo) : usuario.email;
     estado.mensagens = [];
     estado.maxIdRenderizado = 0;
@@ -347,6 +373,7 @@
       const d = await apiJson('api/chat/mensagens.php?conversa_id=' + conversaId);
       renderMensagens(d.mensagens, true);
       if (d.mensagens.length) estado.ultimoMensagemId = d.mensagens[d.mensagens.length - 1].id;
+      estado.sincEm = d.agora || null;
       // Zera o contador de não lidas localmente (o servidor já marcou como lida)
       const c = estado.conversas.find((x) => x.id === conversaId);
       if (c) c.nao_lidas = 0;
@@ -379,7 +406,9 @@
       estado.maxIdRenderizado = 0;
     }
     lista.forEach((m) => {
-      if (!estado.mensagens.some((x) => x.id === m.id)) estado.mensagens.push(m);
+      const i = estado.mensagens.findIndex((x) => x.id === m.id);
+      if (i === -1) estado.mensagens.push(m);
+      else estado.mensagens[i] = m; // editada, apagada ou com reação nova
     });
     estado.mensagens.sort((a, b) => a.id - b.id);
     renderizarLista(substituir);
@@ -394,6 +423,24 @@
       c.hidden = c.getAttribute('data-corpo-aba') !== aba;
     });
     if (aba === 'arquivos') renderizarArquivos();
+    if (aba === 'chamadas') mostrarHistoricoChamadas();
+  }
+
+  // Aba Chamadas: histórico de chamadas com a pessoa da conversa aberta
+  // (componente em assets/js/historico-chamadas.js; dados em api/chamadas/historico.php)
+  let historicoChamadas = null;
+  let historicoDeUsuario = 0;
+  function mostrarHistoricoChamadas() {
+    const u = estado.usuarioAtivo;
+    const alvo = $('chatChamadasHist');
+    if (!u || !u.id || !alvo || !window.HistoricoChamadas) return;
+    if (historicoChamadas && historicoDeUsuario === u.id) { historicoChamadas.recarregar(); return; }
+    historicoDeUsuario = u.id;
+    historicoChamadas = window.HistoricoChamadas.montar(alvo, {
+      escopo: 'contato',
+      usuarioId: u.id,
+      aoLigar: (it, midia) => ligarParaPessoa(midia, u, estado.conversaAtivaId),
+    });
   }
 
   // Aba Arquivos: anexos já carregados nesta conversa (mais recente primeiro)
@@ -463,14 +510,28 @@
     const ext = String(a.extensao || '').toLowerCase();
     const cor = CORES_ARQUIVO[ext] || '#6B7280';
     const rotulo = ROTULO_ARQUIVO[ext] || ext.toUpperCase();
-    const url = 'api/chat/arquivo.php?id=' + a.documento_id;
-    return `<a class="chat__anexo-card" href="${url}" target="_blank" rel="noopener">
-        <span class="chat__anexo-icone" style="background:${cor}">${escapeHtml(rotulo)}</span>
-        <span class="chat__anexo-info">
-          <span class="chat__anexo-nome">${escapeHtml(a.nome)}.${escapeHtml(a.extensao)}</span>
-          <span class="chat__anexo-tamanho">${formatarTamanho(a.tamanho)}</span>
+    const nomeCompleto = escapeHtml(a.nome) + '.' + escapeHtml(a.extensao);
+    // Mesmo funcionamento de Equipes: PDF, imagem e texto abrem em outra aba;
+    // os demais formatos (Word, Excel…) são baixados.
+    const urlBaixar = 'api/chat/arquivo.php?id=' + a.documento_id;
+    const urlAbrir = urlBaixar + (['pdf', 'txt', 'png', 'jpg', 'jpeg', 'webp'].includes(ext) ? '&modo=ver' : '');
+    return `<div class="chat__anexo-card">
+        <a class="chat__anexo-principal" href="${urlAbrir}" target="_blank" rel="noopener">
+          <span class="chat__anexo-icone" style="background:${cor}">${escapeHtml(rotulo)}</span>
+          <span class="chat__anexo-info">
+            <span class="chat__anexo-nome">${nomeCompleto}</span>
+            <span class="chat__anexo-tamanho">${formatarTamanho(a.tamanho)}</span>
+          </span>
+        </a>
+        <span class="chat__anexo-acoes">
+          <a class="chat__anexo-acao" href="${urlAbrir}" target="_blank" rel="noopener" title="Abrir em nova aba" aria-label="Abrir ${nomeCompleto} em nova aba">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M14 4h6v6M20 4l-9 9M18 14v4a2 2 0 01-2 2H6a2 2 0 01-2-2V8a2 2 0 012-2h4"/></svg>
+          </a>
+          <a class="chat__anexo-acao" href="${urlBaixar}" download title="Baixar" aria-label="Baixar ${nomeCompleto}">
+            <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 4v11M7.5 10.5L12 15l4.5-4.5M5 19h14"/></svg>
+          </a>
         </span>
-      </a>`;
+      </div>`;
   }
 
   function renderizarLista(primeiraCarga) {
@@ -526,13 +587,39 @@
       }
 
       const nova = !primeiraCarga && m.id > limite;
-      html += `
-              <div class="chat__msg ${minha ? 'chat__msg--minha' : ''}" data-msg-id="${m.id}"${nova ? ' data-mv-nova' : ''}>
-                <div class="chat__bolha">
-                  ${m.texto ? `<span data-texto>${formatarConteudo(m.texto)}</span>` : ''}
+      const lado = minha ? 'chat__msg--minha' : '';
+      const novaAttr = nova ? ' data-mv-nova' : '';
+
+      if (m.apagada) {
+        html += `
+              <div class="chat__msg ${lado}" data-msg-id="${m.id}"${novaAttr}>
+                <div class="chat__bolha chat__bolha--apagada">Esta mensagem foi apagada</div>
+              </div>`;
+      } else {
+        const citacao = m.resposta_a ? `
+                  <div class="chat__citacao">
+                    <span class="chat__citacao-autor"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7L4.5 11.5 9 16"/><path d="M4.5 11.5H14a5.5 5.5 0 015.5 5.5v1"/></svg>${escapeHtml(m.resposta_a.autor)}</span>
+                    <span class="chat__citacao-trecho">${escapeHtml(m.resposta_a.trecho)}</span>
+                  </div>` : '';
+        const reacoes = (m.reacoes || []).map((r) => `<button type="button" class="chat__reacao ${r.reagiu ? 'chat__reacao--minha' : ''}" data-reagir="${escapeHtml(r.emoji)}">${escapeHtml(r.emoji)} ${r.total}</button>`).join('');
+        const editada = m.editada ? '<span class="chat__editada-rotulo">(editada)</span>' : '';
+        html += `
+              <div class="chat__msg ${lado}" data-msg-id="${m.id}"${novaAttr}>
+                <div class="chat__toolbar-wrap">
+                  <div class="chat__toolbar">
+                    <button type="button" class="chat__toolbar-btn" data-acao="reagir-abrir" title="Reagir" aria-label="Reagir"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M8.5 14c.9 1.2 2 1.8 3.5 1.8s2.6-.6 3.5-1.8"/><path d="M9.2 9.8h.01M14.8 9.8h.01"/></svg></button>
+                    <button type="button" class="chat__toolbar-btn" data-acao="responder" title="Responder" aria-label="Responder"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M9 7L4.5 11.5 9 16"/><path d="M4.5 11.5H14a5.5 5.5 0 015.5 5.5v1"/></svg></button>
+                    <button type="button" class="chat__toolbar-btn" data-acao="mais-abrir" title="Mais" aria-label="Mais opções" aria-haspopup="menu"><svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true"><circle cx="5.5" cy="12" r="1.7"/><circle cx="12" cy="12" r="1.7"/><circle cx="18.5" cy="12" r="1.7"/></svg></button>
+                  </div>
+                </div>
+                <div class="chat__bolha" data-conteudo>${citacao}
+                  ${m.texto ? `<span data-texto>${formatarConteudo(m.texto)}</span>${editada}` : ''}
                   ${m.anexo ? cartaoAnexo(m.anexo) : ''}
                 </div>
+                <div class="chat__reacoes" data-reacoes>${reacoes}</div>
+                ${minha ? `<span class="chat__status" data-status data-criado="${escapeHtml(m.criado_em)}"></span>` : ''}
               </div>`;
+      }
 
       grupoAutor = m.remetente_id;
       grupoHora = data.getTime();
@@ -540,13 +627,27 @@
     fecharGrupo();
 
     refs.listaMsgs.innerHTML = html;
+    atualizarStatusLeitura();
     estado.maxIdRenderizado = Math.max(limite, msgs[msgs.length - 1].id);
 
     const ultima = msgs[msgs.length - 1];
-    if (primeiraCarga || pertoDoFim || ultima.remetente_id === meuId) {
+    // Só rola ao fim na 1ª carga, se já estava perto do fim ou se EU acabei de enviar uma nova
+    // (reagir/editar/apagar mensagem antiga não pode empurrar a conversa pro fim)
+    if (primeiraCarga || pertoDoFim || (ultima.remetente_id === meuId && ultima.id > limite)) {
       caixa.scrollTop = caixa.scrollHeight;
     }
+    atualizarIrFim();
   }
+
+  // Botão "Ir para o fim": aparece quando há mais de ~120px de conversa abaixo da área visível
+  function atualizarIrFim() {
+    const c = refs.mensagens;
+    refs.irFim.hidden = c.scrollHeight - c.scrollTop - c.clientHeight < 120;
+  }
+  refs.mensagens.addEventListener('scroll', atualizarIrFim, { passive: true });
+  refs.irFim.addEventListener('click', () => {
+    refs.mensagens.scrollTo({ top: refs.mensagens.scrollHeight, behavior: 'smooth' });
+  });
 
   // ------------------------------------------------------------
   // Polling (mensagens novas da conversa aberta)
@@ -567,11 +668,15 @@
     if (!estado.conversaAtivaId || document.hidden) return;
     const conversaId = estado.conversaAtivaId;
     try {
-      const d = await apiJson('api/chat/mensagens.php?conversa_id=' + conversaId + '&depois_de=' + estado.ultimoMensagemId);
+      const sinc = estado.sincEm ? '&sinc=' + encodeURIComponent(estado.sincEm) : '';
+      const d = await apiJson('api/chat/mensagens.php?conversa_id=' + conversaId + '&depois_de=' + estado.ultimoMensagemId + sinc);
       if (conversaId !== estado.conversaAtivaId) return; // trocou de conversa enquanto esperava
+      if (d.agora) estado.sincEm = d.agora;
       if (d.mensagens.length) {
-        renderMensagens(d.mensagens, false);
-        estado.ultimoMensagemId = d.mensagens[d.mensagens.length - 1].id;
+        // Editando uma mensagem: guarda as novidades, mas só redesenha quando terminar (não perde o texto)
+        if (estado.editandoId) mesclarSemRedesenhar(d.mensagens);
+        else renderMensagens(d.mensagens, false);
+        estado.ultimoMensagemId = Math.max(estado.ultimoMensagemId, d.mensagens[d.mensagens.length - 1].id);
       }
     } catch (e) {
       // Falha silenciosa: o próximo ciclo tenta de novo. Não interrompe o
@@ -579,6 +684,15 @@
     }
     // Atualiza a lista em segundo plano (prévia/hora/não-lidas de outras conversas)
     carregarConversasSilencioso();
+  }
+
+  function mesclarSemRedesenhar(lista) {
+    lista.forEach((m) => {
+      const i = estado.mensagens.findIndex((x) => x.id === m.id);
+      if (i === -1) estado.mensagens.push(m);
+      else estado.mensagens[i] = m;
+    });
+    estado.mensagens.sort((a, b) => a.id - b.id);
   }
 
   let silenciosoEmAndamento = false;
@@ -626,6 +740,7 @@
     formData.append('conversa_id', String(estado.conversaAtivaId));
     if (texto) formData.append('texto', texto);
     if (arquivo) formData.append('arquivo', arquivo);
+    if (estado.respostaAtual) formData.append('resposta_a', String(estado.respostaAtual.id));
 
     const conversaId = estado.conversaAtivaId;
 
@@ -638,6 +753,7 @@
       refs.inputTexto.value = '';
       refs.inputTexto.style.height = '';
       if (editorApi) editorApi.limpar();
+      cancelarResposta();
       limparAnexoSelecionado();
       esconderAviso();
       carregarConversasSilencioso();
@@ -1398,6 +1514,7 @@
 
     // Documentos trocados nesta conversa = aba "Arquivos" da própria conversa
     $('chatMenuDocumentos').addEventListener('click', () => { fecharMenuMais(); selecionarAba('arquivos'); });
+    $('chatMenuChamadas').addEventListener('click', () => { fecharMenuMais(); selecionarAba('chamadas'); });
   }
 
   // ------------------------------------------------------------
@@ -1495,31 +1612,409 @@
     return true;
   }
 
-  // Botão direito numa mensagem da conversa aberta (links e imagens mantêm o menu do navegador)
+  const menuMsgFechado = { id: null, em: 0 };
+
+  // ------------------------------------------------------------
+  // Ações por mensagem (mesmo funcionamento de Equipes): reagir, responder,
+  // e no "⋯": editar, copiar texto, apagar. Segundo clique no botão fecha.
+  // ------------------------------------------------------------
+  function fecharMenusMensagem() {
+    document.querySelectorAll('.chat__msg-menu, .chat__reacao-picker, .chat__reacao-completo').forEach((el) => el.remove());
+  }
+
+  function mensagemPorId(id) {
+    return estado.mensagens.find((x) => x.id === id);
+  }
+
+  // Aplica a mensagem devolvida pelo servidor e redesenha
+  function aplicarMensagem(m) {
+    if (!m) return;
+    mesclarSemRedesenhar([m]);
+    const topo = refs.mensagens.scrollTop;
+    renderizarLista(false);
+    refs.mensagens.scrollTop = topo;
+    renderizarArquivos();
+  }
+
+  async function reagir(id, emoji) {
+    try {
+      const d = await apiJson('api/chat/mensagem.php', { metodo: 'POST', corpo: { id, acao: 'reagir', emoji } });
+      aplicarMensagem(d.mensagem);
+    } catch (e) {
+      mostrarAviso(e.message);
+    }
+  }
+
+  function iniciarResposta(id) {
+    const m = mensagemPorId(id);
+    if (!m || m.apagada) return;
+    const minha = m.remetente_id === meuId;
+    const base = m.texto ? semMarcadores(m.texto) : (m.anexo ? '📎 ' + m.anexo.nome + '.' + m.anexo.extensao : '');
+    estado.respostaAtual = {
+      id: m.id,
+      autor: minha ? 'Você' : ((estado.usuarioAtivo && estado.usuarioAtivo.nome) || ''),
+      trecho: base.slice(0, 140),
+    };
+    refs.respostaAutor.textContent = estado.respostaAtual.autor;
+    refs.respostaTrecho.textContent = estado.respostaAtual.trecho;
+    refs.respostaPreview.hidden = false;
+    refs.inputTexto.focus();
+  }
+
+  function cancelarResposta() {
+    estado.respostaAtual = null;
+    refs.respostaPreview.hidden = true;
+  }
+
+  refs.respostaFechar.addEventListener('click', cancelarResposta);
+
+  function iniciarEdicao(id) {
+    const m = mensagemPorId(id);
+    const el = refs.listaMsgs.querySelector('[data-msg-id="' + id + '"] [data-conteudo]');
+    if (!m || !m.texto || !el) return;
+    if (estado.editandoId && estado.editandoId !== id) renderizarLista(false); // fecha outra edição aberta
+    estado.editandoId = id;
+    el.innerHTML = `
+      <div class="chat__edicao">
+        <textarea rows="2" aria-label="Editar mensagem">${escapeHtml(m.texto)}</textarea>
+        <div class="chat__edicao-acoes">
+          <button type="button" class="chat__edicao-cancelar" data-op="cancelar">Cancelar</button>
+          <button type="button" class="chat__edicao-salvar" data-op="salvar">Salvar</button>
+        </div>
+      </div>`;
+    const campo = el.querySelector('textarea');
+    campo.focus();
+    campo.setSelectionRange(campo.value.length, campo.value.length);
+    const ajustarAltura = () => { campo.style.height = 'auto'; campo.style.height = Math.min(campo.scrollHeight + 2, 200) + 'px'; };
+    campo.addEventListener('input', ajustarAltura);
+    ajustarAltura();
+    el.scrollIntoView({ block: 'nearest' }); // mantém campo e botões visíveis
+
+    function sair() {
+      estado.editandoId = null;
+      renderizarLista(false);
+    }
+    async function salvar() {
+      const novo = campo.value.trim();
+      if (!novo) return;
+      if (novo === m.texto) { sair(); return; }
+      try {
+        const d = await apiJson('api/chat/mensagem.php', { metodo: 'POST', corpo: { id, acao: 'editar', texto: novo } });
+        estado.editandoId = null;
+        aplicarMensagem(d.mensagem);
+      } catch (e) {
+        mostrarAviso(e.message);
+      }
+    }
+    el.querySelector('[data-op="cancelar"]').addEventListener('click', sair);
+    el.querySelector('[data-op="salvar"]').addEventListener('click', salvar);
+    campo.addEventListener('keydown', (ev) => {
+      if (ev.key === 'Escape') { ev.preventDefault(); sair(); }
+      else if (ev.key === 'Enter' && !ev.shiftKey) { ev.preventDefault(); salvar(); }
+    });
+  }
+
+  async function apagarMensagem(id) {
+    const D = window.IBDialogo;
+    const confirmado = D && D.confirmar
+      ? await D.confirmar({ titulo: 'Apagar mensagem?', texto: 'Esta mensagem será apagada para os dois participantes da conversa.', confirmar: 'Apagar', perigo: true })
+      : window.confirm('Apagar esta mensagem para os dois participantes da conversa?');
+    if (!confirmado) return;
+    try {
+      const d = await apiJson('api/chat/mensagem.php', { metodo: 'POST', corpo: { id, acao: 'apagar' } });
+      cancelarRespostaSe(id); // se a prévia citava a mensagem apagada
+      aplicarMensagem(d.mensagem);
+      carregarConversasSilencioso(); // a prévia da lista pode ter sido essa mensagem
+    } catch (e) {
+      mostrarAviso(e.message);
+    }
+  }
+
+  function cancelarRespostaSe(id) {
+    if (estado.respostaAtual && estado.respostaAtual.id === id) { cancelarResposta(); return true; }
+    return false;
+  }
+
+  function copiarTexto(m) {
+    if (window.MenuContexto) window.MenuContexto.copiar(m.texto, 'Texto copiado');
+    else if (navigator.clipboard) navigator.clipboard.writeText(m.texto).then(() => avisar('Texto copiado'));
+  }
+
+  function abrirPickerReacao(btn, id) {
+    const wrap = btn.closest('.chat__toolbar-wrap');
+    const jaAberto = wrap.querySelector('.chat__reacao-picker');
+    fecharMenusMensagem();
+    if (jaAberto) return; // segundo clique no botão: fecha
+    const picker = document.createElement('div');
+    picker.className = 'chat__reacao-picker';
+    picker.setAttribute('role', 'menu');
+    picker.innerHTML = EMOJIS_RAPIDOS.map((e) => `<button type="button" role="menuitem" data-rapido="${e}" aria-label="Reagir com ${e}">${e}</button>`).join('')
+      + '<button type="button" class="chat__reacao-mais" data-mais-emojis aria-label="Mais emojis" title="Mais emojis"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 8.5v7M8.5 12h7"/></svg></button>';
+    picker.querySelectorAll('[data-rapido]').forEach((b) => {
+      b.addEventListener('click', (ev) => { ev.stopPropagation(); picker.remove(); reagir(id, b.getAttribute('data-rapido')); });
+    });
+    picker.querySelector('[data-mais-emojis]').addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      picker.remove();
+      abrirPickerCompleto(btn, id);
+    });
+    wrap.appendChild(picker);
+    // Abre abaixo da barra; sem espaço embaixo (última mensagem), abre acima dela
+    if (picker.getBoundingClientRect().bottom > refs.mensagens.getBoundingClientRect().bottom) {
+      picker.style.top = (-picker.offsetHeight - 4) + 'px';
+    }
+    setTimeout(() => document.addEventListener('click', function fechar() {
+      picker.remove();
+      document.removeEventListener('click', fechar);
+    }), 0);
+  }
+
+  // Seletor COMPLETO de emojis para reagir (como o do Teams): busca, tom de pele, categorias e recentes.
+  // Usa a mesma lista, os mesmos recentes e o mesmo tom de pele do seletor do campo de texto.
+  function abrirPickerCompleto(ancora, id) {
+    fecharMenusMensagem();
+    const pop = document.createElement('div');
+    pop.className = 'chat__popover chat__popover--emoji chat__reacao-completo';
+    pop.innerHTML = `
+      <div class="chat__emoji-abas"><button type="button" class="chat__emoji-aba chat__emoji-aba--ativa">Emoji</button></div>
+      <div class="chat__emoji-busca-linha">
+        <div class="chat__emoji-busca">
+          <input type="text" placeholder="Encontre algo divertido" autocomplete="off" aria-label="Buscar emoji">
+          <svg viewBox="0 0 24 24" fill="none" aria-hidden="true"><circle cx="11" cy="11" r="7" stroke="currentColor" stroke-width="1.8"/><path d="M21 21L16.65 16.65" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"/></svg>
+        </div>
+        <div class="chat__emoji-tom-wrap">
+          <button type="button" class="chat__emoji-tom-btn" aria-label="Tom de pele" aria-haspopup="true" aria-expanded="false" title="Tom de pele">✋</button>
+          <div class="chat__emoji-tom-menu" hidden></div>
+        </div>
+      </div>
+      <div class="chat__emoji-grade"></div>
+      <div class="chat__emoji-categorias"></div>`;
+    document.body.appendChild(pop);
+
+    const busca = pop.querySelector('input');
+    const grade = pop.querySelector('.chat__emoji-grade');
+    const barra = pop.querySelector('.chat__emoji-categorias');
+    const tomBtn = pop.querySelector('.chat__emoji-tom-btn');
+    const tomMenu = pop.querySelector('.chat__emoji-tom-menu');
+
+    const AMOSTRA_TOM = '\u270B';
+    const MODIFICADORES = ['', '\u{1F3FB}', '\u{1F3FC}', '\u{1F3FD}', '\u{1F3FE}', '\u{1F3FF}'];
+    const NOMES_TOM = ['Padrão', 'Claro', 'Médio-claro', 'Médio', 'Médio-escuro', 'Escuro'];
+    let tom = 0;
+    try { tom = Math.min(5, Math.max(0, parseInt(localStorage.getItem(EMOJI_TOM_CHAVE) || '0', 10) || 0)); } catch (e) { tom = 0; }
+    const comTom = (e) => (tom ? ((EMOJI_TONS[e] && EMOJI_TONS[e][tom - 1]) || e) : e);
+    const botao = (e, n) => { const x = comTom(e); return `<button type="button" data-emoji="${x}" title="${escapeHtml(n || '')}">${x}</button>`; };
+
+    function atualizarBotaoTom() {
+      tomBtn.textContent = AMOSTRA_TOM + MODIFICADORES[tom];
+      tomMenu.innerHTML = MODIFICADORES.map((m, i) =>
+        `<button type="button" data-tom="${i}" class="${i === tom ? 'chat__emoji-tom--ativo' : ''}" title="${NOMES_TOM[i]}" aria-label="${NOMES_TOM[i]}">${AMOSTRA_TOM}${m}</button>`
+      ).join('');
+    }
+    function recentes() {
+      try { return JSON.parse(localStorage.getItem(EMOJI_RECENTES_CHAVE) || '[]'); } catch (e) { return []; }
+    }
+    function guardarRecente(e) {
+      const lista = recentes().filter((x) => x !== e);
+      lista.unshift(e);
+      try { localStorage.setItem(EMOJI_RECENTES_CHAVE, JSON.stringify(lista.slice(0, EMOJI_RECENTES_MAX))); } catch (err) { /* sem storage */ }
+    }
+    function marcarAtiva() {
+      const titulos = Array.from(grade.querySelectorAll('[data-sec]'));
+      if (!titulos.length) return;
+      let ativa = titulos[0].getAttribute('data-sec');
+      titulos.forEach((t) => { if (t.offsetTop - grade.scrollTop <= 12) ativa = t.getAttribute('data-sec'); });
+      barra.querySelectorAll('[data-cat]').forEach((b) => b.classList.toggle('chat__emoji-categoria--ativa', b.getAttribute('data-cat') === ativa));
+    }
+    function desenharTudo() {
+      const secoes = [];
+      const rec = recentes();
+      if (rec.length) secoes.push({ id: 'recentes', icone: '🕒', titulo: 'Usados recentemente', itens: rec.map((e) => [e, 'recente']) });
+      EMOJI_CATEGORIAS.forEach((c) => secoes.push(c));
+      grade.innerHTML = secoes.map((c) => `<div class="chat__emoji-grade-titulo" data-sec="${c.id}">${escapeHtml(c.titulo)}</div>` + c.itens.map(([e, n]) => botao(e, n)).join('')).join('');
+      barra.innerHTML = secoes.map((c) => `<button type="button" class="chat__emoji-categoria" data-cat="${c.id}" title="${escapeHtml(c.titulo)}" aria-label="${escapeHtml(c.titulo)}">${c.icone}</button>`).join('');
+      barra.hidden = false;
+      grade.scrollTop = 0;
+      marcarAtiva();
+    }
+    function desenharBusca(termo) {
+      barra.hidden = true;
+      const achados = [];
+      EMOJI_CATEGORIAS.forEach((c) => c.itens.forEach((item) => { if (semAcento(item[1]).includes(termo)) achados.push(item); }));
+      grade.innerHTML = achados.length
+        ? '<div class="chat__emoji-grade-titulo">Resultados</div>' + achados.map(([e, n]) => botao(e, n)).join('')
+        : '<div class="chat__emoji-grade-vazio">Nenhum emoji encontrado.</div>';
+      grade.scrollTop = 0;
+    }
+
+    atualizarBotaoTom();
+    desenharTudo();
+    grade.addEventListener('scroll', marcarAtiva);
+    grade.addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-emoji]');
+      if (!b) return;
+      const e = b.getAttribute('data-emoji');
+      guardarRecente(e);
+      fechar();
+      reagir(id, e);
+    });
+    barra.addEventListener('click', (ev) => {
+      const b = ev.target.closest('[data-cat]');
+      const alvo = b && grade.querySelector(`[data-sec="${b.getAttribute('data-cat')}"]`);
+      if (alvo) grade.scrollTo({ top: alvo.offsetTop, behavior: 'smooth' });
+    });
+    busca.addEventListener('input', () => {
+      const termo = semAcento(busca.value.trim());
+      if (termo) desenharBusca(termo); else desenharTudo();
+    });
+
+    // Tom de pele (mesmo botão ✋ do seletor do campo de texto)
+    tomBtn.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      tomMenu.hidden = !tomMenu.hidden;
+      tomBtn.setAttribute('aria-expanded', String(!tomMenu.hidden));
+    });
+    tomMenu.addEventListener('click', (ev) => {
+      ev.stopPropagation();
+      const b = ev.target.closest('[data-tom]');
+      if (!b) return;
+      tom = parseInt(b.getAttribute('data-tom'), 10) || 0;
+      try { localStorage.setItem(EMOJI_TOM_CHAVE, String(tom)); } catch (err) { /* sem storage */ }
+      tomMenu.hidden = true;
+      tomBtn.setAttribute('aria-expanded', 'false');
+      atualizarBotaoTom();
+      const termo = semAcento(busca.value.trim());
+      const topo = grade.scrollTop;
+      if (termo) desenharBusca(termo); else { desenharTudo(); grade.scrollTop = topo; marcarAtiva(); }
+    });
+    pop.addEventListener('click', () => { tomMenu.hidden = true; tomBtn.setAttribute('aria-expanded', 'false'); });
+
+    // Posição: ao lado da barra de ações da mensagem (mesma altura), longe do balão,
+    // e sempre dentro da área da conversa (nunca por cima da lista lateral).
+    const barraEl = ancora.closest('.chat__toolbar') || ancora;
+    const r = barraEl.getBoundingClientRect();
+    const area = refs.mensagens.getBoundingClientRect();
+    const larg = pop.offsetWidth || 330;
+    const alt = pop.offsetHeight || 380;
+    const minhaMsg = !!ancora.closest('.chat__msg--minha');
+    const limEsq = Math.max(8, area.left + 8);
+    const limDir = Math.max(limEsq, Math.min(window.innerWidth - larg - 8, area.right - larg - 8));
+    const desejado = minhaMsg ? r.right - larg : r.left;
+    pop.style.left = Math.min(Math.max(limEsq, desejado), limDir) + 'px';
+    pop.style.top = Math.max(8, Math.min(r.top, window.innerHeight - alt - 8)) + 'px';
+    setTimeout(() => busca.focus(), 0);
+
+    function fechar() {
+      pop.remove();
+      document.removeEventListener('mousedown', fora, true);
+      document.removeEventListener('keydown', tecla, true);
+      refs.mensagens.removeEventListener('scroll', fechar);
+    }
+    function fora(ev) { if (!pop.contains(ev.target)) fechar(); }
+    function tecla(ev) { if (ev.key === 'Escape') { ev.stopPropagation(); fechar(); } }
+    document.addEventListener('mousedown', fora, true);
+    document.addEventListener('keydown', tecla, true);
+    refs.mensagens.addEventListener('scroll', fechar);
+  }
+
+  function abrirMenuMais(btn, id) {
+    const wrap = btn.closest('.chat__toolbar-wrap');
+    const m = mensagemPorId(id);
+    const jaAberto = wrap.querySelector('.chat__msg-menu');
+    fecharMenusMensagem();
+    if (jaAberto || !m) return; // segundo clique no botão: fecha
+
+    const menu = document.createElement('div');
+    menu.className = 'chat__msg-menu';
+    menu.setAttribute('role', 'menu');
+    const item = (rotulo, op) => {
+      const b = document.createElement('button');
+      b.type = 'button';
+      b.className = 'chat__msg-menu-item';
+      b.setAttribute('role', 'menuitem');
+      b.textContent = rotulo;
+      b.addEventListener('click', (ev) => {
+        ev.stopPropagation();
+        fecharMenusMensagem();
+        op();
+      });
+      menu.appendChild(b);
+    };
+    const minha = m.remetente_id === meuId;
+    if (minha && m.texto) item('Editar', () => iniciarEdicao(id));
+    if (m.texto) item('Copiar texto', () => copiarTexto(m));
+    if (m.anexo) item('Ver arquivos da conversa', () => selecionarAba('arquivos'));
+    if (minha) item('Apagar', () => apagarMensagem(id));
+    wrap.appendChild(menu);
+
+    // Abre abaixo da barra; se não couber (última mensagem), abre acima dela
+    if (menu.getBoundingClientRect().bottom > refs.mensagens.getBoundingClientRect().bottom) {
+      menu.style.top = (-menu.offsetHeight - 4) + 'px';
+    }
+    setTimeout(() => document.addEventListener('click', function fechar() {
+      fecharMenusMensagem();
+      document.removeEventListener('click', fechar);
+    }), 0);
+  }
+
+  refs.listaMsgs.addEventListener('click', (e) => {
+    const msgEl = e.target.closest('[data-msg-id]');
+    if (!msgEl) return;
+    const id = Number(msgEl.getAttribute('data-msg-id'));
+
+    const chip = e.target.closest('[data-reagir]');
+    if (chip) { e.stopPropagation(); reagir(id, chip.getAttribute('data-reagir')); return; }
+
+    const btn = e.target.closest('[data-acao]');
+    if (!btn) return;
+    const acao = btn.getAttribute('data-acao');
+    e.stopPropagation();
+
+    if (acao === 'reagir-abrir') abrirPickerReacao(btn, id);
+    else if (acao === 'mais-abrir') abrirMenuMais(btn, id);
+    else if (acao === 'responder') {
+      fecharMenusMensagem();
+      if (estado.respostaAtual && estado.respostaAtual.id === id) cancelarResposta(); // segundo clique cancela
+      else iniciarResposta(id);
+    }
+  });
+
+  // Botão direito numa mensagem da conversa aberta (links, imagens e a edição inline mantêm o menu do navegador)
   refs.listaMsgs.addEventListener('contextmenu', (e) => {
     const M = window.MenuContexto;
     const el = e.target.closest('[data-msg-id]');
     if (!M || !el || e.shiftKey || M.temSelecao()) return;
-    if (e.target.closest('a[href], img')) return;
+    if (e.target.closest('a[href], img, textarea, input, button')) return;
     const id = Number(el.getAttribute('data-msg-id'));
-    const m = estado.mensagens.find((x) => x.id === id);
-    if (!m || (!m.texto && !m.anexo)) return;
+    const m = mensagemPorId(id);
+    if (!m || m.apagada || (!m.texto && !m.anexo)) return;
     e.preventDefault();
+    fecharMenusMensagem();
+    // Segundo botão direito na mesma mensagem: o menu já foi fechado pelo clique; não reabre.
+    if (menuMsgFechado.id === id && Date.now() - menuMsgFechado.em < 500) { menuMsgFechado.id = null; return; }
     const pos = M.posicao(e, el);
-    const opcoes = [];
+    const minha = m.remetente_id === meuId;
+    const opcoes = [
+      { rotulo: 'Responder', icone: 'responder', destaque: true, acao: () => iniciarResposta(id) },
+    ];
     if (m.texto) {
-      opcoes.push({ rotulo: 'Copiar texto', icone: 'copiar', destaque: true, acao: () => M.copiar(m.texto, 'Texto copiado') });
+      opcoes.push({ rotulo: 'Copiar texto', icone: 'copiar', acao: () => copiarTexto(m) });
     }
     if (m.anexo) {
-      opcoes.push({ rotulo: 'Ver arquivos da conversa', icone: 'arquivos', destaque: !m.texto,
-        acao: () => selecionarAba('arquivos') });
+      opcoes.push({ rotulo: 'Ver arquivos da conversa', icone: 'arquivos', acao: () => selecionarAba('arquivos') });
     }
-    const nome = m.remetente_id === meuId ? 'Você' : ((estado.usuarioAtivo && estado.usuarioAtivo.nome) || 'Mensagem');
+    if (minha) {
+      opcoes.push('sep');
+      if (m.texto) opcoes.push({ rotulo: 'Editar', icone: 'editar', acao: () => iniciarEdicao(id) });
+      opcoes.push({ rotulo: 'Apagar', icone: 'lixeira', perigo: true, acao: () => apagarMensagem(id) });
+    }
+    const nome = minha ? 'Você' : ((estado.usuarioAtivo && estado.usuarioAtivo.nome) || 'Mensagem');
     M.mostrar({
       x: pos.x, y: pos.y, alvo: null,
       aria: 'Opções da mensagem',
       cabeca: M.cabeca('mensagem', nome),
       opcoes: opcoes,
+      aoFechar: () => { menuMsgFechado.id = id; menuMsgFechado.em = Date.now(); },
     });
   });
 

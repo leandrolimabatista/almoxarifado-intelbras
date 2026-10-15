@@ -55,8 +55,8 @@ try {
     $rep   = (string)($dados['repetir_senha'] ?? '');
 
     $erros = [];
-    if (strlen($senha) < 8 || !preg_match('/[A-Za-z]/', $senha) || !preg_match('/\d/', $senha)) {
-        $erros['senha'] = 'Use ao menos 8 caracteres, com letras e números.';
+    if (!senha_forte($senha)) {
+        $erros['senha'] = 'Use ao menos 8 caracteres, com uma letra maiúscula, um número e um caractere especial.';
     } elseif ($senha !== $rep) {
         $erros['repetir_senha'] = 'As senhas não coincidem.';
     }

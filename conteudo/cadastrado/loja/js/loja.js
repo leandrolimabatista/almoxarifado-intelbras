@@ -15,8 +15,13 @@
   const API = window.LojaApi;
   if (!D || !API) return;
 
-  const { CATEGORIES, ICONS, PRODUCTS, IMG_BASE, MAX_PER_ITEM, LOW_STOCK_LIMIT, COST_CENTER_BALANCE,
+  const { ICONS, IMG_BASE, MAX_PER_ITEM, LOW_STOCK_LIMIT, COST_CENTER_BALANCE,
     FRETE_REGIOES, FRETE_OPCOES, CUPONS, ESTADOS } = D;
+
+  // Catálogo e categorias vêm do banco (api/loja/produtos.php). LojaDados.PRODUCTS é o catálogo
+  // antigo, fixo no JS, e não é mais usado.
+  let PRODUCTS = [];
+  let CATEGORIES = D.CATEGORIES.slice();
 
   /* ---------------- Estado ---------------- */
   let currentCategory = 'all';
@@ -28,6 +33,10 @@
   let cupomAberto = false;
   let frete = null;       // opção de frete escolhida no checkout
   let upsellIdx = 0;      // "Que tal levar também"
+  let catalogoEstado = 'loading';   // loading | ok | erro
+  let catalogoErro = '';
+  let catalogoToken = 0;
+  const nomesCarrinho = {};         // id -> nome (para avisar quando um item sai da Loja)
 
   /* ---------------- Elementos ---------------- */
   const $ = (id) => document.getElementById(id);
@@ -39,11 +48,18 @@
   const catWrap = $('lojaCatWrap');
   if (!grid || !drawer) return;
 
+  // Administrador (id 1): o PHP marca o <main> com data-admin e o token CSRF. O servidor confere de novo.
+  const mainEl = document.querySelector('.loja__main');
+  const ADMIN = !!(mainEl && mainEl.dataset.admin === '1');
+  const CSRF = (mainEl && mainEl.dataset.csrf) || '';
+
   /* ---------------- Utilitários ---------------- */
   function fmtBRL(v) {
     return v.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
   }
   const findProduct = (id) => PRODUCTS.find((p) => p.id === id);
+  // Quantas unidades de um produto cabem no pedido: o menor entre o limite dele e o estoque.
+  const limiteItem = (p) => Math.min(p.max || MAX_PER_ITEM, p.stock);
 
   /* ---------------- Filtro / ordenação ---------------- */
   function getFilteredProducts() {
@@ -126,10 +142,22 @@
 
   /* ---------------- Grid de produtos ---------------- */
   function renderGrid() {
+    if (!PRODUCTS.length && catalogoEstado === 'loading') {
+      grid.innerHTML = '<div class="loja__vazio">Carregando produtos...</div>';
+      return;
+    }
+    if (!PRODUCTS.length && catalogoEstado === 'erro') {
+      grid.innerHTML = `<div class="loja__vazio">${esc(catalogoErro)}<br>
+        <button type="button" class="lcompra__retry" data-catalogo-recarregar>Tentar de novo</button></div>`;
+      return;
+    }
+
     const items = getFilteredProducts();
 
     if (items.length === 0) {
-      grid.innerHTML = '<div class="loja__vazio">Nenhum item encontrado para essa busca.</div>';
+      grid.innerHTML = '<div class="loja__vazio">' + (PRODUCTS.length
+        ? 'Nenhum item encontrado para essa busca.'
+        : 'Nenhum item na Loja ainda.' + (ADMIN ? '<br>Use “Adicionar item” para cadastrar o primeiro.' : '')) + '</div>';
       return;
     }
 
@@ -140,18 +168,29 @@
 
       const control = out
         ? '<button type="button" class="loja__add" disabled>Indisponível</button>'
-        : `<button type="button" class="loja__add" data-add="${p.id}">${ICON_CART}<span>Comprar</span></button>`;
+        : `<button type="button" class="loja__add" data-add="${esc(p.id)}">${ICON_CART}<span>Comprar</span></button>`;
+
+      const midia = p.image
+        ? `<img src="${esc(IMG_BASE + p.image)}" alt="${esc(p.name)}" loading="lazy">`
+        : `<span class="loja__fallback" aria-hidden="true">${ICONS[p.cat] || ''}</span>`;
+
+      const admin = ADMIN ? `
+          <div class="loja__card-admin">
+            <button type="button" class="loja__card-btn" data-editar="${esc(p.id)}" aria-label="Editar ${esc(p.name)}" title="Editar item">${ICON_EDIT}</button>
+            <button type="button" class="loja__card-btn loja__card-btn--perigo" data-remover="${esc(p.id)}" aria-label="Remover ${esc(p.name)}" title="Remover item">${ICON_TRASH}</button>
+          </div>` : '';
 
       return `
-      <article class="loja__card">
-        <div class="loja__card-media" data-cat="${p.cat}">
+      <article class="loja__card" data-id="${esc(p.id)}">
+        <div class="loja__card-media" data-cat="${esc(p.cat)}">
           <span class="loja__tag loja__tag--${tagCls}">${tagTxt}</span>
-          <img src="${IMG_BASE + p.image}" alt="${p.name}" loading="lazy">
+          ${admin}
+          ${midia}
         </div>
         <div class="loja__card-body">
-          <span class="loja__sku">${p.id}</span>
-          <h3 class="loja__card-title">${p.name}</h3>
-          <p class="loja__card-desc">${p.desc}</p>
+          <span class="loja__sku">${esc(p.id)}</span>
+          <h3 class="loja__card-title">${esc(p.name)}</h3>
+          <p class="loja__card-desc">${esc(p.desc)}</p>
           <div class="loja__card-foot">
             <div class="loja__price">${fmtBRL(p.price)}<small>/un</small></div>
             ${control}
@@ -177,6 +216,15 @@
 
   // Delegação de eventos dos botões do card
   grid.addEventListener('click', (e) => {
+    if (e.target.closest('[data-catalogo-recarregar]')) { carregarCatalogo(false); return; }
+    const ed = e.target.closest('[data-editar]');
+    const rm = e.target.closest('[data-remover]');
+    if (ed || rm) {
+      const p = findProduct((ed || rm).dataset[ed ? 'editar' : 'remover']);
+      if (!p) return;
+      if (ed) abrirFormProduto(p); else removerItem(p);
+      return;
+    }
     const add = e.target.closest('[data-add]');
     if (!add) return;
     addToCart(add.dataset.add);
@@ -195,7 +243,7 @@
     e.preventDefault();
     const pos = M.posicao(e, card);
     const esgotado = product.stock === 0;
-    const noLimite = (cart[product.id] || 0) >= Math.min(MAX_PER_ITEM, product.stock);
+    const noLimite = (cart[product.id] || 0) >= limiteItem(product);
     M.mostrar({
       x: pos.x, y: pos.y, alvo: null,
       aria: 'Opções de ' + product.name,
@@ -208,7 +256,11 @@
         'sep',
         { rotulo: 'Copiar código do produto', icone: 'codigo', acao: () => M.copiar(product.id, 'Código copiado') },
         { rotulo: 'Copiar nome', icone: 'copiar', acao: () => M.copiar(product.name, 'Nome copiado') },
-      ],
+      ].concat(ADMIN ? [
+        'sep',
+        { rotulo: 'Editar item', icone: 'editar', acao: () => abrirFormProduto(product) },
+        { rotulo: 'Remover item', icone: 'lixeira', perigo: true, acao: () => removerItem(product) },
+      ] : []),
     });
   });
 
@@ -223,8 +275,9 @@
     const product = findProduct(id);
     if (!product) return;
     const current = cart[id] || 0;
-    if (current >= Math.min(MAX_PER_ITEM, product.stock)) return;
+    if (current >= limiteItem(product)) return;
     cart[id] = current + 1;
+    nomesCarrinho[id] = product.name;
     afterCartChange();
   }
   function decFromCart(id) {
@@ -304,7 +357,8 @@
 
   /* ---------------- Miniaturas ---------------- */
   function thumbHTML(p) {
-    return `<span class="lcart__thumb" data-cat="${p.cat}"><img src="${IMG_BASE + p.image}" alt="" loading="lazy"></span>`;
+    const miolo = p.image ? `<img src="${esc(IMG_BASE + p.image)}" alt="" loading="lazy">` : (ICONS[p.cat] || '');
+    return `<span class="lcart__thumb" data-cat="${esc(p.cat)}">${miolo}</span>`;
   }
   function thumbFallback(root) {
     root.querySelectorAll('.lcart__thumb img').forEach((img) => {
@@ -468,23 +522,23 @@
     const itens = Object.keys(cart).map((id) => {
       const p = findProduct(id);
       const qty = cart[id];
-      const max = Math.min(MAX_PER_ITEM, p.stock);
+      const max = limiteItem(p);
       if (qty >= max) noLimite = true;
       return `
         <div class="lcart__item">
           ${thumbHTML(p)}
           <div class="lcart__info">
             <div class="lcart__top">
-              <span class="lcart__name">${p.name}</span>
+              <span class="lcart__name">${esc(p.name)}</span>
               <span class="lcart__price">${fmtBRL(round2(precoUnit(p) * qty))}</span>
             </div>
-            <div class="lcart__sku">${p.id}</div>
+            <div class="lcart__sku">${esc(p.id)}</div>
             <div class="lcart__ctrl">
-              <button type="button" class="lcart__trash" data-remove="${id}" aria-label="Remover ${p.name}">${ICON_TRASH}</button>
+              <button type="button" class="lcart__trash" data-remove="${esc(id)}" aria-label="Remover ${esc(p.name)}">${ICON_TRASH}</button>
               <div class="loja__stepper">
-                <button type="button" data-dec="${id}" aria-label="Diminuir">−</button>
+                <button type="button" data-dec="${esc(id)}" aria-label="Diminuir">−</button>
                 <span>${qty}</span>
-                <button type="button" data-inc="${id}" aria-label="Aumentar" ${qty >= max ? 'disabled' : ''}>+</button>
+                <button type="button" data-inc="${esc(id)}" aria-label="Aumentar" ${qty >= max ? 'disabled' : ''}>+</button>
               </div>
             </div>
           </div>
@@ -506,16 +560,16 @@
           <div class="lcart__upsell-card">
             ${thumbHTML(p)}
             <div class="lcart__upsell-info">
-              <span class="lcart__name">${p.name}</span>
+              <span class="lcart__name">${esc(p.name)}</span>
               <span class="lcart__upsell-preco">${fmtBRL(p.price)}</span>
             </div>
-            <button type="button" class="lcart__upsell-add" data-upsell-add="${p.id}">+ Comprar</button>
+            <button type="button" class="lcart__upsell-add" data-upsell-add="${esc(p.id)}">+ Comprar</button>
           </div>
         </div>`;
     }
 
     body.innerHTML = itens +
-      (noLimite ? `<p class="lcart__limite">Limite de ${MAX_PER_ITEM} unidades por produto em cada pedido.</p>` : '') +
+      (noLimite ? '<p class="lcart__limite">Você chegou ao limite de unidades disponíveis deste produto em cada pedido.</p>' : '') +
       upsell;
 
     const cupomBloco = cupom
@@ -576,7 +630,7 @@
   // Mesmo componente visual do popout global do site (assets/css/popout-bloqueio.css).
   let toastEl = null;
   let toastTimer = null;
-  function mostrarMensagem(texto) {
+  function mostrarMensagem(texto, titulo) {
     if (!toastEl) {
       toastEl = document.createElement('div');
       toastEl.className = 'acesso-negado acesso-negado--loja';
@@ -587,14 +641,14 @@
       '<div class="acesso-negado__card">',
       '  <span class="acesso-negado__blob acesso-negado__blob--tl" aria-hidden="true"></span>',
       '  <span class="acesso-negado__blob acesso-negado__blob--br" aria-hidden="true"></span>',
-      '  <div class="acesso-negado__topo"><span class="acesso-negado__titulo">Pagamento ⚠️</span></div>',
-      `  <span class="acesso-negado__msg">${texto}</span>`,
+      `  <div class="acesso-negado__topo"><span class="acesso-negado__titulo">${esc(titulo || 'Pagamento ⚠️')}</span></div>`,
+      `  <span class="acesso-negado__msg">${esc(texto)}</span>`,
       '</div>',
     ].join('');
     toastEl.classList.remove('is-open');
     requestAnimationFrame(() => toastEl.classList.add('is-open'));
     clearTimeout(toastTimer);
-    toastTimer = setTimeout(() => toastEl.classList.remove('is-open'), 4000);
+    toastTimer = setTimeout(() => toastEl.classList.remove('is-open'), 4500);
   }
 
   /* ============================================================
@@ -929,7 +983,7 @@
       return `
         <div class="lck__linha">
           <span class="lck__thumbw">${thumbHTML(p)}<em class="lck__badge">${q}</em></span>
-          <span class="lck__lnome">${p.name}</span>
+          <span class="lck__lnome">${esc(p.name)}</span>
           <span class="lck__lpreco">${fmtBRL(round2(precoUnit(p) * q))}</span>
         </div>`;
     }).join('');
@@ -1036,26 +1090,41 @@
     return items;
   }
 
-  // Grava o pedido (aba "Compras"). Espera no máximo 3 s e ignora qualquer erro:
-  // o histórico é secundário, o pagamento já foi gerado.
-  async function registrarPedidoSeguro(initPoint) {
-    try {
-      const pedido = {
-        itens: Object.keys(cart).map((id) => {
-          const p = findProduct(id);
-          return { id, nome: p.name, quantidade: cart[id], preco: precoUnit(p) };
-        }),
-        frete: frete ? { nome: frete.nome, preco: frete.preco } : null,
-        cupom: cupom ? cupom.codigo : null,
-        cep: soDig($('ckCep').value),
-        cidade: $('ckCidade').value.trim(),
-        uf: $('ckUf').value,
-        init_point: initPoint || '',   // o servidor extrai o id da preferência p/ confirmar o pagamento depois
-      };
-      await Promise.race([API.registrarPedido(pedido), new Promise((r) => setTimeout(r, 3000))]);
-    } catch (err) {
-      console.warn('Pedido não registrado no histórico:', err.message);
+  // Corpo do pedido (aba "Compras", Dashboard e baixa de estoque). O servidor confere itens,
+  // limites e preços no catálogo do banco: o navegador não decide nome nem preço máximo.
+  function montarPedido() {
+    return {
+      itens: Object.keys(cart).map((id) => {
+        const p = findProduct(id);
+        return { id, nome: p.name, quantidade: cart[id], preco: precoUnit(p) };
+      }),
+      frete: frete ? { nome: frete.nome, preco: frete.preco } : null,
+      cupom: cupom ? cupom.codigo : null,
+      cep: soDig($('ckCep').value),
+      cidade: $('ckCidade').value.trim(),
+      uf: $('ckUf').value,
+    };
+  }
+
+  // Liga o pedido ao link do Mercado Pago (é por ele que o site descobre o "pago"). Tenta até 3 vezes.
+  async function vincularSeguro(codigo, initPoint) {
+    for (let i = 0; i < 3; i++) {
+      try {
+        await Promise.race([
+          API.vincularPedido(codigo, initPoint),
+          new Promise((_, rej) => setTimeout(() => rej(new Error('tempo esgotado')), 4000)),
+        ]);
+        return;
+      } catch (err) {
+        console.warn('Pedido não vinculado ao pagamento (tentativa ' + (i + 1) + '):', err.message);
+        if (err.status >= 400 && err.status < 500) return;   // o servidor recusou: repetir não adianta
+      }
     }
+  }
+
+  // O pagamento não chegou a ser gerado: devolve o estoque reservado (se falhar, o servidor libera sozinho depois).
+  async function liberarReserva(codigo) {
+    try { await API.cancelarPedido(codigo); } catch (err) { console.warn('Reserva não liberada agora:', err.message); }
   }
 
   async function pagar() {
@@ -1076,10 +1145,27 @@
     btn.disabled = true;
     btn.textContent = 'Em processamento...';
 
+    // 1) Reserva: baixa o estoque e grava o pedido. Se acabou, o pagamento nem é gerado.
+    let codigo;
+    try {
+      codigo = await API.reservarPedido(montarPedido());
+    } catch (err) {
+      console.error(err);
+      if (err.status === 409 || err.estoque) {
+        mostrarMensagem(err.message, 'Estoque ⚠️');
+        await carregarCatalogo(true);   // a vitrine volta com o estoque real e o carrinho é ajustado
+      } else {
+        mostrarMensagem(err.message || 'Não foi possível reservar os itens. Tente novamente.');
+      }
+      restaurar();
+      return;
+    }
+
+    // 2) Pagamento (servidor AWS → Mercado Pago)
     try {
       const data = await API.criarPagamento(montarItens());
       if (data && data.init_point) {
-        await registrarPedidoSeguro(data.init_point); // histórico em "Compras"; nunca impede o pagamento
+        await vincularSeguro(codigo, data.init_point);
         compras = null;
         window.location.href = data.init_point;   // Mercado Pago
         return;
@@ -1089,6 +1175,7 @@
       console.error(err);
       mostrarMensagem('Erro ao conectar com o servidor de pagamento.');
     }
+    await liberarReserva(codigo);
     restaurar();
   }
 
@@ -1110,6 +1197,7 @@
 
   document.addEventListener('keydown', (e) => {
     if (e.key !== 'Escape') return;
+    if (modalProd) return;   // o popout de item trata o próprio Esc
     if (isCatOpen()) { closeCat(); return; }
     if (drawer.classList.contains('is-open')) closeDrawer();
   });
@@ -1124,10 +1212,403 @@
   const ICON_TRASH = '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 12a1.5 1.5 0 0 0 1.5 1.4h7A1.5 1.5 0 0 0 17 19l1-12M9 7V4.5A1 1 0 0 1 10 3.5h4a1 1 0 0 1 1 1V7"/></svg>';
   const ICON_CHEV = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>';
 
+  const ICON_EDIT = '<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 20h9"/><path d="M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg>';
+
+  /* ============================================================
+     CATÁLOGO (banco) + ESTOQUE
+     A vitrine lê api/loja/produtos.php. O estoque mostrado já desconta os pedidos em
+     andamento; ele é atualizado ao voltar para a aba e a cada 45 s com a loja aberta.
+  ============================================================ */
+  // Ajusta o carrinho ao catálogo atual (item removido, sem estoque ou com limite menor). Devolve os avisos.
+  function reconciliarCarrinho() {
+    const avisos = [];
+    Object.keys(cart).forEach((id) => {
+      const p = findProduct(id);
+      if (!p || p.stock <= 0) {
+        avisos.push(`"${(p && p.name) || nomesCarrinho[id] || id}" não está mais disponível e saiu do carrinho.`);
+        delete cart[id];
+        return;
+      }
+      const max = limiteItem(p);
+      if (cart[id] > max) {
+        cart[id] = max;
+        avisos.push(`A quantidade de "${p.name}" foi ajustada para ${max} (estoque disponível).`);
+      }
+    });
+    return avisos;
+  }
+
+  function aplicarCatalogo(d, mostrarAvisos) {
+    PRODUCTS = d.produtos;
+    if (Array.isArray(d.categorias) && d.categorias.length) {
+      CATEGORIES = d.categorias.map((c) => ({ id: c.id, label: c.nome }));
+    }
+    if (currentCategory !== 'all' && !CATEGORIES.some((c) => c.id === currentCategory)) currentCategory = 'all';
+    catalogoEstado = 'ok';
+    const avisos = reconciliarCarrinho();
+    renderCategoryPanel();
+    updatePageHead();
+    afterCartChange();   // redesenha vitrine, carrinho e (se aberto) o resumo do checkout
+    if (mostrarAvisos !== false && avisos.length) mostrarMensagem(avisos.join(' '), 'Carrinho ⚠️');
+  }
+
+  function carregarCatalogo(silencioso) {
+    const token = ++catalogoToken;
+    if (!silencioso && !PRODUCTS.length) { catalogoEstado = 'loading'; renderGrid(); }
+    return API.listarProdutos()
+      .then((d) => { if (token === catalogoToken) aplicarCatalogo(d); })
+      .catch((err) => {
+        if (token !== catalogoToken) return;
+        console.error(err);
+        if (!PRODUCTS.length) { catalogoEstado = 'erro'; catalogoErro = err.message; renderGrid(); }
+        // já havia catálogo na tela: mantém o que está aí até a próxima atualização
+      });
+  }
+
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && !modalProd) carregarCatalogo(true); });
+  setInterval(() => { if (!document.hidden && !modalProd && tela === 'vitrine') carregarCatalogo(true); }, 45000);
+
+  /* ============================================================
+     ADMINISTRADOR — adicionar / editar / remover item
+     Só aparece para o usuário id 1 (e o servidor confere de novo a cada ação).
+     Visual e comportamento do popout = diálogo padrão do site (assets/css/dialogo.css):
+     mesma caixa, mesma animação, mesmos botões; campos = os do checkout.
+  ============================================================ */
+  let modalProd = null;
+
+  const maskPreco = (v) => {
+    const d = soDig(v).slice(0, 8);
+    return d ? fmtBRL(parseInt(d, 10) / 100) : '';
+  };
+  const parsePreco = (v) => { const d = soDig(v); return d ? parseInt(d, 10) / 100 : 0; };
+  const IMG_TIPOS = ['image/jpeg', 'image/png', 'image/webp'];
+  const IMG_MAX = 5 * 1024 * 1024;
+
+  function abrirFormProduto(produto) {
+    if (!ADMIN || modalProd) return;
+    const editando = !!produto;
+    const anterior = document.activeElement;
+    const estoqueAbertura = editando ? produto.stock : 0;   // base para não desfazer compras feitas com o formulário aberto
+    const st = { arquivo: null, previewUrl: '', removerImagem: false, salvando: false };
+
+    const cats = CATEGORIES.map((c) => `<option value="${esc(c.id)}">${esc(c.label)}</option>`).join('');
+    const raiz = document.createElement('div');
+    raiz.className = 'lprod';
+    raiz.innerHTML = `
+      <div class="lprod__fundo" data-lprod-fundo></div>
+      <form class="lprod__caixa" role="dialog" aria-modal="true" aria-labelledby="lprodTitulo" novalidate>
+        <h2 class="lprod__titulo" id="lprodTitulo">${editando ? 'Editar item' : 'Adicionar item'}</h2>
+        <p class="lprod__sub">${editando
+          ? 'Altere os dados e salve. O código do produto não pode ser mudado.'
+          : 'Preencha os dados do produto que vai aparecer na Loja.'}</p>
+
+        <div class="lprod__corpo">
+          <div class="lprod__imagem">
+            <div class="lprod__drop" id="lpDrop" tabindex="0" role="button" aria-label="Escolher a imagem do produto">
+              <span class="lprod__preview" id="lpPreview"></span>
+              <span class="lprod__drop-txt">
+                <strong>Imagem do produto</strong>
+                <span>Arraste um arquivo ou clique para escolher<br>JPG, PNG ou WEBP · até 5MB</span>
+              </span>
+            </div>
+            <input type="file" id="lpArquivo" accept="image/jpeg,image/png,image/webp" hidden>
+            <button type="button" class="lprod__link lprod__link--perigo" id="lpRemoverImagem" hidden>Remover imagem</button>
+            <span class="lck__erro lck__erro--bloco" id="lpImagemErro" role="alert"></span>
+          </div>
+
+          <div class="lck__row">
+            ${campo('lpCodigo', 'Código (ex.: ABC1234)', { extra: 'maxlength="20" autocapitalize="characters" spellcheck="false"' + (editando ? ' disabled' : '') })}
+            <div class="lck__field lck__field--select" data-campo="lpCategoria">
+              <select id="lpCategoria" data-seletor><option value=""></option>${cats}</select>
+              <label for="lpCategoria">Categoria</label>
+              <span class="lck__erro" id="lpCategoriaErro" role="alert"></span>
+            </div>
+          </div>
+          ${campo('lpTitulo', 'Título (ex.: Nome do produto)', { extra: 'maxlength="150"' })}
+          <div class="lck__field lprod__desc" data-campo="lpDescricao">
+            <textarea id="lpDescricao" placeholder=" " maxlength="500" rows="3"></textarea>
+            <label for="lpDescricao">Descrição</label>
+            <span class="lprod__contador" id="lpContador" aria-hidden="true">0/500</span>
+            <span class="lck__erro" id="lpDescricaoErro" role="alert"></span>
+          </div>
+          <div class="lck__row">
+            ${campo('lpPreco', 'Preço (ex.: R$ 99,90)', { extra: 'inputmode="numeric" maxlength="16"' })}
+            ${campo('lpEstoque', 'Estoque (unidades)', { extra: 'inputmode="numeric" maxlength="6"' })}
+          </div>
+          <span class="lck__erro lck__erro--bloco" id="lpErroGeral" role="alert"></span>
+        </div>
+
+        <div class="lprod__acoes">
+          ${editando ? '<button type="button" class="ib-dialogo__btn ib-dialogo__btn--perigo" id="lpRemoverItem">Remover item</button>' : '<span></span>'}
+          <div class="lprod__acoes-dir">
+            <button type="button" class="ib-dialogo__btn ib-dialogo__btn--contorno" id="lpCancelar">Cancelar</button>
+            <button type="submit" class="ib-dialogo__btn ib-dialogo__btn--primario" id="lpSalvar">${editando ? 'Salvar alterações' : 'Adicionar item'}</button>
+          </div>
+        </div>
+      </form>`;
+    document.body.appendChild(raiz);
+    document.body.classList.add('lprod-aberto');
+
+    const el = (id) => raiz.querySelector('#' + id);
+    const caixa = raiz.querySelector('.lprod__caixa');
+    raiz.querySelector('[data-campo="lpPreco"]').insertAdjacentHTML('beforeend', '<span class="lprod__sufixo" aria-hidden="true">/un</span>');
+
+    // valores iniciais
+    if (editando) {
+      el('lpCodigo').value = produto.id;
+      el('lpTitulo').value = produto.name;
+      el('lpDescricao').value = produto.desc;
+      el('lpPreco').value = fmtBRL(produto.price);
+      el('lpEstoque').value = String(produto.stock);
+      el('lpCategoria').value = produto.cat;
+    } else if (currentCategory !== 'all') {
+      el('lpCategoria').value = currentCategory;
+    }
+
+    const lerCampos = () => ({
+      codigo: el('lpCodigo').value.trim().toUpperCase(),
+      titulo: el('lpTitulo').value.trim(),
+      descricao: el('lpDescricao').value.trim(),
+      preco: el('lpPreco').value.trim(),
+      estoque: el('lpEstoque').value.trim(),
+      categoria: el('lpCategoria').value,
+    });
+    const instantaneo = () => JSON.stringify([lerCampos(), st.arquivo ? [st.arquivo.name, st.arquivo.size] : null, st.removerImagem]);
+    const inicial = instantaneo();
+    const sujo = () => instantaneo() !== inicial;
+
+    // ---- imagem ----
+    function atualizarPreview() {
+      const box = el('lpPreview');
+      const cat = el('lpCategoria').value || (produto && produto.cat) || '';
+      let src = '';
+      if (st.arquivo) src = st.previewUrl;
+      else if (editando && produto.image && !st.removerImagem) src = IMG_BASE + produto.image;
+      box.innerHTML = src
+        ? `<img src="${esc(src)}" alt="">`
+        : (ICONS[cat] || '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"><rect x="3.5" y="5" width="17" height="14" rx="2"/><circle cx="9" cy="10.5" r="1.6"/><path d="m4 17 5-4.5 3.5 3 3-2.5 4.5 4"/></svg>');
+      const img = box.querySelector('img');
+      if (img) img.addEventListener('error', () => { img.remove(); box.innerHTML = ICONS[cat] || ''; }, { once: true });
+      el('lpRemoverImagem').hidden = !src;
+    }
+    function escolherImagem(arq) {
+      el('lpImagemErro').textContent = '';
+      if (!arq) return;
+      if (!IMG_TIPOS.includes(arq.type)) { el('lpImagemErro').textContent = 'Formato inválido. Use JPG, PNG ou WEBP.'; return; }
+      if (arq.size > IMG_MAX) { el('lpImagemErro').textContent = 'A imagem deve ter no máximo 5MB.'; return; }
+      if (st.previewUrl) URL.revokeObjectURL(st.previewUrl);
+      st.arquivo = arq;
+      st.previewUrl = URL.createObjectURL(arq);
+      st.removerImagem = false;
+      atualizarPreview();
+    }
+    const drop = el('lpDrop');
+    const inputArq = el('lpArquivo');
+    drop.addEventListener('click', () => inputArq.click());
+    drop.addEventListener('keydown', (e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); inputArq.click(); } });
+    inputArq.addEventListener('change', () => { escolherImagem(inputArq.files[0]); inputArq.value = ''; });
+    ['dragenter', 'dragover'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.add('is-sobre'); }));
+    ['dragleave', 'drop'].forEach((ev) => drop.addEventListener(ev, (e) => { e.preventDefault(); drop.classList.remove('is-sobre'); }));
+    drop.addEventListener('drop', (e) => escolherImagem(e.dataTransfer && e.dataTransfer.files[0]));
+    el('lpRemoverImagem').addEventListener('click', () => {
+      if (st.previewUrl) URL.revokeObjectURL(st.previewUrl);
+      st.arquivo = null; st.previewUrl = ''; st.removerImagem = true;
+      el('lpImagemErro').textContent = '';
+      atualizarPreview();
+    });
+    el('lpCategoria').addEventListener('change', atualizarPreview);
+
+    // ---- máscaras e validação ----
+    el('lpPreco').addEventListener('input', (e) => { e.target.value = maskPreco(e.target.value); });
+    el('lpEstoque').addEventListener('input', (e) => { e.target.value = soDig(e.target.value).slice(0, 6); });
+    el('lpCodigo').addEventListener('input', (e) => { e.target.value = e.target.value.toUpperCase().replace(/[^A-Z0-9_-]/g, ''); });
+    el('lpDescricao').addEventListener('input', (e) => { el('lpContador').textContent = e.target.value.length + '/500'; });
+    el('lpContador').textContent = el('lpDescricao').value.length + '/500';
+
+    const regras = {
+      lpCodigo: (v) => !v ? 'Informe o código do produto'
+        : (/^[A-Z0-9][A-Z0-9_-]{1,19}$/.test(v.toUpperCase()) || 'Use 2 a 20 letras, números, hífen ou sublinhado'),
+      lpCategoria: (v) => !!v || 'Selecione a categoria',
+      lpTitulo: (v) => v.length >= 2 || 'Informe o título do produto',
+      lpDescricao: (v) => !v ? 'Informe a descrição do produto' : (v.length <= 500 || 'A descrição pode ter até 500 caracteres'),
+      lpPreco: (v) => { const n = parsePreco(v); return (n > 0 && n <= 100000) || 'Informe um preço válido (até R$ 100.000,00)'; },
+      lpEstoque: (v) => /^\d{1,6}$/.test(v) || 'Informe o estoque (número inteiro, 0 ou mais)',
+    };
+    const ORDEM = ['lpCodigo', 'lpCategoria', 'lpTitulo', 'lpDescricao', 'lpPreco', 'lpEstoque'];
+    function validar(id) {
+      if (id === 'lpCodigo' && editando) return true;
+      const r = regras[id](el(id).value.trim());
+      if (r === true) { mostrarErro(id, ''); return true; }
+      mostrarErro(id, r);
+      return false;
+    }
+    ORDEM.forEach((id) => {
+      const campoEl = el(id);
+      campoEl.addEventListener('input', () => { limparErro(id); el('lpErroGeral').textContent = ''; });
+      campoEl.addEventListener('change', () => limparErro(id));
+      campoEl.addEventListener('blur', () => { if (campoEl.value.trim() !== '') validar(id); });
+    });
+
+    // ---- abrir / fechar ----
+    const focaveis = () => Array.from(caixa.querySelectorAll('button, input, textarea'))
+      .filter((n) => !n.disabled && !n.hidden && n.type !== 'file' && n.offsetParent !== null);
+    let fechado = false;
+    let soltarProtecao = () => {};
+    function fechar() {
+      if (fechado) return;
+      fechado = true;
+      soltarProtecao();
+      document.removeEventListener('keydown', teclas);
+      if (st.previewUrl) URL.revokeObjectURL(st.previewUrl);
+      raiz.classList.remove('is-open');
+      document.body.classList.remove('lprod-aberto');
+      modalProd = null;
+      setTimeout(() => raiz.remove(), 170);
+      try { if (anterior && anterior.focus) anterior.focus(); } catch (_) { /* ok */ }
+    }
+    function tentarFechar() {
+      if (st.salvando) return;
+      if (!sujo() || !window.IBDialogo) { fechar(); return; }
+      window.IBDialogo.confirmar({
+        titulo: 'Descartar alterações?',
+        texto: 'Você preencheu dados que ainda não foram salvos. Se fechar agora, eles serão perdidos.',
+        confirmar: 'Descartar', cancelar: 'Continuar editando', perigo: true,
+      }).then((ok) => { if (ok) fechar(); });
+    }
+    // Esc: o seletor padrão e os diálogos do site tratam o Esc deles antes (não chega aqui).
+    function teclas(e) {
+      if (e.key === 'Escape') { e.preventDefault(); tentarFechar(); return; }
+      if (e.key !== 'Tab') return;
+      const lista = focaveis();
+      if (!lista.length) return;
+      const i = lista.indexOf(document.activeElement);
+      if (e.shiftKey && i <= 0) { e.preventDefault(); lista[lista.length - 1].focus(); }
+      else if (!e.shiftKey && i === lista.length - 1) { e.preventDefault(); lista[0].focus(); }
+    }
+    document.addEventListener('keydown', teclas);
+    if (window.IBDialogo) {
+      soltarProtecao = window.IBDialogo.protegerSaida(() => !fechado && sujo(), {
+        titulo: 'Sair desta página?',
+        texto: 'Você tem um item em edição que ainda não foi salvo. Se sair agora, ele será perdido.',
+      });
+    }
+    raiz.querySelector('[data-lprod-fundo]').addEventListener('click', tentarFechar);
+    el('lpCancelar').addEventListener('click', tentarFechar);
+
+    // ---- remover (dentro da edição) ----
+    if (editando) {
+      el('lpRemoverItem').addEventListener('click', async () => {
+        if (st.salvando) return;
+        if (await removerItem(produto)) fechar();
+      });
+    }
+
+    // ---- salvar ----
+    function pintarSalvando(on) {
+      st.salvando = on;
+      const b = el('lpSalvar');
+      b.disabled = on;
+      b.textContent = on ? 'Salvando...' : (editando ? 'Salvar alterações' : 'Adicionar item');
+      caixa.classList.toggle('is-busy', on);
+    }
+    caixa.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      if (st.salvando) return;
+      el('lpErroGeral').textContent = '';
+      let primeiro = null;
+      ORDEM.forEach((id) => { if (!validar(id) && !primeiro) primeiro = el(id); });
+      if (primeiro) {
+        if (primeiro.tagName === 'SELECT') { const b = primeiro.parentElement.querySelector('.seletor__botao'); if (b) b.focus(); }
+        else primeiro.focus();
+        return;
+      }
+      const c = lerCampos();
+      const campos = {
+        codigo: c.codigo, titulo: c.titulo, descricao: c.descricao, categoria: c.categoria,
+        preco: parsePreco(c.preco).toFixed(2), estoque: c.estoque,
+      };
+      if (editando) {
+        campos.estoque_base = String(estoqueAbertura);
+        if (st.removerImagem && !st.arquivo) campos.remover_imagem = '1';
+      }
+      pintarSalvando(true);
+      try {
+        const d = await API.salvarProduto(editando ? 'editar' : 'criar', campos, st.arquivo, CSRF);
+        fechar();
+        aplicarCatalogo({ produtos: d.produtos }, false);
+        mostrarMensagem(editando ? `"${c.titulo}" foi atualizado.` : `"${c.titulo}" já está na Loja.`,
+          editando ? 'Item atualizado ✅' : 'Item adicionado ✅');
+        destacarItem(c.codigo);
+      } catch (err) {
+        console.error(err);
+        pintarSalvando(false);
+        if (err.campo === 'lpImagem') {
+          el('lpImagemErro').textContent = err.message;
+        } else if (err.campo && el(err.campo)) {
+          mostrarErro(err.campo, err.message);
+          const alvo = el(err.campo);
+          if (alvo.tagName !== 'SELECT') alvo.focus();
+        } else {
+          el('lpErroGeral').textContent = err.message || 'Não foi possível salvar o item. Tente novamente.';
+        }
+      }
+    });
+
+    modalProd = { fechar, sujo };
+    atualizarPreview();
+    requestAnimationFrame(() => raiz.classList.add('is-open'));
+    // Abre sem nada selecionado: o foco fica na própria caixa (teclado/Esc continuam funcionando; Tab vai ao 1º campo).
+    caixa.tabIndex = -1;
+    caixa.focus({ preventScroll: true });
+  }
+
+  // Remove da Loja (as compras já feitas continuam no histórico e no Dashboard). true = removido.
+  async function removerItem(p) {
+    if (!ADMIN) return false;
+    const ok = window.IBDialogo
+      ? await window.IBDialogo.confirmar({
+        titulo: 'Remover item?',
+        texto: `"${p.name}" (${p.id}) vai sair da Loja. As compras já feitas continuam no histórico e no Dashboard.`,
+        confirmar: 'Remover', cancelar: 'Cancelar', perigo: true,
+      })
+      : false;
+    if (!ok) return false;
+    try {
+      const d = await API.salvarProduto('remover', { codigo: p.id }, null, CSRF);
+      aplicarCatalogo({ produtos: d.produtos }, false);
+      mostrarMensagem(`"${p.name}" foi removido da Loja.`, 'Item removido ✅');
+      return true;
+    } catch (err) {
+      console.error(err);
+      mostrarMensagem(err.message || 'Não foi possível remover o item.', 'Item ⚠️');
+      return false;
+    }
+  }
+
+  // Mostra o item recém-salvo: tira filtros que o escondam, rola até o card e dá um destaque curto.
+  function destacarItem(id) {
+    const p = findProduct(id);
+    if (!p) return;
+    let refazer = false;
+    if (currentCategory !== 'all' && currentCategory !== p.cat) { currentCategory = 'all'; refazer = true; }
+    if (searchTerm) { searchTerm = ''; $('lojaBusca').value = ''; refazer = true; }
+    if (refazer) { renderCategoryPanel(); renderGrid(); updatePageHead(); }
+    const card = Array.from(grid.querySelectorAll('.loja__card')).find((c) => c.dataset.id === id);
+    if (!card) return;
+    card.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    card.classList.add('is-novo');
+    setTimeout(() => card.classList.remove('is-novo'), 2200);
+  }
+
+  const btnAdicionar = $('lojaAdicionarItem');
+  if (btnAdicionar) btnAdicionar.addEventListener('click', () => abrirFormProduto(null));
+
+  /* ---------------- Início ---------------- */
   renderCategoryPanel();
-  renderGrid();
+  renderGrid();          // "Carregando produtos..."
   updatePageHead();
   updateCartCount();
+  carregarCatalogo(false);
 
   window.Loja = { abrirCheckout };
 })();
