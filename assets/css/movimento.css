@@ -67,9 +67,6 @@
 ::selection {
   background: rgba(0, 168, 89, 0.22);
 }
-body * {
-  scrollbar-color: #cdd5d0 transparent;
-}
 /* Menu lateral: pode rolar (roda do mouse/toque) mas sem mostrar a barra */
 html body .inicio__sidebar {
   scrollbar-width: none;
@@ -133,10 +130,11 @@ html body * {
   animation-timing-function: var(--mv-ease);
 }
 
-/* Anti-flash: enquanto o movimento.js não classificou a página, o <main>
-   fica invisível (classe posta no <head>; o JS remove na 1ª varredura).
-   Sem isso os cards aparecem inteiros e "pulam" para o início da animação. */
-html.mv-boot main { opacity: 0; }
+/* Anti-flash: enquanto a página não terminou de carregar os CSS e o movimento.js não
+   classificou os elementos, a página toda (cabeçalho, menu e conteúdo) fica invisível
+   (classe posta no <head>; o JS remove quando os estilos chegaram, com limite de 1,5s).
+   Sem isso aparecia o HTML sem estilo e os cards "pulavam" para o início da animação. */
+html.mv-boot body { opacity: 0; }
 
 /* Cards/blocos entrando em cascata (índice definido pelo JS) */
 html body [data-mv-in] {

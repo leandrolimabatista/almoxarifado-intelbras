@@ -24,8 +24,8 @@ $erros = [];
 if ($atual === '') {
     $erros['atual'] = 'Informe sua senha atual.';
 }
-if (strlen($nova) < 8 || !preg_match('/[A-Za-z]/', $nova) || !preg_match('/\d/', $nova)) {
-    $erros['nova'] = 'Use ao menos 8 caracteres, com letras e números.';
+if (!senha_forte($nova)) {
+    $erros['nova'] = 'Use ao menos 8 caracteres, com uma letra maiúscula, um número e um caractere especial.';
 } elseif ($nova === $atual) {
     $erros['nova'] = 'A nova senha deve ser diferente da atual.';
 }

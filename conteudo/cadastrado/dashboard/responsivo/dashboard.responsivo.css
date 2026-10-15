@@ -1,6 +1,20 @@
 /* ============================================================
-   RESPONSIVO — Dashboard (área CADASTRADO, ADMIN)
+   CONTEÚDO — Dashboard (área CADASTRADO, ADMIN) — Estilos responsivos
+
+   Notebook/tablet largo : tiles e KPIs em grade automática; tabelas largas
+   ≤ 1180px              : detalhe de compra em coluna única
+   ≤ 1024px              : "Editar usuário" em coluna única (cartão de info no topo)
+   ≤ 768px               : coluna única; filtros, busca e botões na largura toda
+   ≤ 480px               : diálogos e topo de "Editar usuário" empilhados
+   As tabelas (.usuarios__tabela-wrap) já rolam por dentro do próprio cartão.
 ============================================================= */
+
+/* ===================== TABLET PAISAGEM (≤ 1180px / ≤ 1024px) ===================== */
+
+/* Monitoramento de compras: detalhe em coluna única */
+@media (max-width: 1180px) {
+  .usuarios__detalhe { grid-template-columns: 1fr; gap: 14px; }
+}
 
 @media (max-width: 1024px) {
   .usuarios__editar-grid {
@@ -8,6 +22,8 @@
   }
   .usuarios__info-card { order: -1; position: static; }
 }
+
+/* ===================== CELULAR GRANDE (≤ 768px) ===================== */
 
 @media (max-width: 768px) {
   .usuarios__main { padding: 20px 16px 36px; }
@@ -29,15 +45,40 @@
 
 /* Monitoramento de compras */
 @media (max-width: 768px) {
-  .usuarios__detalhe { grid-template-columns: 1fr; gap: 14px; }
   .usuarios__kpis { grid-template-columns: 1fr 1fr; }
   .usuarios__col-itens { max-width: 200px; }
   .usuarios__mais { flex-direction: column; align-items: stretch; text-align: center; }
 }
 
+/* ===================== CELULAR (≤ 480px) ===================== */
+
 /* Popout de confirmação + topo da tela Editar usuário */
 @media (max-width: 480px) {
   .usuarios__dialogo-acoes { flex-direction: column-reverse; }
-  .usuarios__dialogo-acoes button { width: 100%; }
+  .usuarios__dialogo-acoes button { width: 100%; min-width: 0; }
   .usuarios__editar-topo { flex-direction: column; align-items: flex-start; }
+  .usuarios__kpis { grid-template-columns: 1fr; }
+}
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
+
+@media (max-width: 360px) {
+  .usuarios__main { padding: 16px 12px 32px; }
+  .usuarios__card,
+  .usuarios__form-card { padding: 16px 12px; }
+  .usuarios__tabela { font-size: 12px; }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .usuarios__dialogo { max-height: calc(100dvh - 16px); overflow-y: auto; }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+@media (hover: none) and (pointer: coarse) {
+  .usuarios__btn-primario,
+  .usuarios__btn-secundario,
+  .usuarios__seletor-botao { min-height: 44px; }
 }

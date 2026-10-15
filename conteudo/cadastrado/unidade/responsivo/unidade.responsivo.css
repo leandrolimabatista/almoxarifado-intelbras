@@ -1,6 +1,12 @@
 /* ============================================================
    CONTEÚDO — Unidade (área CADASTRADO) — Estilos responsivos
+
+   ≤ 1180px : coluna única (hero → mapa → informações → avisos)
+   ≤ 1024px : tiles em 2 por linha (e por largura do cartão, via @container)
+   ≤ 860px / ≤ 600px : margens menores, hero empilhado, mapa mais baixo
 ============================================================= */
+
+/* ===================== TABLET PAISAGEM (≤ 1180px / ≤ 1024px) ===================== */
 
 @media (max-width: 1180px) {
   /* Sem espaço para duas colunas: "Localização" vem logo depois do
@@ -21,7 +27,7 @@
   }
 }
 
-@media (max-width: 1020px) {
+@media (max-width: 1024px) {
   .unidade__tiles {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
@@ -41,13 +47,17 @@
   }
 }
 
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
 @media (max-width: 860px) {
   .unidade__main {
     padding: 24px 20px 40px;
   }
 }
 
-@media (max-width: 560px) {
+/* ===================== CELULAR GRANDE (≤ 600px) ===================== */
+
+@media (max-width: 600px) {
   .unidade__main {
     padding: 20px 16px 32px;
   }
@@ -88,4 +98,17 @@
   .unidade__mapa-box {
     height: 240px;
   }
+}
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
+
+@media (max-width: 360px) {
+  .unidade__main { padding: 16px 12px 28px; }
+  .unidade__mapa-box { height: 200px; }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .unidade__mapa-box { height: 200px; }
 }

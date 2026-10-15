@@ -1,13 +1,32 @@
 /* ============================================================
    CONTEÚDO — Serviços (área CADASTRADO) — Estilos responsivos
+
+   Notebook ≤ 1280px: 3 colunas · tablet ≤ 1024px: 2 colunas
+   celular ≤ 600px  : 1 coluna, margens menores
 ============================================================= */
-@media (max-width: 1280px) { .servicos__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); } }
 
-@media (max-width: 960px) { .servicos__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+/* ===================== NOTEBOOK (≤ 1280px) ===================== */
 
+@media (max-width: 1280px) {
+  .servicos__grid { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+}
 
-@media (max-width: 560px) {
+/* ===================== TABLET PAISAGEM (≤ 1024px) ===================== */
+
+@media (max-width: 1024px) {
+  .servicos__grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+
+/* ===================== CELULAR GRANDE (≤ 600px) ===================== */
+
+@media (max-width: 600px) {
   .servicos__main { padding: 24px 20px 40px; }
   .servicos__grid { grid-template-columns: 1fr; }
   .servicos__card { min-height: 0; }
+}
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
+
+@media (max-width: 360px) {
+  .servicos__main { padding: 20px 14px 32px; }
 }

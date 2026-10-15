@@ -1,9 +1,25 @@
 /* ============================================================
-   CONTEÚDO — Chat (área CADASTRADO) — responsivo
-   Abaixo de 860px: lista e conversa não cabem lado a lado, então
-   empilha (como o Teams no celular) — a conversa aberta cobre a
-   tela toda, com um botão "< Conversas" pra voltar pra lista.
+   CONTEÚDO — Chat (área CADASTRADO) — Estilos responsivos
+
+   Notebook/tablet largo : lista de conversas (320px) + conversa lado a lado
+   ≤ 860px               : lista e conversa não cabem juntas → empilha (como o
+                           Teams no celular): a conversa aberta cobre a tela
+                           toda, com botão "<" para voltar à lista
+                           (acoplado ao chat.js, que usa o mesmo 860px)
+   ≤ 600px / ≤ 480px     : margens, cabeçalho e campo de mensagem compactos
+   Alturas usam dvh/--app-h: o teclado virtual não esconde o campo.
 ============================================================= */
+
+/* Abas (Chat): sem barra de rolagem aparente em qualquer largura.
+   Se não couberem, continuam deslizando com o dedo / roda do mouse. */
+.chat__tabs {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.chat__tabs::-webkit-scrollbar {
+  display: none;
+}
 
 /* Regra base (visível só em telas estreitas — ver @media abaixo). Vem
    ANTES do @media de propósito: as duas regras têm a mesma especificidade,
@@ -33,7 +49,21 @@
   background: var(--content-bg);
 }
 
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
+/* Altura = área visível real (barra do navegador e teclado virtual) */
 @media (max-width: 860px) {
+  html body .chat,
+  html body .chat__main {
+    min-height: 0;
+    height: calc(var(--app-h, 100dvh) - var(--hdr-h, 73px));
+  }
+
+  html body .chat {
+    min-height: calc(100dvh - var(--hdr-h, 73px));
+    height: auto;
+  }
+
   .chat__main {
     position: relative;
   }
@@ -66,7 +96,10 @@
   }
 }
 
-@media (max-width: 420px) {
+/* ===================== CELULAR (≤ 480px) ===================== */
+
+/* "Nova conversa" ocupa a tela toda */
+@media (max-width: 480px) {
   .chat__novo-fundo {
     padding-top: 0;
     align-items: stretch;
@@ -80,8 +113,33 @@
   }
 }
 
-/* ----- Padrão Equipes (mesmos pontos de quebra da página Equipes) ----- */
+/* Margens da conversa (mesmo padrão da página Equipes) */
 @media (max-width: 860px) {
+  /* Sem espaço ao lado do balão: a barra de ações (reagir / responder / ⋯)
+     sobe para cima dele em vez de ficar em left:100% (que estourava a tela
+     e criava rolagem horizontal). Antes estava em chat.css a 700px. */
+  .chat__messages {
+    overflow-x: hidden;
+  }
+
+  .chat__toolbar-wrap,
+  .chat__msg--minha .chat__toolbar-wrap {
+    top: -34px;
+    left: auto;
+    right: 8px;
+    padding: 0;
+  }
+
+  .chat__msg--minha .chat__toolbar-wrap {
+    right: auto;
+    left: 8px;
+  }
+
+  /* espaço para a barra da primeira mensagem não ficar cortada no topo */
+  .chat__messages-lista {
+    padding-top: 20px;
+  }
+
   .chat__thread-cabecalho {
     padding: 14px 16px;
   }
@@ -99,7 +157,8 @@
   }
 }
 
-@media (max-width: 767px) {
+/* ===================== CELULAR GRANDE (≤ 768px) ===================== */
+@media (max-width: 768px) {
   .chat__thread-cargo {
     display: none;
   }
@@ -119,7 +178,7 @@
   }
 }
 
-/* Campo de mensagem em telas bem estreitas: botões um pouco menores */
+/* Campo de mensagem em telas estreitas: botões um pouco menores */
 @media (max-width: 480px) {
   .chat__composer-wrap {
     padding: 10px 10px 12px;
@@ -143,5 +202,50 @@
     min-height: 34px;
     padding: 7px 6px;
     font-size: 14px;
+  }
+}
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
+
+@media (max-width: 360px) {
+  .chat__grupo-corpo {
+    max-width: calc(100vw - 80px);
+  }
+
+  .chat__emoji-grade {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .chat__thread-nome {
+    font-size: 16px;
+  }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .chat__novo-painel {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .chat__messages {
+    padding-top: 8px;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+@media (hover: none) and (pointer: coarse) {
+  .chat__thread-voltar,
+  .chat__icone-btn,
+  .chat__toolbar-btn {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  /* A barra de ações da mensagem (reagir / responder / ⋯) aparece ao tocar na mensagem */
+  .chat__msg:focus-within .chat__toolbar {
+    opacity: 1;
+    pointer-events: auto;
   }
 }

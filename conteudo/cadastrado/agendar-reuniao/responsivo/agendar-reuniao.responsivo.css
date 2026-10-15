@@ -1,13 +1,15 @@
 /* ============================================================
    CONTEÚDO — Agendar reunião (área CADASTRADO) — Estilos responsivos
 
-   ≥ 1280px      : duas colunas (formulário + detalhes); menu lateral
-                   padrão do site.
-   768 – 1279px  : card "Detalhes"
-                   abaixo do formulário.
-   < 768px       : coluna única; botões em
-                   largura total, empilhados.
+   Notebook/tablet largo : duas colunas (formulário + detalhes)
+   ≤ 1279px              : card "Detalhes" abaixo do formulário (o mesmo
+                           valor do tema escuro, que pinta .reuniao__item)
+   ≤ 768px               : coluna única; botões em largura total, empilhados;
+                           alvos de toque de 44px
+   ≤ 480px               : título menor
 ============================================================= */
+
+/* ===================== NOTEBOOK (≤ 1279px) ===================== */
 
 @media (max-width: 1279px) {
   .reuniao__layout {
@@ -39,7 +41,9 @@
   }
 }
 
-@media (max-width: 767px) {
+/* ===================== CELULAR GRANDE (≤ 768px) ===================== */
+
+@media (max-width: 768px) {
   .reuniao__main {
     padding: 20px 16px 32px;
   }
@@ -119,7 +123,7 @@
   }
 
   .reuniao__toasts {
-    top: 72px;
+    top: calc(var(--hdr-h, 72px) + 4px);
   }
 
   .reuniao__dlg-rodape {
@@ -135,9 +139,31 @@
   }
 }
 
-/* Título do cabeçalho igual ao de Documentos no celular pequeno */
+/* ===================== CELULAR (≤ 480px) ===================== */
+
+/* Título do cabeçalho igual ao de Documentos no celular */
 @media (max-width: 480px) {
   .reuniao__titulo {
     font-size: 22px;
+  }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .reuniao__main {
+    padding-top: 12px;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+/* Tablets (≥ 769px) também ganham alvos de toque de 44px */
+@media (hover: none) and (pointer: coarse) {
+  .reuniao__campo,
+  .reuniao__input,
+  .reuniao__btn,
+  .reuniao__opcao {
+    min-height: 44px;
   }
 }

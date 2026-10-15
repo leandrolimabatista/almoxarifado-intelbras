@@ -46,6 +46,17 @@ if ($codigo === '' || !in_array($status, ['pago', 'cancelado'], true)) {
 
 try {
     $pdo = conectar();
+
+    // Cancelamento de um pedido que ainda estava "iniciado": devolve o estoque que ele reservou.
+    if ($status === 'cancelado' && prod_pedidos_prontos($pdo)) {
+        $q = $pdo->prepare("SELECT id FROM tb_loja_pedidos WHERE codigo = :c AND status = 'iniciado'");
+        $q->execute(['c' => $codigo]);
+        $idPendente = $q->fetchColumn();
+        if ($idPendente !== false && pedido_cancelar_pendente($pdo, (int)$idPendente, false)) {
+            status_resposta(200, ['sucesso' => true]);
+        }
+    }
+
     $up = $pdo->prepare('UPDATE tb_loja_pedidos SET status = :s, atualizado_em = NOW() WHERE codigo = :c');
     $up->execute(['s' => $status, 'c' => $codigo]);
     $existe = $up->rowCount() > 0;

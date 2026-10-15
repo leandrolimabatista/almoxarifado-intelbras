@@ -201,13 +201,7 @@ mark.bp-marca.bp-atual {
 }
 
 /* ---------- Responsivo ---------- */
-@media (max-width: 480px) {
-  .bp-barra { top: 10px; right: 12px; left: 12px; width: auto; max-width: none; }
-  .bp-card { padding: 6px; gap: 4px; }
-  .bp-campo-wrap { height: 38px; padding-left: 12px; }
-  .bp-btn { width: 32px; height: 32px; }
-  .bp-sep { margin: 0 2px; }
-}
+
 
 @media (prefers-reduced-motion: reduce) {
   .bp-barra, .bp-barra.is-open { transition: none; transform: none; }

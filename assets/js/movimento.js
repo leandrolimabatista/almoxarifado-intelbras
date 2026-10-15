@@ -161,7 +161,7 @@
       if (RX.primary.test(todas)) f.push('primary');
       else if (RX.danger.test(todas)) f.push('danger');
       else if (RX.ghost.test(todas)) f.push('ghost');
-      else if (semTexto(el)) f.push('icon');
+      else if (semTexto(el) && todas.indexOf('seletor__botao') === -1) f.push('icon');   // seletor vazio não é botão-ícone (crescia no hover)
       if (redondo(cs)) el.setAttribute('data-mv-round', '');
     }
     if (f.indexOf('field') !== -1 && redondo(cs)) el.setAttribute('data-mv-round', '');
@@ -255,11 +255,49 @@
     }).observe(document.body, { attributes: true, attributeFilter: ['class'] });
   }
 
+  // Espera todos os CSS (inclusive os que ficam no <body>, como os de cada tela) antes de
+  // mostrar a página; senão ela aparece sem estilo por um instante ("HTML cru").
+  // Limite de 1,2s para nunca deixar a tela em branco se algum CSS falhar.
+  function liberarQuandoEstilosCarregarem() {
+    var liberada = false;
+    function liberar() {
+      if (liberada) return;
+      liberada = true;
+      // 2 quadros: garante que o navegador já aplicou os estilos antes de mostrar
+      requestAnimationFrame(function () {
+        requestAnimationFrame(function () {
+          document.documentElement.classList.remove('mv-boot');
+        });
+      });
+    }
+    // Páginas que montam blocos por fetch (index.html) registram aqui as promessas deles.
+    function prontos() {
+      var extras = window.__mvAguardar;
+      if (extras && extras.length) Promise.all(extras).then(liberar, liberar);
+      else liberar();
+    }
+    var pendentes = 0;
+    var links = document.querySelectorAll('link[rel="stylesheet"]');
+    function feito() { if (--pendentes <= 0) prontos(); }
+    for (var i = 0; i < links.length; i++) {
+      var l = links[i];
+      if (l.href.indexOf(location.origin) !== 0) continue; // fontes do Google etc.: já usam display=swap
+      var carregado = false;
+      try { carregado = !!l.sheet; } catch (e) { carregado = true; }
+      if (carregado) continue;
+      pendentes++;
+      l.addEventListener('load', feito, { once: true });
+      l.addEventListener('error', feito, { once: true });
+    }
+    if (pendentes === 0) prontos();
+    setTimeout(liberar, 1200);
+  }
+
   function iniciar() {
     marcarPagina();
     varrer(document.body);
     marcarMenuLateral();
-    document.documentElement.classList.remove('mv-boot'); // libera o <main> (anti-flash)
+    liberarQuandoEstilosCarregarem(); // libera a página (anti-flash)
 
     // conteúdo que aparece depois (listas vindas da API, modais, toasts, menus)
     new MutationObserver(function (muts) {

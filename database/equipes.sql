@@ -144,9 +144,7 @@ SELECT e.slug, l.rotulo, l.url, l.icone, l.ordem
 FROM tb_equipes e
 JOIN (
   SELECT 'Documentos da equipe' AS rotulo, 'index.php?pagina=documentos' AS url, 'doc' AS icone, 1 AS ordem
-  UNION ALL SELECT 'Planejamento 2026',     NULL, 'plano',      2
   UNION ALL SELECT 'Calendário da equipe',  NULL, 'calendario', 3
-  UNION ALL SELECT 'Diretrizes Intelbras',  NULL, 'livro',      4
 ) l
 WHERE NOT EXISTS (SELECT 1 FROM tb_equipes_links x WHERE x.equipe_slug = e.slug);
 

@@ -1,23 +1,35 @@
 /* ============================================================
-   CONTEÚDO — Intelbras — Estilos responsivos
+   CONTEÚDO — Início do visitante (área NÃO CADASTRADO) — Estilos responsivos
+
+   ≤ 1180px : grade principal em coluna única
+   ≤ 860px  : cards em coluna única; menu lateral estreito
+   ≤ 600px  : "Bem-vindo" e botões empilhados
+   ≤ 480px  : botões em coluna, na largura toda
 ============================================================= */
 
-@media (max-width: 1080px) {
+/* ===================== TABLET PAISAGEM (≤ 1180px) ===================== */
+
+@media (max-width: 1180px) {
   .content__grid {
     grid-template-columns: 1fr;
   }
 }
 
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
 @media (max-width: 860px) {
   body.sidebar-open .content__sidebar {
     width: 200px;
   }
+
   .content__cards-col {
     grid-template-columns: 1fr;
   }
 }
 
-/* ===================== BEM-VINDO + BOTÕES (título/ações) ===================== */
+/* ===================== CELULAR GRANDE (≤ 600px) ===================== */
+
+/* Bem-vindo + botões (título/ações) */
 @media (max-width: 600px) {
   .content__header-row {
     flex-direction: column;
@@ -35,12 +47,22 @@
   }
 }
 
-@media (max-width: 420px) {
+/* ===================== CELULAR (≤ 480px) ===================== */
+
+@media (max-width: 480px) {
   .content__actions {
     flex-direction: column;
   }
 
   .content__btn {
     width: 100%;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+@media (hover: none) and (pointer: coarse) {
+  .content__btn {
+    min-height: 44px;
   }
 }

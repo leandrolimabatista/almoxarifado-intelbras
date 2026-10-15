@@ -207,6 +207,11 @@
   min-height: 320px;
   border-radius: 8px;
   overflow: hidden;
+  /* Contexto de empilhamento próprio: o z-index 500 da faixa "Ver no mapa" e os
+     controles do mapa ficam presos aqui dentro e não passam por cima da gaveta
+     do menu (z-index 150) nem de outros painéis da página. */
+  isolation: isolate;
+  z-index: 0;
   border: 1px solid var(--content-border);
   background: #F2F3F0;   /* mesma cor de fundo do mapa: quadro "em branco" até carregar */
 }

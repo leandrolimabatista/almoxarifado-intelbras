@@ -37,13 +37,14 @@ try {
               WHERE a.cancelada_em IS NULL
                 AND DATE_ADD(a.data_hora, INTERVAL a.duracao_min MINUTE) > NOW()
                 " . ($uid !== 1 ? 'AND a.criador_id <> 1' : '') . "
-                AND (a.criador_id = :u
-                     OR EXISTS (SELECT 1 FROM tb_chamadas_agendadas_participantes p WHERE p.agendamento_id = a.id AND p.usuario_id = :u)
+                AND (a.criador_id = :u1
+                     OR EXISTS (SELECT 1 FROM tb_chamadas_agendadas_participantes p WHERE p.agendamento_id = a.id AND p.usuario_id = :u2)
                      OR (a.toda_equipe = 1 AND a.equipe_slug = :eq))
               ORDER BY a.data_hora ASC
               LIMIT " . (int)$limite
         );
-        $st->execute(['u' => $uid, 'eq' => $equipe]);
+        // Cada parâmetro nomeado só pode aparecer uma vez (EMULATE_PREPARES = false).
+        $st->execute(['u1' => $uid, 'u2' => $uid, 'eq' => $equipe]);
 
         $agora = new DateTimeImmutable('now');
         $lista = [];

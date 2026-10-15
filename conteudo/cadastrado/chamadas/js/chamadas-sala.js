@@ -156,10 +156,17 @@
       estado: { mic: true, video: false, mao: false, tela: false },
       dc: null, audioEl: null,
     };
-    const ta = pc.addTransceiver('audio', { direction: 'sendrecv' });
-    const tv = pc.addTransceiver('video', { direction: 'sendrecv' });
-    p.sAudio = ta.sender; p.sVideo = tv.sender;
-    aplicarTrilhas(p);
+    // Só quem OFERECE cria os transceivers. Quem RESPONDE não pode criar os seus: transceivers
+    // criados com addTransceiver() não são associados às linhas da oferta recebida, então ficavam
+    // sem negociar e o navegador criava outros só de recepção — resultado: quem atendia a chamada
+    // ouvia o outro lado, mas o próprio microfone nunca era enviado. No lado que responde, os
+    // transceivers vindos da oferta são ligados em ligarTransceiversRecebidos().
+    if (p.ofereco) {
+      const ta = pc.addTransceiver('audio', { direction: 'sendrecv' });
+      const tv = pc.addTransceiver('video', { direction: 'sendrecv' });
+      p.sAudio = ta.sender; p.sVideo = tv.sender;
+      aplicarTrilhas(p);
+    }
 
     // canal de dados negociado: estado de microfone/câmera/mão levantada
     p.dc = pc.createDataChannel('estado', { negotiated: true, id: 0 });
@@ -184,6 +191,9 @@
         $('salaAudios').appendChild(p.audioEl);
       }
       p.audioEl.srcObject = p.stream;
+      // garante a reprodução mesmo que o navegador bloqueie o autoplay
+      const tocar = p.audioEl.play();
+      if (tocar && tocar.catch) tocar.catch(() => {});
       if (e.track.kind === 'audio') iniciarAnalise(id, e.track);
       renderGrade();
     };
@@ -204,6 +214,19 @@
     if (p.ofereco) oferecer(p);
     atualizarEstadoGeral();
     return p;
+  }
+
+  /** Lado que responde: liga os transceivers criados pela oferta ao nosso áudio/vídeo e os torna bidirecionais. */
+  function ligarTransceiversRecebidos(p) {
+    p.pc.getTransceivers().forEach((t) => {
+      if (t.stopped) return;
+      const tipo = t.receiver && t.receiver.track ? t.receiver.track.kind : '';
+      if (tipo === 'audio') p.sAudio = t.sender;
+      else if (tipo === 'video') p.sVideo = t.sender;
+      else return;
+      try { t.direction = 'sendrecv'; } catch (e) { /* mantém o padrão */ }
+    });
+    aplicarTrilhas(p);
   }
 
   async function oferecer(p) {
@@ -247,6 +270,7 @@
       if (s.tipo === 'offer') {
         await p.pc.setRemoteDescription(d);
         p.remota = true;
+        ligarTransceiversRecebidos(p);
         while (p.pend.length) await p.pc.addIceCandidate(p.pend.shift()).catch(() => {});
         const a = await p.pc.createAnswer();
         await p.pc.setLocalDescription(a);
@@ -526,7 +550,14 @@
       '<div class="sala__msg-bloco">' +
       (seq ? '' : '<span class="sala__msg-autor"><b>' + esc(eu ? 'Você' : C.primeiroNome(m.nome)) + '</b> · ' + hora + '</span>') +
       '<span class="sala__msg-texto" title="' + hora + '"></span></div>';
-    d.querySelector('.sala__msg-texto').textContent = m.texto;
+    const elTexto = d.querySelector('.sala__msg-texto');
+    elTexto.textContent = m.texto;
+    // mensagem só com 1 a 3 emojis aparece grande, como nos apps de chat
+    try {
+      const soEmoji = /^(?:\p{Extended_Pictographic}(?:️|‍|[\u{1F3FB}-\u{1F3FF}])*)+$/u;
+      const n = Array.from(String(m.texto).trim().matchAll(/\p{Extended_Pictographic}(?:️|[\u{1F3FB}-\u{1F3FF}])?(?:‍\p{Extended_Pictographic}(?:️|[\u{1F3FB}-\u{1F3FF}])?)*/gu)).length;
+      if (n >= 1 && n <= 3 && soEmoji.test(String(m.texto).trim())) elTexto.classList.add('sala__msg-texto--emoji');
+    } catch (e) { /* navegador sem \p{}: mantém a bolha normal */ }
     const noFim = pertoDoFim(box);
     box.appendChild(d);
     $('salaChatVazio').hidden = true;
@@ -561,6 +592,7 @@
     $('salaMaos').hidden = true;
     $('salaMsgInput').value = '';
     $('salaMsgEnviar').disabled = true;
+    fecharEmojis(false);
     $('salaAudios').innerHTML = '';
     $('salaTitulo').textContent = tituloDaChamada();
     $('miniTitulo').textContent = tituloDaChamada();
@@ -580,6 +612,13 @@
     S.cam = !!m.video;
     if (m.erro) avisoPermissao(m.erro);
     iniciarAnalise('eu', m.audio);
+
+    // CORREÇÃO (áudio de um lado só): quem atende a chamada recebe a oferta enquanto o navegador ainda
+    // pede permissão do microfone. O peer nascia sem trilha e ela nunca era anexada depois, então só o
+    // microfone de quem ligou chegava ao outro lado. Agora, assim que a mídia está pronta, anexamos
+    // as trilhas a TODOS os peers já criados e avisamos o estado real do microfone/câmera.
+    S.peers.forEach(aplicarTrilhas);
+    enviarEstado();
 
     sincronizarPeers(S.chamada.participantes);
     renderGrade();
@@ -629,6 +668,7 @@
     Object.keys(S.analises).forEach((k) => S.analises[k].fechar());
     [S.local.audio, S.local.video, S.local.tela].forEach((t) => { if (t) t.stop(); });
     if (S.ctx) { try { S.ctx.close(); } catch (e) { /* ok */ } }
+    fecharEmojis(false);
     $('chSala').hidden = true;
     $('chMini').hidden = true;
     $('salaCompart').hidden = true;
@@ -892,10 +932,150 @@
     if (!texto) return;
     inpMsg.value = '';
     ajustarCampo();
+    fecharEmojis(false);
     const r = await C.api('mensagem.php', { corpo: { chamada_id: S.chamada.id, texto: texto } });
     if (!r.ok) { C.toast(r.dados.erro || 'Não foi possível enviar a mensagem.', 'erro'); inpMsg.value = texto; ajustarCampo(); return; }
     C.tickAgora();
   });
+
+  // ---- emojis no chat da chamada (mesma lista, recentes e tom de pele de Equipes/Chat)
+  const EMOJI_CATEGORIAS = window.EQUIPES_EMOJIS || [];
+  const EMOJI_TONS = window.EQUIPES_EMOJIS_TONS || {};
+  const EMOJI_RECENTES_CHAVE = 'equipes_emojis_recentes';
+  const EMOJI_RECENTES_MAX = 24;
+  const EMOJI_TOM_CHAVE = 'equipes_emoji_tom';
+  const MODIFICADORES = ['', '\u{1F3FB}', '\u{1F3FC}', '\u{1F3FD}', '\u{1F3FE}', '\u{1F3FF}'];
+  const NOMES_TOM = ['Padrão', 'Claro', 'Médio-claro', 'Médio', 'Médio-escuro', 'Escuro'];
+  const AMOSTRA_TOM = '✋';
+  const semAcento = (t) => String(t).normalize('NFD').replace(/[̀-ͯ]/g, '').toLowerCase();
+  const emBtn = $('salaBtnEmoji');
+  const emPop = $('salaEmojiPopover');
+  const emBusca = $('salaEmojiBusca');
+  const emGrade = $('salaEmojiGrade');
+  const emCats = $('salaEmojiCategorias');
+  const emTomBtn = $('salaEmojiTomBtn');
+  const emTomMenu = $('salaEmojiTomMenu');
+  let tomAtual = 0;
+  try { tomAtual = Math.min(5, Math.max(0, parseInt(localStorage.getItem(EMOJI_TOM_CHAVE) || '0', 10) || 0)); } catch (e) { tomAtual = 0; }
+
+  function emojisRecentes() {
+    try { return JSON.parse(localStorage.getItem(EMOJI_RECENTES_CHAVE) || '[]'); } catch (e) { return []; }
+  }
+  function registrarEmojiRecente(emoji) {
+    const l = emojisRecentes().filter((e) => e !== emoji);
+    l.unshift(emoji);
+    try { localStorage.setItem(EMOJI_RECENTES_CHAVE, JSON.stringify(l.slice(0, EMOJI_RECENTES_MAX))); } catch (e) { /* sem storage */ }
+  }
+  function comTom(emoji) {
+    if (!tomAtual) return emoji;
+    const v = EMOJI_TONS[emoji];
+    return (v && v[tomAtual - 1]) || emoji;
+  }
+  function botaoEmoji(emoji, nome) {
+    const e = comTom(emoji);
+    return '<button type="button" data-emoji="' + e + '" title="' + esc(nome || '') + '">' + e + '</button>';
+  }
+  function secoesEmoji() {
+    const s = [];
+    const rec = emojisRecentes();
+    if (rec.length) s.push({ id: 'recentes', icone: '🕒', titulo: 'Usados recentemente', itens: rec.map((e) => [e, 'recente']) });
+    EMOJI_CATEGORIAS.forEach((c) => s.push(c));
+    return s;
+  }
+  function marcarCategoriaAtiva() {
+    const tit = Array.from(emGrade.querySelectorAll('[data-sec]'));
+    if (!tit.length) return;
+    let ativa = tit[0].getAttribute('data-sec');
+    tit.forEach((t) => { if (t.offsetTop - emGrade.scrollTop <= 12) ativa = t.getAttribute('data-sec'); });
+    emCats.querySelectorAll('[data-cat]').forEach((b) => b.classList.toggle('sala__emoji-categoria--ativa', b.getAttribute('data-cat') === ativa));
+  }
+  function renderizarEmojis() {
+    const secoes = secoesEmoji();
+    emGrade.innerHTML = secoes.map((c) =>
+      '<div class="sala__emoji-grade-titulo" data-sec="' + c.id + '">' + esc(c.titulo) + '</div>' + c.itens.map((i) => botaoEmoji(i[0], i[1])).join('')).join('');
+    emCats.innerHTML = secoes.map((c) =>
+      '<button type="button" class="sala__emoji-categoria" data-cat="' + c.id + '" title="' + esc(c.titulo) + '" aria-label="' + esc(c.titulo) + '">' + c.icone + '</button>').join('');
+    emCats.hidden = false;
+    emGrade.scrollTop = 0;
+    marcarCategoriaAtiva();
+  }
+  function renderizarBuscaEmoji(termo) {
+    emCats.hidden = true;
+    const achados = [];
+    EMOJI_CATEGORIAS.forEach((c) => c.itens.forEach((i) => { if (semAcento(i[1]).includes(termo)) achados.push(i); }));
+    emGrade.innerHTML = achados.length
+      ? '<div class="sala__emoji-grade-titulo">Resultados</div>' + achados.map((i) => botaoEmoji(i[0], i[1])).join('')
+      : '<div class="sala__emoji-grade-vazio">Nenhum emoji encontrado.</div>';
+    emGrade.scrollTop = 0;
+  }
+  function atualizarBotaoTom() {
+    emTomBtn.textContent = AMOSTRA_TOM + MODIFICADORES[tomAtual];
+    emTomMenu.innerHTML = MODIFICADORES.map((m, i) =>
+      '<button type="button" data-tom="' + i + '" class="' + (i === tomAtual ? 'sala__emoji-tom--ativo' : '') + '" title="' + NOMES_TOM[i] + '" aria-label="' + NOMES_TOM[i] + '">' + AMOSTRA_TOM + m + '</button>').join('');
+  }
+  function fecharTom() { emTomMenu.hidden = true; emTomBtn.setAttribute('aria-expanded', 'false'); }
+  function fecharEmojis(devolverFoco) {
+    if (emPop.hidden) return;
+    emPop.hidden = true;
+    emBtn.setAttribute('aria-expanded', 'false');
+    fecharTom();
+    if (devolverFoco) inpMsg.focus();
+  }
+  function abrirEmojis() {
+    atualizarBotaoTom();
+    emBusca.value = '';
+    renderizarEmojis();
+    emPop.hidden = false;
+    emBtn.setAttribute('aria-expanded', 'true');
+    setTimeout(() => emBusca.focus(), 0);
+  }
+  /** Insere o emoji onde está o cursor do campo de mensagem. */
+  function inserirEmoji(emoji) {
+    const ini = inpMsg.selectionStart == null ? inpMsg.value.length : inpMsg.selectionStart;
+    const fim = inpMsg.selectionEnd == null ? ini : inpMsg.selectionEnd;
+    if (inpMsg.value.length - (fim - ini) + emoji.length > inpMsg.maxLength) return;
+    inpMsg.setRangeText(emoji, ini, fim, 'end');
+    ajustarCampo();
+    registrarEmojiRecente(emoji);
+  }
+
+  emBtn.addEventListener('click', (e) => { e.stopPropagation(); if (emPop.hidden) abrirEmojis(); else fecharEmojis(true); });
+  emPop.addEventListener('click', (e) => { e.stopPropagation(); if (!e.target.closest('.sala__emoji-tom-wrap')) fecharTom(); });
+  emGrade.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-emoji]');
+    if (!b) return;
+    inserirEmoji(b.getAttribute('data-emoji'));
+    if (!emBusca.value.trim()) renderizarEmojis(); // atualiza "usados recentemente"
+    inpMsg.focus();
+  });
+  emGrade.addEventListener('scroll', marcarCategoriaAtiva);
+  emCats.addEventListener('click', (e) => {
+    const b = e.target.closest('[data-cat]');
+    const alvo = b && emGrade.querySelector('[data-sec="' + b.getAttribute('data-cat') + '"]');
+    if (alvo) emGrade.scrollTo({ top: alvo.offsetTop, behavior: 'smooth' });
+  });
+  emBusca.addEventListener('input', () => {
+    const termo = semAcento(emBusca.value.trim());
+    if (termo) renderizarBuscaEmoji(termo); else renderizarEmojis();
+  });
+  emTomBtn.addEventListener('click', (e) => {
+    e.stopPropagation();
+    emTomMenu.hidden = !emTomMenu.hidden;
+    emTomBtn.setAttribute('aria-expanded', String(!emTomMenu.hidden));
+  });
+  emTomMenu.addEventListener('click', (e) => {
+    e.stopPropagation();
+    const b = e.target.closest('[data-tom]');
+    if (!b) return;
+    tomAtual = parseInt(b.getAttribute('data-tom'), 10) || 0;
+    try { localStorage.setItem(EMOJI_TOM_CHAVE, String(tomAtual)); } catch (err) { /* sem storage */ }
+    fecharTom();
+    atualizarBotaoTom();
+    const termo = semAcento(emBusca.value.trim());
+    if (termo) renderizarBuscaEmoji(termo); else renderizarEmojis();
+  });
+  emPop.addEventListener('keydown', (e) => { if (e.key === 'Escape') { e.stopPropagation(); fecharEmojis(true); } });
+  document.addEventListener('click', (e) => { if (!e.target.closest('#salaEmojiPopover')) fecharEmojis(false); });
 
   // ---- compartilhar tela (pop-out)
   document.querySelectorAll('#mdTela [data-superficie]').forEach((b2) => b2.addEventListener('click', () => marcarSuperficie(b2.getAttribute('data-superficie'))));

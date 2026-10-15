@@ -3,10 +3,18 @@
    Só @media queries; o estilo base (desktop) fica em css/documentos.css.
    A largura do menu lateral aberto (200px/220px) já é tratada por
    inicio.responsivo.css, que o próprio documentos.html carrega.
+
+   ≤ 1180px : acesso rápido/atividade em coluna única; some a coluna "por"
+   ≤ 860px  : resumo em 2 x 2
+   ≤ 768px  : a tabela vira lista de cartões
+   ≤ 600px  : cabeçalho, filtros e diálogos empilhados
+   ≤ 480px  : margens e título menores
 ============================================================= */
 
-/* ---------- Tablet largo: acesso rápido e atividade em coluna única ---------- */
-@media (max-width: 1100px) {
+/* ===================== TABLET PAISAGEM (≤ 1180px) ===================== */
+
+/* Acesso rápido e atividade em coluna única */
+@media (max-width: 1180px) {
   .documentos__duo {
     grid-template-columns: 1fr;
   }
@@ -21,10 +29,10 @@
     padding: 0 14px;
   }
 
-  .documentos__col-nome   { width: 44%; }
+  .documentos__col-nome   { width: 40%; }
   .documentos__col-equipe { width: 20%; }
   .documentos__col-data   { width: 24%; }
-  .documentos__col-acoes  { width: 12%; }
+  .documentos__col-acoes  { width: 16%; }
 
   .documentos__tabela td.documentos__col-data {
     white-space: normal;
@@ -45,7 +53,9 @@
   }
 }
 
-/* ---------- Tablet: resumo em 2 x 2 ---------- */
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
+/* Resumo em 2 x 2 */
 @media (max-width: 860px) {
   .documentos__resumo {
     grid-template-columns: repeat(2, 1fr);
@@ -63,8 +73,10 @@
   }
 }
 
-/* ---------- Celular: a tabela vira lista de cartões ---------- */
-@media (max-width: 720px) {
+/* ===================== CELULAR GRANDE (≤ 768px / ≤ 600px) ===================== */
+
+/* A tabela vira lista de cartões */
+@media (max-width: 768px) {
   .documentos__main {
     padding: 24px 20px 32px;
   }
@@ -168,7 +180,7 @@
   }
 }
 
-/* ---------- Celular: cabeçalho, filtros e diálogos ---------- */
+/* Cabeçalho, filtros e diálogos */
 @media (max-width: 600px) {
   .documentos__cabecalho {
     flex-direction: column;
@@ -198,6 +210,13 @@
 
   .documentos__abas {
     gap: 20px;
+    overflow-x: auto;
+    white-space: nowrap;
+    scrollbar-width: none;
+  }
+
+  .documentos__abas::-webkit-scrollbar {
+    display: none;
   }
 
   .documentos__stat-icone {
@@ -231,6 +250,7 @@
     padding: 0;
     width: calc(100vw - 16px);
     height: calc(100vh - 16px);
+    height: calc(100dvh - 16px);
   }
 
   .documentos__ver-cabecalho {
@@ -249,7 +269,7 @@
   }
 }
 
-/* ---------- Celular pequeno ---------- */
+/* ===================== CELULAR (≤ 480px) ===================== */
 @media (max-width: 480px) {
   .documentos__main {
     padding: 20px 16px 28px;
@@ -273,5 +293,25 @@
 
   .documentos__toasts {
     bottom: 16px;
+  }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .documentos__dialogo {
+    max-height: calc(100dvh - 16px);
+    overflow-y: auto;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+/* Ações da linha (⋯) e filtros com alvo de toque confortável */
+@media (hover: none) and (pointer: coarse) {
+  .documentos__col-acoes button,
+  .documentos__filtro,
+  .documentos__btn {
+    min-height: 44px;
   }
 }

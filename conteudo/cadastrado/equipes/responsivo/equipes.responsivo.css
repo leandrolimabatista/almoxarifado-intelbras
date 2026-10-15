@@ -1,17 +1,38 @@
 /* ============================================================
-   CONTEÚDO — Equipes — Estilos responsivos
+   CONTEÚDO — Equipes (área CADASTRADO) — Estilos responsivos
 
-   ≥1280   : 3 colunas completas (sidebar + chat + painel)
-   1024–1279: painel direito recolhido por padrão, abre como drawer
-   768–1023 : painel direito como drawer
-   <768     : uma coluna — lista de equipes OU chat em tela cheia
+   Notebook/tablet largo : 3 colunas (menu de equipes + conversa + painel)
+   ≤ 1279px              : painel direito vira gaveta pela direita
+   ≤ 860px               : menu de equipes vira gaveta (zoom.css); conversa
+                           ocupa a largura toda, margens menores
+   ≤ 600px / ≤ 480px     : cabeçalho do canal e campo de mensagem compactos
+   Alturas usam dvh/--app-h: o teclado virtual não esconde o campo.
 ============================================================= */
 
-/* ----- 1024–1279: painel direito vira drawer ----- */
+/* Abas (Equipes): sem barra de rolagem aparente em qualquer largura.
+   Se não couberem, continuam deslizando com o dedo / roda do mouse. */
+.equipes__tabs {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+
+.equipes__tabs::-webkit-scrollbar {
+  display: none;
+}
+
+/* Área de mensagens: só rola na vertical (some a barra horizontal no pé da conversa) */
+.equipes__messages {
+  overflow-x: hidden;
+}
+
+/* ===================== NOTEBOOK (≤ 1366px) ===================== */
+
+/* O painel direito vira gaveta já em ≤ 1279px (mesmo valor do zoom.css,
+   que acerta o "top" dele com a altura real do cabeçalho). */
 @media (max-width: 1279px) {
   .equipes__painel {
     position: fixed;
-    top: 73px;
+    top: var(--hdr-h, 73px);
     right: 0;
     bottom: 0;
     width: 320px;
@@ -31,7 +52,53 @@
   }
 }
 
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
+/* Agenda e formulário de abas (vieram do equipes.css) */
 @media (max-width: 860px) {
+  .equipes__aba-conteudo {
+    padding: 12px 16px 0;
+  }
+
+  .equipes__agenda-corpo {
+    grid-template-columns: 1fr;
+  }
+
+  .equipes__agenda-dia {
+    min-height: 42px;
+  }
+
+  .equipes__aba-form {
+    flex-wrap: wrap;
+  }
+
+  .equipes__aba-input--data,
+  .equipes__data {
+    flex: 1 1 140px;
+  }
+}
+
+/* Conversa: margens menores */
+@media (max-width: 860px) {
+  /* Sem espaço ao lado do balão: a barra de ações sobe para cima dele
+     (antes estava em equipes.css a 700px, fora da escada de breakpoints). */
+  .equipes__toolbar-wrap {
+    top: -34px;
+    left: auto;
+    right: 8px;
+    padding: 0;
+  }
+
+  .equipes__msg--minha .equipes__toolbar-wrap {
+    right: auto;
+    left: 8px;
+  }
+
+  /* espaço para a barra da primeira mensagem não ficar cortada no topo */
+  .equipes__messages-lista {
+    padding-top: 20px;
+  }
+
   .equipes__chat-header {
     padding: 14px 16px;
   }
@@ -51,18 +118,17 @@
   .equipes__composer-wrap {
     padding: 10px 16px 14px;
   }
-
-  .equipes__ir-fim {
-    right: 20px;
-  }
 }
 
-/* ----- <768: uma coluna (lista de equipes OU chat em tela cheia) ----- */
-@media (max-width: 767px) {
-  .equipes {
-    min-height: calc(100vh - 73px);
+/* ===================== CELULAR GRANDE (≤ 768px) ===================== */
+
+@media (max-width: 768px) {
+  .equipes,
+  .equipes__skeleton {
+    min-height: calc(100dvh - var(--hdr-h, 73px));
   }
 
+  /* Cabeçalho do canal compacto */
   .equipes__canal-icone {
     width: 42px;
     height: 42px;
@@ -91,6 +157,7 @@
     padding: 0;
   }
 
+  /* Balões e seletor de emoji cabem na tela */
   .equipes__grupo-corpo {
     max-width: calc(100vw - 100px);
   }
@@ -104,20 +171,26 @@
   .equipes__emoji-grade {
     grid-template-columns: repeat(6, 1fr);
   }
-}
 
-@media (max-width: 420px) {
-  .equipes__toolbar {
-    top: -34px;
+  /* Faixa offline e avisos usam a largura toda */
+  .equipes__offline {
+    padding: 8px 12px;
+    font-size: 12.5px;
+  }
+
+  /* Modal de confirmação nunca passa da altura da tela */
+  .equipes__modal-caixa {
+    max-height: calc(100dvh - 24px);
+    overflow-y: auto;
   }
 }
 
+/* ===================== CELULAR (≤ 480px) ===================== */
 
-/* ----- Campo de mensagem em telas bem estreitas: botões um pouco menores
-   para sobrar espaço para digitar ----- */
+/* Campo de mensagem: botões menores para sobrar espaço para digitar */
 @media (max-width: 480px) {
   .equipes__composer-wrap {
-    padding: 10px 10px 12px;
+    padding: 10px 10px calc(12px + env(safe-area-inset-bottom, 0px));
   }
 
   .equipes__composer-linha {
@@ -126,12 +199,8 @@
 
   .equipes__composer-btn,
   .equipes__enviar {
-    height: 34px;
-  }
-
-  .equipes__composer-btn,
-  .equipes__enviar {
     width: 34px;
+    height: 34px;
   }
 
   .equipes__composer-icones {
@@ -142,5 +211,72 @@
     min-height: 34px;
     padding: 7px 6px;
     font-size: 14px;
+  }
+
+  .equipes__messages {
+    padding: 12px 10px 8px;
+  }
+
+  .equipes__chat-header {
+    padding: 12px 10px;
+  }
+
+  .equipes__tabs {
+    padding: 0 10px;
+  }
+}
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
+
+@media (max-width: 360px) {
+  .equipes__grupo-corpo {
+    max-width: calc(100vw - 80px);
+  }
+
+  .equipes__emoji-grade {
+    grid-template-columns: repeat(5, 1fr);
+  }
+
+  .equipes__canal-titulo {
+    font-size: 15px;
+  }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+@media (max-height: 500px) and (orientation: landscape) {
+  .equipes__modal-caixa {
+    max-height: calc(100dvh - 16px);
+  }
+
+  .equipes__messages {
+    padding-top: 8px;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+@media (hover: none) and (pointer: coarse) {
+  /* Alvos de toque confortáveis nos controles da conversa */
+  .equipes__icone-btn,
+  .equipes__toolbar-btn,
+  .equipes__cal-nav {
+    min-width: 40px;
+    min-height: 40px;
+  }
+
+  .equipes__tab {
+    min-height: 44px;
+  }
+
+  .equipes__menu-item,
+  .equipes__popover-item {
+    min-height: 44px;
+  }
+
+  /* A barra de reações da mensagem aparece ao tocar na mensagem */
+  .equipes__msg:focus-within .equipes__toolbar {
+    opacity: 1;
+    pointer-events: auto;
   }
 }

@@ -1,7 +1,16 @@
 /* ============================================================
    CONTEÚDO — Chamadas (área CADASTRADO) — Estilos responsivos
-   Tablet ≤ 1024px · Mobile ≤ 600px (390px é a referência).
+
+   Notebook/tablet largo : ações e colunas lado a lado
+   ≤ 1180px              : ações e colunas empilham
+   ≤ 860px               : contatos compactos, busca na largura toda
+   ≤ 600px               : modais viram folha; SALA de chamada em modo
+                           celular (grade 1–2 colunas, controles em barra
+                           inferior, painel de chat por cima)
+   O topo da sala acompanha a altura real do cabeçalho (zoom.css).
 ============================================================= */
+
+/* ===================== TABLET PAISAGEM (≤ 1180px / ≤ 1024px) ===================== */
 
 @media (max-width: 1180px) {
   .chamadas__acoes { grid-template-columns: 1fr; }
@@ -16,6 +25,8 @@
   .chamadas__tooltip::after { left: 40px; margin-left: 0; }
 }
 
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
 @media (max-width: 860px) {
   .chamadas__contato { grid-template-columns: 44px minmax(0, 1fr) auto; }
   .chamadas__contato .chamadas__badge { grid-column: 2; grid-row: 2; justify-self: start; }
@@ -25,6 +36,16 @@
   .chamadas__link-btn--direita { margin-left: 0; }
 }
 
+/* Escolha de tela/janela a compartilhar e aviso de compartilhamento */
+@media (max-width: 768px) {
+  .tela__opcoes { grid-template-columns: 1fr; }
+  .tela__op { flex-direction: row; text-align: left; padding: 12px; }
+  .sala__compart { top: calc(var(--hdr-h, 73px) + 10px); max-width: calc(100% - 16px); flex-wrap: wrap; justify-content: center; border-radius: 16px; }
+}
+
+/* ===================== CELULAR GRANDE (≤ 600px) ===================== */
+
+/* Página */
 @media (max-width: 600px) {
   .chamadas__main { padding: 14px 14px 28px; }
   .chamadas__acao { flex-direction: row; gap: 14px; }
@@ -35,14 +56,21 @@
   .chamadas__contato { gap: 10px; padding: 12px; }
   .chamadas__contato-acoes { gap: 6px; }
   .chamadas__campo-linha { flex-direction: column; }
+  .chamadas__resumo { flex-direction: column; gap: 12px; align-items: center; }
+  .chamadas__mini { left: 12px; right: 12px; bottom: 12px; justify-content: space-between; }
+  .chamadas__avisos { bottom: 84px; width: calc(100vw - 24px); }
+}
+
+/* Modais viram folha na base da tela */
+@media (max-width: 600px) {
   .chamadas__modal { align-items: flex-end; padding: 0; }
-  .chamadas__modal-caixa { max-width: none; border-radius: 16px 16px 0 0; max-height: 92vh; }
+  .chamadas__modal-caixa { max-width: none; border-radius: 16px 16px 0 0; max-height: 92vh; max-height: 92dvh; }
   .chamadas__modal--alto .chamadas__modal-caixa--estreita { border-radius: 16px; margin: 16px; max-width: 400px; }
   .chamadas__modal--alto { align-items: center; }
-  .chamadas__resumo { flex-direction: column; gap: 12px; align-items: center; }
+}
 
-  /* Sala: grade em 1 coluna, painel por cima, controles em barra inferior */
-  .chamadas__sala { top: 64px; }
+/* Sala: grade em 1 coluna, painel por cima, controles em barra inferior */
+@media (max-width: 600px) {
   .sala__topo { grid-template-columns: auto 1fr auto; padding: 8px 10px; }
   .sala__topo-centro { justify-content: center; gap: 8px; min-width: 0; }
   .sala__titulo { max-width: 120px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -52,26 +80,36 @@
   .sala__grade { grid-template-columns: repeat(var(--cols-m, 1), minmax(0, 1fr)); gap: 8px; }
   .sala__grade[data-qtd='5'], .sala__grade[data-qtd='6'], .sala__grade[data-qtd='7'], .sala__grade[data-qtd='8'], .sala__grade[data-qtd='9'] { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .sala__painel { position: absolute; left: 0; right: 0; bottom: 0; top: 96px; width: auto; z-index: 6; }
-  .sala__barra { gap: 6px; padding: 8px; justify-content: space-between; }
+  .sala__barra { gap: 6px; padding: 8px 8px calc(8px + env(safe-area-inset-bottom, 0px)); justify-content: space-between; }
   .sala__ctl { flex: 1 1 0; min-width: 44px; min-height: 52px; padding: 6px 4px; }
   .sala__ctl-rot { display: none; }
   .sala__ctl--encerrar { min-width: 56px; }
-  .sala__menu { right: auto; left: auto; bottom: calc(100% + 8px); right: 0; }
-  .chamadas__mini { left: 12px; right: 12px; bottom: 12px; justify-content: space-between; }
-  .chamadas__avisos { bottom: 84px; width: calc(100vw - 24px); }
+  .sala__menu { left: auto; right: 0; bottom: calc(100% + 8px); }
 }
 
-@media (max-width: 420px) {
+/* ===================== CELULAR (≤ 480px) ===================== */
+
+@media (max-width: 480px) {
+  .chamadas__title { font-size: 22px; }
   .chamadas__acao { flex-direction: column; align-items: flex-start; }
   .chamadas__acao-icone { width: 56px; height: 56px; }
 }
 
-@media (max-width: 480px) {
-  .chamadas__title { font-size: 22px; }
+/* ===================== CELULAR DEITADO ===================== */
+
+/* Sala com pouca altura: controles compactos, painel de chat ocupa tudo */
+@media (max-height: 500px) and (orientation: landscape) {
+  .sala__topo { padding: 4px 10px; }
+  .sala__palco { padding: 4px; }
+  .sala__barra { padding-top: 4px; padding-bottom: 4px; }
+  .sala__ctl { min-height: 44px; }
+  .sala__painel { top: 0; }
+  .chamadas__modal-caixa { max-height: calc(100dvh - 16px); overflow-y: auto; }
 }
 
-@media (max-width: 720px) {
-  .tela__opcoes { grid-template-columns: 1fr; }
-  .tela__op { flex-direction: row; text-align: left; padding: 12px; }
-  .sala__compart { top: 74px; max-width: calc(100% - 16px); flex-wrap: wrap; justify-content: center; border-radius: 16px; }
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+@media (hover: none) and (pointer: coarse) {
+  .sala__ctl,
+  .chamadas__icone-btn { min-height: 44px; }
 }

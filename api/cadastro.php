@@ -70,8 +70,8 @@ if (!filter_var($email, FILTER_VALIDATE_EMAIL)) {
 }
 
 // Senha
-if (mb_strlen($senha) < 6) {
-    $erros['senha'] = 'A senha deve ter pelo menos 6 caracteres.';
+if (!senha_forte($senha)) {
+    $erros['senha'] = 'A senha deve ter no mínimo 8 caracteres, com uma letra maiúscula, um número e um caractere especial.';
 } elseif ($senha !== $repetirSenha) {
     $erros['repetir_senha'] = 'As senhas não coincidem.';
 }

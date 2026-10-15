@@ -1124,11 +1124,7 @@ a.inteligencia-artificial__anexo-chip--doc:hover {
   object-fit: cover;
 }
 
-@media (max-width: 480px) {
-  .inteligencia-artificial__anexos:not(.inteligencia-artificial__anexos--varios) .inteligencia-artificial__anexo-img {
-    max-width: 220px;
-  }
-}
+
 
 /* Botão de remover (X) no canto do cartão/miniatura */
 .inteligencia-artificial__anexo-remover {

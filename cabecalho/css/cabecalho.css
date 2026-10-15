@@ -263,18 +263,31 @@ input[type="search"]::-webkit-search-cancel-button:hover {
   right: 3px;
   min-width: 16px;
   height: 16px;
-  padding: 0 4px;
+  padding: 2px 4px 0; /* fallback (Firefox): empurra o dígito para baixo */
   border-radius: 999px;
   background: var(--intelbras-verde);
   color: #fff;
   font-size: 10px;
   font-weight: 700;
-  line-height: 16px;
-  text-align: center;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 }
 
 .header__icon-badge[hidden] {
   display: none;
+}
+
+/* Centraliza o número pela altura real do dígito (independe da fonte).
+   Chrome/Edge/Safari; nos demais vale o padding do fallback acima. */
+@supports (text-box: trim-both cap alphabetic) {
+  .header__icon-badge {
+    display: block;
+    text-align: center;
+    text-box: trim-both cap alphabetic;
+    padding: calc((16px - 1cap) / 2) 4px;
+  }
 }
 
 /* Popout de notificações (sino) */
@@ -887,6 +900,47 @@ html body .login-modal__input.is-invalid:focus-visible {
   background: var(--intelbras-verde-escuro);
 }
 
+/* Badge de "não lidas" das EQUIPES no menu lateral: mesmo padrão do site
+   (mesmo tamanho do badge do chat: 16px) */
+.inicio__channel-badge {
+  margin-left: auto;
+  margin-right: 2px;
+  flex-shrink: 0;
+  min-width: 16px;
+  height: 16px;
+  padding: 2px 5px 0; /* fallback (Firefox): empurra o dígito para baixo */
+  box-sizing: border-box;
+  border-radius: 999px;
+  background: var(--intelbras-verde);
+  color: var(--intelbras-branco);
+  font-family: system-ui, Arial, sans-serif; /* mesma fonte do badge do sino */
+  font-size: 10px;
+  font-weight: 700;
+  line-height: 1;
+  letter-spacing: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.inicio__channel-badge[hidden] {
+  display: none;
+}
+
+/* Centraliza o número pela altura real do dígito (independe da fonte).
+   Chrome/Edge/Safari; nos demais vale o padding do fallback acima. */
+@supports (text-box: trim-both cap alphabetic) {
+  .inicio__channel-badge {
+    display: block;
+    text-align: center;
+    text-box: trim-both cap alphabetic;
+    padding: calc((16px - 1cap) / 2) 5px;
+  }
+  .inicio__channel-badge[hidden] {
+    display: none;
+  }
+}
+
 /* Equipe silenciada no menu lateral: sem badge e com ícone de silenciada */
 .inicio__channel-item--silenciada .inicio__channel-badge {
   display: none !important;
@@ -924,4 +978,35 @@ html body .login-modal__input.is-invalid:focus-visible {
 
 #redefinirStepForm .login-modal__actions {
   justify-content: flex-end;
+}
+
+/* Checklist da senha forte (cadastro) */
+.login-modal__senha-regras.is-visible {
+  display: grid;
+}
+.login-modal__senha-regras {
+  list-style: none;
+  margin: 8px 0 0;
+  padding: 0;
+  display: none;              /* só aparece depois do 1º caractere */
+  gap: 4px;
+  font-size: 12px;
+  color: #6b7280;
+}
+.login-modal__senha-regras li {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+.login-modal__senha-regras li::before {
+  content: "\2717";            /* ✗ */
+  font-weight: 700;
+  color: #9ca3af;
+}
+.login-modal__senha-regras li.is-ok {
+  color: #15803d;
+}
+.login-modal__senha-regras li.is-ok::before {
+  content: "\2713";            /* ✓ */
+  color: #15803d;
 }

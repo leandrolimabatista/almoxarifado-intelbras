@@ -252,17 +252,31 @@
 
 .chat__badge {
   flex-shrink: 0;
-  min-width: 18px;
-  height: 18px;
-  padding: 0 5px;
+  min-width: 16px;
+  height: 16px;
+  padding: 2px 5px 0; /* fallback (Firefox): empurra o dígito para baixo */
+  box-sizing: border-box;
   border-radius: 999px;
   background: var(--intelbras-verde);
   color: var(--intelbras-branco);
-  font-size: 10.5px;
+  font-family: system-ui, Arial, sans-serif; /* mesma fonte do badge do sino */
+  font-size: 10px;
   font-weight: 700;
+  line-height: 1;
   display: flex;
   align-items: center;
   justify-content: center;
+}
+
+/* Centraliza o número pela altura real do dígito (independe da fonte).
+   Chrome/Edge/Safari; nos demais vale o padding do fallback acima. */
+@supports (text-box: trim-both cap alphabetic) {
+  .chat__badge {
+    display: block;
+    text-align: center;
+    text-box: trim-both cap alphabetic;
+    padding: calc((16px - 1cap) / 2) 5px;
+  }
 }
 
 .chat__conversa-icones {
@@ -741,12 +755,114 @@
   position: relative;
   display: flex;
   flex-direction: column;
+  align-items: flex-start;
   gap: 6px;
   max-width: 100%;
 }
 
 .chat__msg--minha {
   align-items: flex-end;
+}
+
+/* Barra de ações ao passar o mouse: fica AO LADO do balão (no nível do horário),
+   nunca por cima do texto. Mensagem recebida: à direita; minha: à esquerda. */
+.chat__toolbar-wrap {
+  position: absolute;
+  top: 0;
+  left: 100%;
+  padding-left: 6px; /* ponte de hover entre o balão e a barra */
+  z-index: 5;
+}
+
+.chat__msg--minha .chat__toolbar-wrap {
+  left: auto;
+  right: 100%;
+  padding-left: 0;
+  padding-right: 6px;
+}
+
+.chat__toolbar {
+  position: static;
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid var(--chat-borda);
+  border-radius: 8px;
+  box-shadow: var(--chat-sombra-2);
+  padding: 3px;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity .12s ease;
+  z-index: 5;
+}
+
+.chat__msg:hover .chat__toolbar,
+.chat__toolbar:focus-within {
+  opacity: 1;
+  pointer-events: auto;
+}
+
+.chat__toolbar-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 6px;
+  border: none;
+  background: none;
+  cursor: pointer;
+  font-size: 14px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--chat-cinza);
+}
+
+.chat__toolbar-btn:hover {
+  background: #F2F3F5;
+  color: var(--chat-preto);
+}
+
+.chat__toolbar-btn svg {
+  width: 17px;
+  height: 17px;
+  flex-shrink: 0;
+}
+
+/* Menu "⋯" da mensagem: abre acima da barra, sem cobri-la */
+.chat__msg-menu {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 6px;
+  background: #fff;
+  border: 1px solid var(--chat-borda);
+  border-radius: 8px;
+  box-shadow: var(--chat-sombra-2);
+  min-width: 150px;
+  padding: 6px;
+  z-index: 20;
+}
+
+.chat__msg--minha .chat__msg-menu {
+  left: auto;
+  right: 6px;
+}
+
+.chat__msg-menu-item {
+  display: block;
+  width: 100%;
+  text-align: left;
+  border: none;
+  background: none;
+  cursor: pointer;
+  padding: 8px 10px;
+  font-size: 13px;
+  border-radius: 6px;
+  color: var(--chat-preto);
+  white-space: nowrap;
+}
+
+.chat__msg-menu-item:hover {
+  background: #F2F3F5;
 }
 
 .chat__bolha {
@@ -758,6 +874,7 @@
   color: var(--chat-preto);
   word-break: break-word;
   max-width: 100%;
+  width: fit-content;
 }
 
 .chat__bolha [data-texto] {
@@ -776,14 +893,53 @@
 .chat__anexo-card {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 4px;
   border: 1px solid var(--chat-borda);
   border-radius: 8px;
-  padding: 9px 10px;
+  padding: 0 6px 0 0;
   background: #fff;
   margin-top: 4px;
+  color: inherit;
+}
+
+.chat__anexo-principal {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex: 1;
+  min-width: 0;
+  padding: 9px 4px 9px 10px;
   text-decoration: none;
   color: inherit;
+}
+
+.chat__anexo-acoes {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  flex-shrink: 0;
+}
+
+.chat__anexo-card .chat__anexo-acao {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  color: var(--chat-cinza);
+  font-weight: 400;
+  text-decoration: none;
+}
+
+.chat__anexo-card .chat__anexo-acao svg {
+  width: 17px;
+  height: 17px;
+}
+
+.chat__anexo-card .chat__anexo-acao:hover {
+  background: #F0F0F0;
+  color: var(--chat-preto);
 }
 
 .chat__anexo-icone {
@@ -877,6 +1033,47 @@
   margin: 0;
 }
 
+/* Botão "Ir para o fim" */
+.chat__ir-fim-ancora {
+  position: relative;
+  height: 0;
+  flex-shrink: 0;
+  z-index: 15;
+}
+
+.chat__ir-fim {
+  position: absolute;
+  bottom: 14px;
+  left: 50%;
+  transform: translateX(-50%);
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: #fff;
+  border: 1px solid var(--chat-borda);
+  border-radius: 999px;
+  box-shadow: var(--chat-sombra-2);
+  padding: 8px 14px;
+  font-size: 12.5px;
+  font-weight: 700;
+  color: var(--chat-preto);
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.chat__ir-fim[hidden] {
+  display: none;
+}
+
+.chat__ir-fim svg {
+  width: 14px;
+  height: 14px;
+}
+
+.chat__ir-fim:hover {
+  background: #F5F5F5;
+}
+
 .chat__composer-wrap {
   flex-shrink: 0;
   border-top: 1px solid var(--chat-borda);
@@ -884,6 +1081,7 @@
   background: #fff;
 }
 
+.chat__resposta-preview,
 .chat__anexo-preview {
   display: flex;
   align-items: center;
@@ -1670,6 +1868,16 @@
   font-size: 13px;
 }
 
+/* Aba Chamadas (histórico com esta pessoa) */
+.chat__chamadas {
+  overflow-y: auto;
+  padding: 20px 24px;
+}
+
+.chat__chamadas .hist {
+  max-width: 760px;
+}
+
 /* ===================== Chat ocupa a tela toda, sem rodapé ===================== */
 /* O rodapé é incluído pelo index.php em todas as páginas; aqui ele some só
    quando a página do Chat está aberta (este CSS só é carregado no Chat). */
@@ -1730,3 +1938,332 @@ body:has(#chatRaiz) .footer {
 }
 .chat__pos-btn:hover { background: #007A40; }
 
+/* ---- Reagir / Responder / Editar / Apagar (mesmo visual de Equipes) ---- */
+.chat__resposta-barra {
+  width: 3px;
+  align-self: stretch;
+  background: var(--chat-verde);
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.chat__resposta-texto {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--chat-cinza);
+}
+
+.chat__resposta-texto strong {
+  color: var(--chat-preto);
+}
+
+/* Resposta citada, dentro da bolha */
+.chat__citacao {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  border-left: 3px solid var(--chat-verde);
+  border-radius: 6px;
+  background: rgba(0, 0, 0, 0.045);
+  padding: 6px 10px;
+  margin-bottom: 8px;
+  font-size: 12.5px;
+  line-height: 1.4;
+  color: var(--chat-cinza);
+}
+
+.chat__msg--minha .chat__citacao {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.chat__citacao-autor {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--chat-verde-escuro);
+}
+
+.chat__citacao-autor svg {
+  width: 12px;
+  height: 12px;
+  flex-shrink: 0;
+}
+
+.chat__citacao-trecho {
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  white-space: normal;
+}
+
+.chat__editada-rotulo {
+  font-size: 11px;
+  color: var(--chat-cinza);
+  font-weight: 400;
+  margin-left: 6px;
+}
+
+.chat__bolha--apagada {
+  color: var(--chat-cinza);
+  font-style: italic;
+}
+
+/* Reações */
+.chat__reacoes {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.chat__reacoes:empty {
+  display: none;
+}
+
+.chat__msg--minha .chat__reacoes {
+  justify-content: flex-end;
+}
+
+.chat__reacao {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  background: var(--chat-bolha-recebida);
+  border: 1px solid transparent;
+  font-family: 'Noto Emoji Chat', 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 12px;
+  cursor: pointer;
+  color: var(--chat-preto);
+}
+
+.chat__reacao:hover {
+  background: #E9EBED;
+}
+
+.chat__reacao--minha {
+  background: var(--chat-verde-100);
+  border-color: var(--chat-verde);
+  color: var(--chat-verde-escuro);
+}
+
+/* Seletor rápido de reações */
+.chat__reacao-picker {
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 6px;
+  display: flex;
+  gap: 2px;
+  background: #fff;
+  border: 1px solid var(--chat-borda);
+  border-radius: 999px;
+  box-shadow: var(--chat-sombra-2);
+  padding: 4px 6px;
+  z-index: 10;
+}
+
+.chat__msg--minha .chat__reacao-picker {
+  left: auto;
+  right: 6px;
+}
+
+.chat__reacao-picker button {
+  border: none;
+  background: none;
+  font-family: 'Noto Emoji Chat', 'Poppins', 'Segoe UI', Arial, sans-serif;
+  font-size: 17px;
+  cursor: pointer;
+  padding: 2px 3px;
+  border-radius: 999px;
+}
+
+.chat__reacao-picker button:hover {
+  background: var(--chat-bolha-recebida);
+}
+
+/* Edição na própria bolha */
+.chat__edicao {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: min(360px, 70vw);
+}
+
+.chat__edicao textarea {
+  width: 100%;
+  border: 1px solid var(--chat-borda);
+  border-radius: 10px;
+  padding: 8px 10px;
+  font: inherit;
+  font-size: 14px;
+  resize: vertical;
+  background: #fff;
+  color: var(--chat-preto);
+}
+
+.chat__edicao textarea:focus {
+  outline: 2px solid var(--chat-verde);
+  outline-offset: 0;
+}
+
+.chat__edicao-acoes {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.chat__edicao-salvar {
+  border: none;
+  background: var(--chat-verde);
+  color: #fff;
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat__edicao-salvar:hover {
+  background: var(--chat-verde-escuro);
+}
+
+/* Seletor completo de emojis para reagir (flutua sobre a tela, ancorado no botão) */
+.chat__popover--emoji.chat__reacao-completo {
+  position: fixed;
+  right: auto;
+  bottom: auto;
+  z-index: 1000;
+}
+
+/* O seletor completo é criado no <body>, fora de .chat. Sem isto ele perdia as
+   variáveis de cor, a fonte e o box-sizing e ficava diferente do seletor do campo. */
+.chat__reacao-completo {
+  --chat-verde: var(--intelbras-verde, #00A859);
+  --chat-verde-escuro: var(--intelbras-verde-escuro, #007A40);
+  --chat-verde-100: var(--intelbras-verde-100, #E7F7EE);
+  --chat-preto: var(--intelbras-preto, #1A1A1A);
+  --chat-cinza: var(--intelbras-cinza, #6B6B6B);
+  --chat-cinza-claro: var(--intelbras-cinza-claro, #E8E8E8);
+  --chat-borda: #ECECEC;
+  --chat-bg: #F7F8F9;
+  --chat-bolha-recebida: #F2F3F5;
+  --chat-sombra-2: 0 4px 16px rgba(0, 0, 0, .10);
+  font-family: 'Noto Emoji Chat', 'Nunito Sans', 'Segoe UI', Arial, sans-serif;
+  width: 330px;
+  max-width: calc(100vw - 16px);
+}
+
+.chat__reacao-completo,
+.chat__reacao-completo * {
+  box-sizing: border-box;
+}
+
+.chat__reacao-completo [hidden] {
+  display: none !important;
+}
+
+.chat__reacao-completo .chat__emoji-grade {
+  flex: none;
+}
+
+.chat__reacao-picker .chat__reacao-mais {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  margin-left: 2px;
+  padding: 0;
+  border-left: 1px solid var(--chat-borda);
+  border-radius: 999px;
+  color: var(--chat-cinza);
+}
+
+.chat__reacao-picker .chat__reacao-mais svg {
+  width: 18px;
+  height: 18px;
+}
+
+/* ---- Edição na bolha: layout refinado ---- */
+.chat__bolha:has(.chat__edicao) {
+  padding: 8px;
+  background: #fff;
+  border: 1px solid var(--chat-borda);
+  box-shadow: var(--chat-sombra-1);
+}
+
+.chat__edicao {
+  min-width: min(380px, 72vw);
+  gap: 8px;
+}
+
+.chat__edicao textarea {
+  min-height: 40px;
+  max-height: 200px;
+  resize: none;
+  overflow-y: auto;
+  border: 1px solid var(--chat-borda);
+  border-radius: 8px;
+  padding: 9px 12px;
+  background: #fff;
+  outline: none;
+  box-shadow: none;
+}
+
+.chat__edicao textarea:focus {
+  outline: none;
+  border-color: var(--chat-verde);
+  box-shadow: 0 0 0 3px var(--chat-verde-100);
+}
+
+.chat__edicao-acoes {
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.chat__edicao-cancelar {
+  border: 1px solid var(--chat-borda);
+  background: #fff;
+  color: var(--chat-preto);
+  border-radius: 8px;
+  padding: 6px 14px;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.chat__edicao-cancelar:hover {
+  background: #F2F3F5;
+}
+
+.chat__edicao-salvar {
+  font-family: inherit;
+}
+
+/* Fonte padronizada: botões não herdam font-family por padrão, então herdam da página (igual a Equipes) */
+.chat__msg-menu-item,
+.chat__toolbar-btn,
+.chat__edicao-salvar,
+.chat__edicao-cancelar,
+.chat__reacao,
+.chat__edicao textarea {
+  font-family: inherit;
+}
+
+/* Status enviada/lida (igual a Equipes) */
+.chat__status {
+  font-size: 11px;
+  color: var(--chat-cinza);
+}
+
+.chat__status--lida {
+  color: var(--chat-verde);
+}

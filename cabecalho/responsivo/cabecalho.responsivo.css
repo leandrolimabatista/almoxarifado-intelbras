@@ -1,6 +1,14 @@
 /* ============================================================
    CABEÇALHO — Intelbras — Estilos responsivos
+
+   Notebook/tablet largo : cabeçalho completo (zoom.css compacta 769–1100px)
+   ≤ 768px               : logo | categorias, sino, chat, avatar e lupa; a busca
+                           abre numa linha própria ao tocar na lupa
+   ≤ 480px               : login vira cartão centralizado, sem setinha
+   Tamanhos/espaços em tela estreita: assets/css/zoom.css (carrega por último).
 ============================================================= */
+
+/* ===================== CELULAR GRANDE (≤ 768px) ===================== */
 
 @media (max-width: 768px) {
   .header__container {
@@ -80,6 +88,8 @@
   }
 }
 
+/* ===================== CELULAR (≤ 480px) ===================== */
+
 @media (max-width: 480px) {
   .login-modal__arrow {
     display: none;
@@ -112,5 +122,42 @@
 
   .login-modal__back {
     margin: 0 auto;
+  }
+}
+
+/* Sugestões da busca e popout de notificações nunca passam da tela */
+@media (max-width: 768px) {
+  .header__search-results {
+    max-height: calc(100dvh - var(--hdr-h, 73px) - 24px);
+  }
+
+  .notif-popout {
+    max-width: calc(100vw - 16px);
+  }
+
+  .user-menu__card {
+    width: min(220px, calc(100vw - 20px));
+  }
+}
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
+
+@media (max-width: 360px) {
+  .login-modal__card {
+    padding: 20px 16px 16px;
+  }
+
+  .login-modal {
+    width: calc(100vw - 16px);
+  }
+}
+
+/* ===================== CELULAR DEITADO ===================== */
+
+/* Cartão de login rola dentro da tela baixa */
+@media (max-height: 500px) and (orientation: landscape) {
+  .login-modal {
+    max-height: calc(100dvh - var(--hdr-h, 73px) - 8px);
+    overflow-y: auto;
   }
 }

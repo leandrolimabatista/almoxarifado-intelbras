@@ -1,6 +1,19 @@
 /* ============================================================
    CONTEÚDO — Início (área CADASTRADO) — Estilos responsivos
+
+   ATENÇÃO: este arquivo é carregado por TODAS as telas da área logada
+   (cada html de tela o inclui) porque contém as regras do MENU LATERAL
+   compartilhado (.inicio__sidebar). A gaveta do menu em ≤ 860px e a
+   altura do menu ficam no assets/css/zoom.css.
+
+   Notebook/tablet largo : 3 colunas de cards
+   ≤ 1180px              : cards em coluna única (cada coluna mantém seus 2 cards)
+   ≤ 860px               : atalhos 2 x 2
+   ≤ 600px               : "Bem-vindo" e botões empilhados
+   ≤ 480px               : botões em coluna, na largura toda
 ============================================================= */
+
+/* ===================== TABLET PAISAGEM (≤ 1180px) ===================== */
 
 @media (max-width: 1180px) {
   /* Com 3 colunas independentes (cada uma com 2 cards), uma
@@ -13,16 +26,21 @@
   }
 }
 
+/* ===================== TABLET RETRATO (≤ 860px) ===================== */
+
 @media (max-width: 860px) {
   body.sidebar-open .inicio__sidebar {
     width: 200px;
   }
+
   .inicio__shortcut-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-/* ===================== BEM-VINDO + BOTÕES (título/ações) ===================== */
+/* ===================== CELULAR GRANDE (≤ 600px) ===================== */
+
+/* Bem-vindo + botões (título/ações) */
 @media (max-width: 600px) {
   .inicio__header-row {
     flex-direction: column;
@@ -40,12 +58,42 @@
   }
 }
 
-@media (max-width: 420px) {
+/* ===================== CELULAR (≤ 480px) ===================== */
+
+@media (max-width: 480px) {
   .inicio__actions {
     flex-direction: column;
   }
 
   .inicio__btn {
     width: 100%;
+  }
+}
+
+/* ===================== CELULAR PEQUENO (≤ 360px) ===================== */
+
+@media (max-width: 360px) {
+  .inicio__shortcut-grid {
+    gap: 6px;
+  }
+
+  .inicio__banner-arrow {
+    right: 56px;
+  }
+}
+
+/* ===================== APARELHOS DE TOQUE ===================== */
+
+/* Setas e bolinhas do banner com área de toque confortável */
+@media (hover: none) and (pointer: coarse) {
+  .inicio__banner-arrow {
+    width: 36px;
+    height: 36px;
+  }
+
+  .inicio__nav-item,
+  .inicio__channel-item,
+  .inicio__shortcut {
+    min-height: 44px;
   }
 }

@@ -848,6 +848,13 @@
       atualizarEstrela(estrela, doc);
     }
 
+    const btnBaixar = tr.querySelector('.documentos__baixar-btn');
+    if (naLixeira) {
+      btnBaixar.hidden = true; // documento na lixeira não baixa
+    } else {
+      btnBaixar.setAttribute('aria-label', 'Baixar ' + doc.nome);
+    }
+
     tr.querySelector('.documentos__mais-btn').setAttribute('aria-label', 'Mais ações para ' + doc.nome);
     return tr;
   }
@@ -1081,7 +1088,7 @@
       ];
     }
     const itens = [
-      { rotulo: 'Abrir', icone: 'abrir', acao: () => abrirVisualizador(doc) },
+      { rotulo: 'Abrir', icone: 'abrir', acao: () => abrir(doc) },
       { rotulo: 'Baixar', icone: 'baixar', acao: () => baixar(doc) },
     ];
     if (doc.meu) {
@@ -1409,53 +1416,94 @@
     refs.verCorpo.appendChild(box);
   }
 
+  // Liga um botão-link do cabeçalho ao endereço (ou o desativa quando não há arquivo).
+  function ajustarLinkVisualizador(a, url, nomeArquivo) {
+    if (url) {
+      a.href = url;
+      if (nomeArquivo) a.setAttribute('download', nomeArquivo);
+      a.removeAttribute('aria-disabled');
+    } else {
+      a.removeAttribute('href');
+      a.setAttribute('aria-disabled', 'true');
+    }
+  }
+
+  let verSeq = 0;      // descarta respostas de uma abertura anterior
+  let verBlobUrl = ''; // PDF carregado em memória (liberado ao fechar)
+
+  function liberarBlobVisualizador() {
+    if (verBlobUrl) { URL.revokeObjectURL(verBlobUrl); verBlobUrl = ''; }
+  }
+
   function abrirVisualizador(doc) {
     const tipo = tipoVisualizacao(doc.extensao);
     const urlVer = urlDoc(doc, 'ver');
     const urlBaixar = urlDoc(doc, 'baixar');
     const eq = EQUIPE[doc.equipe];
+    const seq = ++verSeq;
+    liberarBlobVisualizador();
 
     aplicarIcone(refs.verIcone, doc.extensao);
     refs.verTitulo.textContent = doc.nome;
     refs.verMeta.textContent = String(doc.extensao || '').toUpperCase() + ' • ' + formatarTamanho(doc.tamanho) + (eq ? ' • ' + eq.nome : '');
 
-    if (urlBaixar) {
-      refs.verBaixar.href = urlBaixar;
-      refs.verBaixar.setAttribute('download', doc.nome + '.' + doc.extensao);
-      refs.verBaixar.removeAttribute('aria-disabled');
-    } else {
-      refs.verBaixar.removeAttribute('href');
-      refs.verBaixar.setAttribute('aria-disabled', 'true');
-    }
-    refs.verAbrir.hidden = !(tipo && urlVer);
-    if (tipo && urlVer) refs.verAbrir.href = urlVer;
+    // Mesmo funcionamento de Equipes: PDF, imagem e texto abrem em outra aba;
+    // Word, Excel, PowerPoint e demais formatos são baixados.
+    refs.verAbrir.hidden = false;
+    refs.verAbrir.title = tipo ? 'Abrir em outra aba' : 'Este formato não abre no navegador: será baixado';
+    ajustarLinkVisualizador(refs.verAbrir, tipo && urlVer ? urlVer : urlBaixar, null);
+    ajustarLinkVisualizador(refs.verBaixar, urlBaixar, doc.nome + '.' + doc.extensao);
 
     refs.verCorpo.textContent = '';
     if (!urlVer && !urlBaixar) {
       avisoVisualizador(doc, 'Pré-visualização indisponível', 'Este é um documento fictício do modo demonstração e não tem arquivo. Envie um documento seu para testar a visualização.');
     } else if (tipo === 'pdf') {
-      const f = document.createElement('iframe');
-      f.title = doc.nome;
-      f.src = urlVer;
-      refs.verCorpo.appendChild(f);
+      refs.verCorpo.appendChild(el('p', 'documentos__ver-carregando', 'Carregando…'));
+      fetch(urlVer, { credentials: 'same-origin' })
+        .then((r) => {
+          if (!r.ok) throw new Error('falha');
+          return r.blob();
+        })
+        .then((b) => {
+          if (seq !== verSeq) return;
+          verBlobUrl = URL.createObjectURL(b.type === 'application/pdf' ? b : new Blob([b], { type: 'application/pdf' }));
+          const f = document.createElement('iframe');
+          f.title = doc.nome;
+          f.src = verBlobUrl;
+          refs.verCorpo.textContent = '';
+          refs.verCorpo.appendChild(f);
+        })
+        .catch(() => {
+          if (seq === verSeq) avisoIndisponivel(doc);
+        });
     } else if (tipo === 'imagem') {
-      const img = document.createElement('img');
+      refs.verCorpo.appendChild(el('p', 'documentos__ver-carregando', 'Carregando…'));
+      const img = new Image();
       img.alt = doc.nome;
+      img.onload = () => {
+        if (seq !== verSeq) return;
+        refs.verCorpo.textContent = '';
+        refs.verCorpo.appendChild(img);
+      };
+      img.onerror = () => {
+        if (seq === verSeq) avisoIndisponivel(doc);
+      };
       img.src = urlVer;
-      refs.verCorpo.appendChild(img);
     } else if (tipo === 'texto') {
-      const pre = el('pre', 'documentos__ver-texto', 'Carregando…');
-      refs.verCorpo.appendChild(pre);
+      refs.verCorpo.appendChild(el('p', 'documentos__ver-carregando', 'Carregando…'));
       fetch(urlVer, { credentials: 'same-origin' })
         .then((r) => {
           if (!r.ok) throw new Error('falha');
           return r.text();
         })
         .then((t) => {
-          pre.textContent = t.length > 200000 ? t.slice(0, 200000) + '\n\n[… arquivo cortado; baixe para ver tudo …]' : t;
+          if (seq !== verSeq) return;
+          const pre = el('pre', 'documentos__ver-texto', t.length > 200000 ? t.slice(0, 200000) + '\n\n[… arquivo cortado; baixe para ver tudo …]' : t);
+          refs.verCorpo.textContent = '';
+          refs.verCorpo.appendChild(pre);
         })
         .catch(() => {
-          avisoVisualizador(doc, 'Não foi possível abrir o arquivo', 'Tente baixá-lo pelo botão “Baixar”.');
+          if (seq === verSeq) avisoIndisponivel(doc);
         });
     } else {
       avisoVisualizador(doc, 'Este formato abre no seu computador', 'Documentos do Word, Excel e PowerPoint não têm pré-visualização aqui. Use o botão “Baixar” para abrir no programa correspondente.');
@@ -1465,20 +1513,35 @@
     registrarAcesso(doc);
   }
 
+  function avisoIndisponivel(doc) {
+    avisoVisualizador(
+      doc,
+      'Não foi possível abrir o arquivo',
+      'Ele não está disponível para visualização agora. Tente baixá-lo pelo botão “Baixar” ou peça para quem enviou enviar de novo.'
+    );
+  }
+
   refs.verFechar.addEventListener('click', () => fecharDialogo(refs.dlgVer));
-  refs.verBaixar.addEventListener('click', (e) => {
-    if (refs.verBaixar.getAttribute('aria-disabled') === 'true') {
-      e.preventDefault();
-      toast('Download indisponível no modo demonstração.', { tipo: 'erro' });
-    }
+  [refs.verBaixar, refs.verAbrir].forEach((a) => {
+    a.addEventListener('click', (e) => {
+      if (a.getAttribute('aria-disabled') === 'true') {
+        e.preventDefault();
+        toast('Indisponível no modo demonstração.', { tipo: 'erro' });
+      }
+    });
   });
   // limpa o conteúdo ao fechar (para o PDF/imagem parar de carregar)
-  refs.dlgVer.addEventListener('close', () => { refs.verCorpo.textContent = ''; });
+  refs.dlgVer.addEventListener('close', () => { verSeq++; liberarBlobVisualizador(); refs.verCorpo.textContent = ''; });
   // clicar fora da janela (no fundo escurecido) fecha
   refs.dlgVer.addEventListener('click', (e) => {
     const r = refs.dlgVer.getBoundingClientRect();
     if (e.clientX < r.left || e.clientX > r.right || e.clientY < r.top || e.clientY > r.bottom) fecharDialogo(refs.dlgVer);
   });
+
+  // Abre o visualizador; nele "Nova aba" e "Baixar" existem para todo arquivo.
+  function abrir(doc) {
+    abrirVisualizador(doc);
+  }
 
   function baixar(doc) {
     const url = urlDoc(doc, 'baixar');
@@ -1680,7 +1743,9 @@
     if (!doc) return;
 
     if (botao.classList.contains('documentos__nome-btn')) {
-      abrirVisualizador(doc);
+      abrir(doc);
+    } else if (botao.classList.contains('documentos__baixar-btn')) {
+      baixar(doc);
     } else if (botao.classList.contains('documentos__estrela')) {
       alternarFavorito(doc, botao);
     } else if (botao.classList.contains('documentos__mais-btn')) {
@@ -1708,7 +1773,7 @@
       ];
     } else {
       opcoes = [
-        { rotulo: 'Abrir', icone: 'abrir', destaque: true, acao: () => abrirVisualizador(doc) },
+        { rotulo: 'Abrir', icone: 'abrir', destaque: true, acao: () => abrir(doc) },
         { rotulo: 'Baixar', icone: 'baixar', acao: () => baixar(doc) },
         { rotulo: doc.favorito ? 'Remover dos favoritos' : 'Adicionar aos favoritos', icone: 'estrela',
           acao: () => alternarFavorito(doc, tr.querySelector('.documentos__estrela')) },
