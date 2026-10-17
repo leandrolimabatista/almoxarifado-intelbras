@@ -1257,7 +1257,7 @@
 
     // 2) Pagamento (servidor AWS → Mercado Pago)
     try {
-      const data = await API.criarPagamento(montarItens());
+      const data = await API.criarPagamento(montarItens(), $('ckEmail').value.trim(), codigo);
       if (data && data.init_point) {
         await vincularSeguro(codigo, data.init_point);
         compras = null;

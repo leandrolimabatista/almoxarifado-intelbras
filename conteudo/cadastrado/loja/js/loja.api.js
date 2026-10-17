@@ -23,11 +23,11 @@
    * para o chamador tratar no catch.
    * @param {{id:string,title:string,quantity:number,unit_price:number}[]} items
    */
-  async function criarPagamento(items) {
+  async function criarPagamento(items, emailComprovante, codigoLoja) {
     const resp = await fetch(API_BASE_URL + PATH_CRIAR_PAGAMENTO, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, email_comprovante: emailComprovante || null, codigo_loja: codigoLoja || null }),
     });
     return resp.json();
   }
