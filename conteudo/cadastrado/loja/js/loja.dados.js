@@ -89,18 +89,16 @@
   };
 
   // ------------------------------------------------------------
-  // CUPONS — percentuais. Vazio por padrão (nenhum cupom válido).
-  // Exemplo:  INTEL10: { tipo: 'percent', valor: 10 }
+  // CUPONS — agora ficam no banco (tb_loja_cupons) e são validados no servidor
+  // (api/loja/cupom.php). O administrador cadastra pelo botão "Cupons" da Loja.
   // ------------------------------------------------------------
-  const CUPONS = {
-    // INTEL10: { tipo: 'percent', valor: 10 },
-  };
+  const CUPOM_MAX_PERCENT = 90;   // mesmo teto de api/loja/_cupons.php
 
   const ESTADOS = ['AC','AL','AP','AM','BA','CE','DF','ES','GO','MA','MT','MS','MG','PA','PB','PR','PE','PI','RJ','RN','RS','RO','RR','SC','SP','SE','TO'];
 
   window.LojaDados = {
     IMG_BASE, CATEGORIES, ICONS, PRODUCTS,
     MAX_PER_ITEM, LOW_STOCK_LIMIT, COST_CENTER_BALANCE,
-    FRETE_REGIOES, FRETE_OPCOES, CUPONS, ESTADOS,
+    FRETE_REGIOES, FRETE_OPCOES, CUPOM_MAX_PERCENT, ESTADOS,
   };
 })();

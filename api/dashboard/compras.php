@@ -88,7 +88,7 @@ try {
         $buscaCodigo = "CONCAT('PED-', LPAD(p.id, 6, '0')) LIKE :b1";
         $buscaItem   = 'EXISTS (SELECT 1 FROM tb_loja_pedido_itens i WHERE i.pedido_id = p.id AND i.titulo LIKE :b4)';
     } else {
-        $campos = "p.id, p.status, p.subtotal, 0 AS desconto, p.frete_nome, p.frete_valor, p.total,
+        $campos = "p.id, p.status, p.subtotal, " . (compras_tabela_existe($pdo, 'tb_loja_pedidos', 'desconto') ? 'p.desconto' : '0') . " AS desconto, p.frete_nome, p.frete_valor, p.total,
                    p.cupom, p.entrega_cidade AS cidade, p.entrega_uf AS uf, NULL AS codigo_rastreio, p.criado_em,
                    p.codigo AS codigo_legado, p.usuario_id, p.itens AS itens_json, NULL AS metodo,
                    u.nome AS usuario_nome, u.email AS usuario_email, u.equipe_slug, un.nome AS unidade_nome";

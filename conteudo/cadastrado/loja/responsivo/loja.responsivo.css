@@ -84,3 +84,52 @@
   .loja__cat-btn,
   .loja__tab { min-height: 44px; }
 }
+
+/* ===================== CUPONS (administrador) — CELULAR ===================== */
+
+/* Botões do topo: "Adicionar item" e "Cupons" dividem a linha; "Ordenar" ocupa a linha de baixo */
+@media (max-width: 600px) {
+  .loja__page-head-actions { gap: 8px; }
+  .loja__page-head-actions .loja__add-item,
+  .loja__page-head-actions .loja__cupons-btn { flex: 1 1 calc(50% - 4px); justify-content: center; min-height: 44px; }
+  .loja__page-head-actions .seletor,
+  .loja__page-head-actions .loja__ordenar { flex: 1 1 100%; min-width: 0; }
+}
+
+/* Janela de cupons */
+@media (max-width: 560px) {
+  .lprod { padding: max(12px, env(safe-area-inset-top)) max(12px, env(safe-area-inset-right)) max(12px, env(safe-area-inset-bottom)) max(12px, env(safe-area-inset-left)); }
+  .lprod .lprod__caixa { max-height: calc(100vh - 24px); max-height: calc(100dvh - 24px); padding: 18px 14px; }
+  .lprod__titulo { font-size: 17px; }
+  .lprod__sub { font-size: 13px; margin-bottom: 12px; }
+
+  /* campos maiores e fonte de 16px (evita o zoom automático do iPhone ao tocar) */
+  .lcp__f input[type="text"], .lcp__f input[type="number"] { height: 46px; font-size: 16px; }
+  .lcp__dd-btn, .lcp__dt-btn { height: 46px; font-size: 16px; }
+  .lcp__f label { font-size: 12.5px; }
+  .lcp__dica { font-size: 12px; }
+  .lcp__check { min-height: 44px; font-size: 15px; }
+  .lcp__check input { width: 20px; height: 20px; }
+
+  /* lista suspensa e calendário: alvos de toque confortáveis, nunca mais largos que a tela */
+  .lcp__dd-item { min-height: 44px; font-size: 14.5px; }
+  .lcp__cal { width: min(300px, calc(100vw - 32px)); padding: 10px; }
+  .lcp__cal-titulo { font-size: 14px; }
+  .lcp__cal-nav { width: 40px; height: 40px; }
+  .lcp__cal-nav { font-size: 22px; }
+  .lcp__cal-sem { font-size: 12px; padding: 4px 0; }
+  .lcp__cal-dia { height: 38px; font-size: 14px; }
+  .lcp__cal-link { font-size: 14px; padding: 10px 12px; }
+
+  /* lista de cupons: Editar / Desligar / Remover fáceis de tocar */
+  .lcp__item { padding: 12px; }
+  .lcp__acoes { gap: 6px; margin-top: 6px; }
+  .lcp__acoes .lprod__link { margin-top: 0; min-height: 44px; padding: 0 12px; font-size: 14px; }
+  .lprod__acoes .ib-dialogo__btn { min-height: 46px; }
+}
+
+/* Celular deitado: pouca altura, a janela rola por dentro */
+@media (max-height: 500px) and (orientation: landscape) {
+  .lprod .lprod__caixa { max-height: calc(100vh - 16px); max-height: calc(100dvh - 16px); padding: 14px 18px; }
+  .lprod__sub { display: none; }
+}

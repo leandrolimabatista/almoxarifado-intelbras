@@ -16,7 +16,7 @@
   if (!D || !API) return;
 
   const { ICONS, IMG_BASE, MAX_PER_ITEM, LOW_STOCK_LIMIT, COST_CENTER_BALANCE,
-    FRETE_REGIOES, FRETE_OPCOES, CUPONS, ESTADOS } = D;
+    FRETE_REGIOES, FRETE_OPCOES, CUPOM_MAX_PERCENT, ESTADOS } = D;
 
   // Catálogo e categorias vêm do banco (api/loja/produtos.php). LojaDados.PRODUCTS é o catálogo
   // antigo, fixo no JS, e não é mais usado.
@@ -29,8 +29,9 @@
   let sortMode = 'default';
   let cart = {};          // id -> qty
   let tela = 'vitrine';   // vitrine | checkout
-  let cupom = null;       // { codigo, valor } (percentual)
+  let cupom = null;       // { codigo, tipo:'percent'|'valor', valor, minimo } — já validado pelo servidor
   let cupomAberto = false;
+  let cupomCarregando = false;
   let frete = null;       // opção de frete escolhida no checkout
   let upsellIdx = 0;      // "Que tal levar também"
   let catalogoEstado = 'loading';   // loading | ok | erro
@@ -291,6 +292,7 @@
     afterCartChange();
   }
   function afterCartChange() {
+    conferirCupom();
     renderGrid();
     updateCartCount();
     renderDrawer();
@@ -306,31 +308,96 @@
     if (badge) badge.textContent = cartItemCount();
   }
 
-  // Preço unitário já com o cupom (arredondado em centavos: o que a
-  // tela mostra é exatamente o que vai para o Mercado Pago).
-  function precoUnit(p) {
-    return cupom ? round2(p.price * (1 - cupom.valor / 100)) : p.price;
+  /* ---------------- Valores e cupom ----------------
+     Tudo em CENTAVOS INTEIROS: é o mesmo cálculo de api/loja/_cupons.php (cupom_ratear). O preço do
+     item no pedido é sempre o de tabela; o desconto é calculado à parte. O servidor recalcula ao
+     reservar o pedido e recusa se o valor mostrado aqui for diferente. */
+  const centavos = (v) => Math.round(v * 100);
+
+  // linhas = [{ preco, qtd }] (preço unitário de tabela, em centavos) · c = { tipo, valor } ou null
+  // Devolve { desconto, linhas:[desconto de cada linha] }, tudo em centavos.
+  function ratearCupom(linhas, c) {
+    const n = linhas.length;
+    const descs = new Array(n).fill(0);
+    if (!c || !n) return { desconto: 0, linhas: descs };
+    const totais = linhas.map((l) => l.preco * l.qtd);
+    const sub = totais.reduce((a, b) => a + b, 0);
+    if (sub <= 0) return { desconto: 0, linhas: descs };
+
+    if (c.tipo === 'percent') {
+      // cada UNIDADE é arredondada em centavos (meio centavo sobe)
+      const bp = Math.max(0, Math.min(CUPOM_MAX_PERCENT * 100, centavos(c.valor)));
+      linhas.forEach((l, i) => {
+        let unit = Math.floor((l.preco * (10000 - bp) + 5000) / 10000);
+        unit = Math.max(1, Math.min(l.preco, unit));
+        descs[i] = (l.preco - unit) * l.qtd;
+      });
+    } else {
+      // R$ fixo dividido pelas linhas na proporção do total de cada uma; teto de 90% do subtotal
+      const teto = Math.floor((sub * CUPOM_MAX_PERCENT) / 100);
+      const alvo = Math.max(0, Math.min(centavos(c.valor), teto));
+      let dado = 0;
+      linhas.forEach((l, i) => {
+        descs[i] = Math.min(Math.floor((alvo * totais[i]) / sub), Math.max(0, totais[i] - l.qtd));   // ao menos 1 centavo por unidade
+        dado += descs[i];
+      });
+      let resto = alvo - dado;
+      for (let volta = 0; resto > 0 && volta < n + 1; volta++) {
+        linhas.forEach((l, i) => {
+          if (resto > 0 && descs[i] < totais[i] - l.qtd) { descs[i]++; resto--; }   // deixa ao menos 1 centavo por unidade
+        });
+      }
+    }
+    return { desconto: descs.reduce((a, b) => a + b, 0), linhas: descs };
+  }
+
+  function rateioAtual() {
+    const ids = Object.keys(cart);
+    const r = ratearCupom(ids.map((id) => ({ preco: centavos(findProduct(id).price), qtd: cart[id] })), cupom);
+    const porId = {};
+    ids.forEach((id, i) => { porId[id] = r.linhas[i]; });
+    return { desconto: r.desconto, porId };
+  }
+  // Total da linha já com o desconto (para mostrar no carrinho e no resumo)
+  function linhaLiquida(id) {
+    return (centavos(findProduct(id).price) * cart[id] - rateioAtual().porId[id]) / 100;
   }
   function subtotalBruto() {
     return round2(Object.entries(cart).reduce((s, [id, q]) => s + findProduct(id).price * q, 0));
   }
-  function subtotal() {
-    return round2(Object.entries(cart).reduce((s, [id, q]) => s + precoUnit(findProduct(id)) * q, 0));
-  }
-  function descontoTotal() { return round2(subtotalBruto() - subtotal()); }
+  function descontoTotal() { return rateioAtual().desconto / 100; }
+  function subtotal() { return round2(subtotalBruto() - descontoTotal()); }   // já sem o desconto
   function totalPedido() { return round2(subtotal() + (frete ? frete.preco : 0)); }
 
   /* ---------------- Cupom ---------------- */
-  function aplicarCupom(raw) {
+  function cupomRotulo(c) {
+    return c.tipo === 'percent' ? `−${String(c.valor).replace('.', ',')}%` : `−${fmtBRL(c.valor)}`;
+  }
+
+  // Quem diz se o cupom vale é o servidor (api/loja/cupom.php): ativo, validade, limite de usos,
+  // uso por usuário e valor mínimo.
+  async function aplicarCupom(raw) {
     const codigo = String(raw || '').trim().toUpperCase();
     if (!codigo) return { ok: false, msg: 'Digite o código do cupom.' };
-    const chave = Object.keys(CUPONS).find((k) => k.toUpperCase() === codigo);
-    const c = chave && CUPONS[chave];
-    if (!c || c.tipo !== 'percent' || !(c.valor > 0 && c.valor <= 100)) {
-      return { ok: false, msg: 'Cupom inválido ou expirado.' };
+    if (cartItemCount() === 0) return { ok: false, msg: 'Seu carrinho está vazio.' };
+    try {
+      const d = await API.validarCupom(codigo, Object.keys(cart).map((id) => ({ id, quantidade: cart[id] })));
+      cupom = { codigo: d.cupom.codigo, tipo: d.cupom.tipo, valor: d.cupom.valor, minimo: d.cupom.minimo };
+      return { ok: true };
+    } catch (err) {
+      return { ok: false, msg: err.message || 'Não foi possível validar o cupom.' };
     }
-    cupom = { codigo, valor: c.valor };
-    return { ok: true };
+  }
+
+  // Se o carrinho encolheu abaixo do mínimo do cupom, o cupom sai (o servidor também confere ao reservar).
+  function conferirCupom() {
+    if (!cupom || cartItemCount() === 0) return;
+    if (cupom.minimo && subtotalBruto() < cupom.minimo) {
+      const c = cupom;
+      cupom = null;
+      setTimeout(() => mostrarMensagem(
+        `O cupom ${c.codigo} vale para compras a partir de ${fmtBRL(c.minimo)} em produtos e foi removido.`, 'Cupom ⚠️'), 0);
+    }
   }
 
   // Cliques de cupom (compartilhado entre o carrinho lateral e o resumo do checkout)
@@ -345,10 +412,20 @@
       return true;
     }
     if (aplicar) {
+      if (cupomCarregando) return true;
       const input = root.querySelector('[data-cupom-input]');
-      const r = aplicarCupom(input ? input.value : '');
-      if (r.ok) { cupomAberto = false; afterCartChange(); }
-      else { const m = root.querySelector('[data-cupom-msg]'); if (m) m.textContent = r.msg; }
+      const msg = root.querySelector('[data-cupom-msg]');
+      if (msg) msg.textContent = '';
+      cupomCarregando = true;
+      aplicar.disabled = true;
+      aplicar.textContent = 'Aplicando...';
+      aplicarCupom(input ? input.value : '').then((r) => {
+        cupomCarregando = false;
+        if (r.ok) { cupomAberto = false; afterCartChange(); return; }
+        aplicar.disabled = false;
+        aplicar.textContent = 'Aplicar';
+        if (msg) msg.textContent = r.msg;
+      });
       return true;
     }
     if (remover) { cupom = null; afterCartChange(); return true; }
@@ -470,7 +547,7 @@
           </summary>
           <div class="lcompra__det">
             ${linhas}
-            ${c.cupom ? `<div class="lcompra__item lcompra__item--dim"><span>Cupom ${esc(c.cupom)}</span><span>aplicado</span></div>` : ''}
+            ${c.cupom ? `<div class="lcompra__item lcompra__item--dim"><span>Cupom ${esc(c.cupom)}</span><span>${c.desconto > 0 ? '−' + fmtBRL(c.desconto) : 'aplicado'}</span></div>` : ''}
             <div class="lcompra__item lcompra__item--dim"><span>Frete${c.frete_nome ? ' · ' + esc(c.frete_nome) : ''}</span><span>${c.frete > 0 ? fmtBRL(c.frete) : 'Grátis'}</span></div>
             ${entrega ? `<div class="lcompra__item lcompra__item--dim"><span>Entrega</span><span>${entrega}</span></div>` : ''}
             <button type="button" class="lcompra__again" data-recomprar="${esc(c.codigo)}">Comprar novamente</button>
@@ -530,7 +607,7 @@
           <div class="lcart__info">
             <div class="lcart__top">
               <span class="lcart__name">${esc(p.name)}</span>
-              <span class="lcart__price">${fmtBRL(round2(precoUnit(p) * qty))}</span>
+              <span class="lcart__price">${fmtBRL(linhaLiquida(id))}</span>
             </div>
             <div class="lcart__sku">${esc(p.id)}</div>
             <div class="lcart__ctrl">
@@ -573,7 +650,7 @@
       upsell;
 
     const cupomBloco = cupom
-      ? `<div class="lcart__cupom-ok"><span>Cupom <strong>${esc(cupom.codigo)}</strong> (−${cupom.valor}%)</span>
+      ? `<div class="lcart__cupom-ok"><span>Cupom <strong>${esc(cupom.codigo)}</strong> (${cupomRotulo(cupom)})</span>
            <button type="button" data-cupom-remover aria-label="Remover cupom">✕</button></div>`
       : `<button type="button" class="lcart__cupom-toggle" data-cupom-toggle aria-expanded="${cupomAberto}">
            <span>Adicionar cupom</span>${ICON_CHEV}
@@ -587,7 +664,7 @@
     foot.innerHTML = `
       <div class="lcart__foot">
         ${cupomBloco}
-        <div class="lcart__sub"><span>Subtotal</span><strong>${fmtBRL(subtotal())}</strong></div>
+        <div class="lcart__sub"><span>Subtotal</span><strong>${fmtBRL(subtotalBruto())}</strong></div>
         ${descontoTotal() > 0 ? `<div class="lcart__sub lcart__sub--desc"><span>Desconto</span><span>−${fmtBRL(descontoTotal())}</span></div>` : ''}
         <button type="button" class="loja__primary lcart__finalizar" data-finalizar>Finalizar compra · ${fmtBRL(subtotal())}</button>
         <p class="lcart__nota">O frete é calculado no próximo passo.</p>
@@ -749,7 +826,7 @@
   function obterFrete(chave, cep, uf) {
     if (freteCache[chave]) return Promise.resolve(freteCache[chave]);
     if (freteEmVoo[chave]) return freteEmVoo[chave];
-    const itens = Object.keys(cart).map((id) => ({ id, quantidade: cart[id], preco: precoUnit(findProduct(id)) }));
+    const itens = Object.keys(cart).map((id) => ({ id, quantidade: cart[id], preco: findProduct(id).price }));
     freteEmVoo[chave] = API.cotarFrete(cep, itens)
       .then((res) => (freteCache[chave] = res))
       .catch((err) => {
@@ -984,12 +1061,12 @@
         <div class="lck__linha">
           <span class="lck__thumbw">${thumbHTML(p)}<em class="lck__badge">${q}</em></span>
           <span class="lck__lnome">${esc(p.name)}</span>
-          <span class="lck__lpreco">${fmtBRL(round2(precoUnit(p) * q))}</span>
+          <span class="lck__lpreco">${fmtBRL(linhaLiquida(id))}</span>
         </div>`;
     }).join('');
 
     const cupomBloco = cupom
-      ? `<div class="lcart__cupom-ok"><span>Cupom <strong>${esc(cupom.codigo)}</strong> (−${cupom.valor}%)</span>
+      ? `<div class="lcart__cupom-ok"><span>Cupom <strong>${esc(cupom.codigo)}</strong> (${cupomRotulo(cupom)})</span>
            <button type="button" data-cupom-remover aria-label="Remover cupom">✕</button></div>`
       : `<div class="lck__cupom">
            <input type="text" data-cupom-input placeholder="Código de desconto" maxlength="30" autocomplete="off">
@@ -1073,11 +1150,22 @@
   }
 
   // Corpo EXATAMENTE no contrato do servidor: { items:[{id,title,quantity,unit_price}] }.
-  // O frete segue como mais um item (id "FRETE"); o cupom já está nos preços unitários.
+  // O frete segue como mais um item (id "FRETE"). O cupom entra no preço de cada linha: se o
+  // desconto da linha não divide certinho pelas unidades, a linha vira dois itens (a diferença
+  // de centavos fica numa unidade) — o total cobrado é exatamente o mostrado na tela.
   function montarItens() {
-    const items = Object.entries(cart).map(([id, qty]) => {
+    const rat = rateioAtual();
+    const items = [];
+    Object.entries(cart).forEach(([id, qty]) => {
       const p = findProduct(id);
-      return { id: p.id, title: p.name, quantity: qty, unit_price: precoUnit(p) };
+      const liquido = centavos(p.price) * qty - rat.porId[id];   // centavos da linha
+      const unit = Math.floor(liquido / qty);
+      if (unit * qty === liquido) {
+        items.push({ id: p.id, title: p.name, quantity: qty, unit_price: unit / 100 });
+      } else {
+        if (qty > 1) items.push({ id: p.id, title: p.name, quantity: qty - 1, unit_price: unit / 100 });
+        items.push({ id: p.id, title: p.name, quantity: 1, unit_price: (liquido - unit * (qty - 1)) / 100 });
+      }
     });
     if (frete && frete.preco > 0) {
       items.push({
@@ -1091,15 +1179,17 @@
   }
 
   // Corpo do pedido (aba "Compras", Dashboard e baixa de estoque). O servidor confere itens,
-  // limites e preços no catálogo do banco: o navegador não decide nome nem preço máximo.
+  // limites e preços no catálogo do banco e recalcula o cupom/desconto/total: o navegador não decide
+  // nome, preço nem desconto ("desconto" só serve para o servidor conferir o que a tela mostrou).
   function montarPedido() {
     return {
       itens: Object.keys(cart).map((id) => {
         const p = findProduct(id);
-        return { id, nome: p.name, quantidade: cart[id], preco: precoUnit(p) };
+        return { id, nome: p.name, quantidade: cart[id], preco: p.price };
       }),
       frete: frete ? { nome: frete.nome, preco: frete.preco } : null,
       cupom: cupom ? cupom.codigo : null,
+      desconto: descontoTotal(),
       cep: soDig($('ckCep').value),
       cidade: $('ckCidade').value.trim(),
       uf: $('ckUf').value,
@@ -1151,7 +1241,11 @@
       codigo = await API.reservarPedido(montarPedido());
     } catch (err) {
       console.error(err);
-      if (err.status === 409 || err.estoque) {
+      if (err.cupom) {
+        cupom = null;   // o servidor não aceitou mais o cupom (regra mudou, venceu, acabou...)
+        mostrarMensagem(err.message, 'Cupom ⚠️');
+        afterCartChange();
+      } else if (err.status === 409 || err.estoque) {
         mostrarMensagem(err.message, 'Estoque ⚠️');
         await carregarCatalogo(true);   // a vitrine volta com o estoque real e o carrinho é ajustado
       } else {
@@ -1163,7 +1257,7 @@
 
     // 2) Pagamento (servidor AWS → Mercado Pago)
     try {
-      const data = await API.criarPagamento(montarItens());
+      const data = await API.criarPagamento(montarItens(), $('ckEmail').value.trim(), codigo);
       if (data && data.init_point) {
         await vincularSeguro(codigo, data.init_point);
         compras = null;

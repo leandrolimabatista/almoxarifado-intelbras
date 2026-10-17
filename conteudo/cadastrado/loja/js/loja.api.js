@@ -12,7 +12,9 @@
 (function () {
   'use strict';
 
-  const API_BASE_URL = 'http://44.204.128.56:3000';
+  const API_BASE_URL = (location.hostname === 'localhost' || location.hostname === '127.0.0.1')
+    ? 'https://portal-intelbras.duckdns.org'
+    : '';
   const PATH_CRIAR_PAGAMENTO = '/criar-pagamento';
 
   /**
@@ -21,11 +23,11 @@
    * para o chamador tratar no catch.
    * @param {{id:string,title:string,quantity:number,unit_price:number}[]} items
    */
-  async function criarPagamento(items) {
+  async function criarPagamento(items, emailComprovante, codigoLoja) {
     const resp = await fetch(API_BASE_URL + PATH_CRIAR_PAGAMENTO, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ items }),
+      body: JSON.stringify({ items, email_comprovante: emailComprovante || null, codigo_loja: codigoLoja || null }),
     });
     return resp.json();
   }
@@ -94,6 +96,7 @@
     e.status = resp ? resp.status : 0;
     e.campo = (d && d.campo) || null;
     e.estoque = !!(d && d.estoque);
+    e.cupom = !!(d && d.cupom === true);   // o servidor recusou por causa do cupom (some do carrinho)
     return e;
   }
 
@@ -156,8 +159,55 @@
     return postPedido({ acao: 'cancelar', codigo }, 'Não foi possível cancelar o pedido.');
   }
 
+  /* ---------------- Cupons (api/loja/cupom.php) ---------------- */
+
+  /**
+   * Pergunta ao servidor se o cupom vale para este carrinho.
+   * Devolve { cupom:{codigo,tipo,valor,minimo}, desconto }; lança erro com a mensagem pronta para a tela.
+   * @param {string} codigo
+   * @param {{id:string,quantidade:number}[]} itens
+   */
+  async function validarCupom(codigo, itens) {
+    let resp;
+    try {
+      resp = await fetch('api/loja/cupom.php', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ acao: 'validar', codigo, itens }),
+      });
+    } catch (_) {
+      throw erroApi(null, null, 'Sem conexão com o servidor. Tente novamente.');
+    }
+    const d = await lerJson(resp);
+    if (!resp.ok || !d || d.sucesso !== true || !d.cupom) {
+      throw erroApi(resp, d, 'Não foi possível validar o cupom. Tente novamente.');
+    }
+    return d;
+  }
+
+  /**
+   * Administrador: acao = 'listar' | 'criar' | 'editar' | 'alternar' | 'remover'.
+   * Devolve { cupons } (lista atualizada).
+   */
+  async function cuponsAdmin(acao, campos, csrf) {
+    let resp;
+    try {
+      resp = await fetch('api/loja/cupom.php', {
+        method: 'POST', credentials: 'same-origin',
+        headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': csrf || '' },
+        body: JSON.stringify(Object.assign({ acao }, campos || {})),
+      });
+    } catch (_) {
+      throw erroApi(null, null, 'Sem conexão com o servidor. Tente novamente.');
+    }
+    const d = await lerJson(resp);
+    if (!resp.ok || !d || d.sucesso !== true) throw erroApi(resp, d, 'Não foi possível concluir a operação com o cupom.');
+    return d;
+  }
+
   window.LojaApi = {
     API_BASE_URL, PATH_CRIAR_PAGAMENTO, criarPagamento, buscarCep, cotarFrete, listarPedidos, registrarPedido,
     listarProdutos, salvarProduto, reservarPedido, vincularPedido, cancelarPedido,
+    validarCupom, cuponsAdmin,
   };
 })();

@@ -1,0 +1,79 @@
+/* ============================================================
+   Barra de rolagem da PÁGINA (janela) — só a alça, sem trilho.
+   A barra nativa da janela sempre pinta uma faixa de fundo ao lado
+   do conteúdo (e do rodapé). Esta fica "transparente": flutua por
+   cima de tudo, inclusive do rodapé. assets/js/barra-pagina.js liga
+   (classe .barra-pagina-ativa no <html>); sem JS vale a barra nativa.
+   As cores vêm das variáveis de barra-rolagem.css (verde ao passar o mouse).
+   ============================================================ */
+
+html.barra-pagina-ativa {
+  scrollbar-width: none;
+}
+
+html.barra-pagina-ativa::-webkit-scrollbar {
+  display: none;
+  width: 0;
+  height: 0;
+}
+
+.barra-pagina {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: var(--rolagem-largura, 14px);
+  z-index: 2147483000;
+  pointer-events: none;
+}
+
+.barra-pagina[hidden] {
+  display: none;
+}
+
+.barra-pagina__alca {
+  position: absolute;
+  right: 0;
+  width: 100%;
+  min-height: 48px;
+  pointer-events: auto;
+  cursor: default;
+  touch-action: none;
+  user-select: none;
+  -webkit-user-select: none;
+}
+
+/* parte visível: 4px em repouso, engorda ao aproximar o mouse (igual às demais barras) */
+.barra-pagina__alca::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  right: 5px;
+  width: 4px;
+  border-radius: 999px;
+  background: var(--rolagem-thumb);
+  transition: width .15s ease, right .15s ease, background-color .15s ease;
+}
+
+html:hover .barra-pagina__alca::before {
+  right: 4px;
+  width: 6px;
+  background: var(--rolagem-thumb-area);
+}
+
+html .barra-pagina__alca:hover::before {
+  right: 2px;
+  width: 10px;
+  background: var(--rolagem-thumb-hover);
+}
+
+html .barra-pagina__alca.barra-pagina__alca--arrastando::before {
+  right: 2px;
+  width: 10px;
+  background: var(--rolagem-thumb-ativo);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .barra-pagina__alca::before { transition: none; }
+}

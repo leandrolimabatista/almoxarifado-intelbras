@@ -964,55 +964,6 @@
     }
   };
 
-  /* ---------- Visitante (não logado) ----------
-     O menu lateral do visitante usa as classes content__* (inicio.html de
-     conteudo/nao-cadastrado) e os itens levam a "Acesso negado". Mesmo assim o
-     botão direito segue o padrão do site: menu próprio (e não o do navegador),
-     com a opção de entrar. */
-  var SEL_VISITANTE = '.content__nav-item, .content__channel-item, .content__shortcut';
-
-  function itemVisitante(alvo) {
-    if (!alvo || !alvo.closest || (document.body && document.body.dataset.logado === '1')) return null;
-    var item = alvo.closest(SEL_VISITANTE);
-    return item && item.closest('.content__sidebar') ? item : null;
-  }
-
-  function nomeVisitante(item) {
-    if (item.classList.contains('content__channel-item')) return 'Equipes';
-    var sp = item.querySelector('span');
-    return (sp && sp.textContent.trim()) || 'Menu';
-  }
-
-  function pedirLogin() {
-    if (typeof window.intelbrasAbrirLogin === 'function') window.intelbrasAbrirLogin();
-    else window.__intelbrasLoginPendente = true;
-  }
-
-  function abrirMenuVisitante(item, x, y) {
-    if (menuEl && alvoAtual === item) return;
-    var nome = nomeVisitante(item);
-    mostrarMenu({
-      x: x, y: y, alvo: item,
-      aria: 'Opções de ' + nome,
-      opcoes: [{
-        rotulo: 'Entrar para acessar', icone: 'pessoa', destaque: true,
-        acao: pedirLogin
-      }],
-      cabeca: function (cabeca) {
-        var ico = item.querySelector('svg.content__icon');
-        if (ico) {
-          var cc = ico.cloneNode(true);
-          cc.removeAttribute('class');
-          cabeca.appendChild(cc);
-        }
-        var n = document.createElement('span');
-        n.className = 'ml-menu__cabeca-nome';
-        n.textContent = nome;
-        cabeca.appendChild(n);
-      }
-    });
-  }
-
   /* ---------- Eventos do menu ---------- */
   // Sem coordenadas (0,0) = aberto pelo teclado; qualquer clique/toque zera isso
   document.addEventListener('contextmenu', function (e) { origemTeclado = !e.clientX && !e.clientY; }, true);
@@ -1022,17 +973,6 @@
   document.addEventListener('contextmenu', function (e) {
     if (menuEl && menuEl.contains(e.target)) { e.preventDefault(); return; }
     if (e.defaultPrevented) return; // outra tela já abriu o seu menu (ex.: conversa do Chat)
-    var visitante = itemVisitante(e.target);
-    if (visitante) {
-      e.preventDefault();
-      var vx = e.clientX, vy = e.clientY;
-      if (!vx && !vy) { // teclado (tecla Menu / Shift+F10)
-        var vr = visitante.getBoundingClientRect();
-        vx = vr.left + 24; vy = vr.bottom - 6;
-      }
-      abrirMenuVisitante(visitante, vx, vy);
-      return;
-    }
     var item = e.target.closest && e.target.closest(SEL_ITEM);
     if (!item || !item.closest('.inicio__sidebar') || !grupoDe(item)) {
       if (menuSelecao(e)) return; // texto selecionado -> menu padronizado
@@ -1081,16 +1021,6 @@
   (function () {
     var timer = null, bloquearClique = 0;
     document.addEventListener('touchstart', function (e) {
-      var visitante = e.touches.length === 1 ? itemVisitante(e.target) : null;
-      if (visitante) {
-        var tv = e.touches[0];
-        clearTimeout(timer);
-        timer = setTimeout(function () {
-          bloquearClique = Date.now();
-          abrirMenuVisitante(visitante, tv.clientX, tv.clientY);
-        }, 550);
-        return;
-      }
       var item = e.target.closest && e.target.closest(SEL_ITEM);
       if (!item || !item.closest('.inicio__sidebar') || !grupoDe(item) || e.touches.length !== 1) return;
       var t = e.touches[0];
@@ -1104,7 +1034,7 @@
       document.addEventListener(ev, function () { clearTimeout(timer); }, { passive: true });
     });
     document.addEventListener('click', function (e) {
-      if (Date.now() - bloquearClique < 700 && e.target.closest && e.target.closest('.inicio__sidebar, .content__sidebar')) {
+      if (Date.now() - bloquearClique < 700 && e.target.closest && e.target.closest('.inicio__sidebar')) {
         e.preventDefault();
         e.stopPropagation();
       }

@@ -6,7 +6,10 @@
  *   POST  -> corpo JSON com "acao":
  *
  *     "reservar"  (fluxo atual do checkout, ANTES de gerar o pagamento)
- *                 { itens:[{id,nome,quantidade,preco}], frete:{nome,preco}, cupom, cep, cidade, uf }
+ *                 { itens:[{id,nome,quantidade,preco}], frete:{nome,preco}, cupom, desconto, cep, cidade, uf }
+ *                 "preco" = preço de TABELA do item (o desconto do cupom não vai no preço); "desconto" = o que a
+ *                 tela mostrou. O servidor confere o cupom (api/loja/_cupons.php), recalcula o desconto e o total
+ *                 e recusa (422, "cupom":true) se o desconto mudou ou o cupom não vale mais.
  *                 Baixa o estoque e grava o pedido como "iniciado".
  *                 -> { sucesso:true, codigo:"LJ-20261007-A3F9" }   ·   409 se faltar estoque / item saiu da Loja
  *     "vincular"  { codigo, init_point }  liga o pedido ao link do Mercado Pago (para confirmar o "pago" depois)
@@ -15,7 +18,7 @@
  *                 sem a coluna de estoque no banco (database/loja_catalogo.sql) funciona como antigamente.
  *
  * Cada usuário só vê/cria os PRÓPRIOS pedidos (id vem da sessão).
- * Subtotal e total são recalculados aqui; o navegador não os define. Nome e preço máximo
+ * Subtotal, desconto e total são recalculados aqui; o navegador não os define. Nome e preço
  * de cada item vêm do catálogo do banco (o navegador não escolhe).
  */
 declare(strict_types=1);
@@ -99,11 +102,17 @@ try {
 
     $catalogo = loja_catalogo_frete($pdo);   // ids válidos (catálogo estático + produtos do banco)
     $dados    = pedido_validar($corpo, $catalogo);
+    if ($dados['cupom'] !== null && !$controla) {
+        pedidos_resposta(503, ['sucesso' => false, 'erro' => 'Banco de dados desatualizado: rode database/loja_catalogo.sql e database/loja_cupons.sql.']);
+    }
     if ($controla) {
         $dados = pedido_checar_catalogo($pdo, $dados);
     }
     $codigo = pedido_criar($pdo, $usuarioId, $dados, $controla);
     pedidos_resposta(200, ['sucesso' => true, 'codigo' => $codigo]);
+} catch (CupomErro $e) {
+    $http = in_array($e->getCode(), [404, 409, 422, 503], true) ? $e->getCode() : 422;
+    pedidos_resposta($http, ['sucesso' => false, 'erro' => $e->getMessage(), 'cupom' => true]);
 } catch (PedidoErro $e) {
     $conflito = $e->getCode() === 409;
     pedidos_resposta($conflito ? 409 : 422, ['sucesso' => false, 'erro' => $e->getMessage(), 'estoque' => $conflito]);

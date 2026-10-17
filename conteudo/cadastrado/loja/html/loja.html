@@ -10,7 +10,7 @@
      apresentação visual mudou, seguindo o print DEMONSTRAÇÃO.
 ============================================================= -->
 <?php
-// Administrador Intelbras (id 1): botão "Adicionar item" + editar/remover nos cards.
+// Administrador Intelbras (id 1): botões "Adicionar item" e "Cupons" + editar/remover nos cards.
 // O token CSRF é o mesmo do módulo administrativo (api/dashboard/_bootstrap.php).
 $lojaEhAdmin = ((int)($_SESSION['usuario_id'] ?? 0) === 1);
 $lojaCsrf = '';
@@ -21,7 +21,7 @@ if ($lojaEhAdmin) {
     $lojaCsrf = (string)$_SESSION['csrf_usuarios'];
 }
 ?>
-<link rel="stylesheet" href="conteudo/cadastrado/loja/css/loja.css?v=20261016">
+<link rel="stylesheet" href="conteudo/cadastrado/loja/css/loja.css?v=20261017">
 <link rel="stylesheet" href="conteudo/cadastrado/loja/responsivo/loja.responsivo.css?v=5">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/css/inicio.css?v=20261004">
 <link rel="stylesheet" href="conteudo/cadastrado/inicio/responsivo/inicio.responsivo.css?v=4">
@@ -167,6 +167,10 @@ if ($lojaEhAdmin) {
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M12 5v14M5 12h14"/></svg>
           <span>Adicionar item</span>
         </button>
+        <button type="button" class="loja__cupons-btn" id="lojaCupons">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M3 9a2 2 0 0 0 0 6v3a1 1 0 0 0 1 1h16a1 1 0 0 0 1-1v-3a2 2 0 0 1 0-6V6a1 1 0 0 0-1-1H4a1 1 0 0 0-1 1z"/><path d="M9 9h.01M15 15h.01M15 9l-6 6"/></svg>
+          <span>Cupons</span>
+        </button>
         <?php endif; ?>
         <select class="loja__ordenar" id="lojaOrdenar" data-seletor aria-label="Ordenar produtos">
           <option value="default">Ordenar: relevância</option>
@@ -215,6 +219,9 @@ if ($lojaEhAdmin) {
   <div id="lojaDrawerFoot"></div>
 </aside>
 
-<script src="conteudo/cadastrado/loja/js/loja.dados.js?v=5"></script>
-<script src="conteudo/cadastrado/loja/js/loja.api.js?v=7"></script>
-<script src="conteudo/cadastrado/loja/js/loja.js?v=11"></script>
+<script src="conteudo/cadastrado/loja/js/loja.dados.js?v=6"></script>
+<script src="conteudo/cadastrado/loja/js/loja.api.js?v=8"></script>
+<script src="conteudo/cadastrado/loja/js/loja.js?v=12"></script>
+<?php if ($lojaEhAdmin): ?>
+<script src="conteudo/cadastrado/loja/js/loja.cupons.js?v=1"></script>
+<?php endif; ?>

@@ -83,3 +83,63 @@ X-Loja-Token: <LOJA_WEBHOOK_TOKEN>
 
 Para isso o código do pedido (`LJ-...`) precisaria chegar ao servidor (ex.: como `external_reference`), o que exige
 alterar o contrato de `/criar-pagamento`.
+
+
+# Loja — cupons de desconto
+
+Campo **Adicionar cupom** (carrinho lateral e resumo do checkout). Quem decide se o cupom vale e
+quanto desconta é o **servidor**; o navegador só mostra o valor.
+
+## Uma vez só (banco)
+
+No phpMyAdmin, no banco `bd_intelbras`, aba **SQL**, rode `database/loja_cupons.sql`
+(estende `tb_loja_cupons` e acrescenta `desconto` em `tb_loja_pedidos`; pode rodar de novo sem problema).
+Sem isso o campo de cupom responde "Cupons ainda não instalados" e a Loja segue funcionando sem cupom.
+
+## Cadastrar cupons
+
+Logado como Administrador Intelbras (id 1): botão **Cupons** na Loja (ao lado de "Adicionar item").
+Cada cupom tem:
+
+| Campo | Regra |
+|---|---|
+| código | 3 a 30 letras/números/`-`/`_`; o usuário pode digitar em minúsculas |
+| tipo | **percentual** (0,01 a 90 %) ou **valor fixo** (R$) sobre o subtotal dos itens — o frete não recebe desconto |
+| subtotal mínimo | opcional |
+| válido de / até | opcional (o "até" vale até o fim do dia) |
+| limite total de usos | opcional — soma de todos os usuários |
+| usos por usuário | opcional — `1` = uma vez só por pessoa |
+| ativo | desliga sem apagar |
+
+O desconto nunca passa de 90 % do subtotal (o Mercado Pago não aceita item de R$ 0,00).
+Pedido **cancelado** ou **expirado** devolve o uso do cupom.
+
+## Como funciona
+
+```
+campo de cupom → api/loja/cupom.php (acao "validar")   confere ativo, validade, limites, mínimo
+                                                       e devolve { codigo, tipo, valor, minimo }
+checkout       → api/loja/pedidos.php (acao "reservar") recalcula TUDO no servidor
+```
+
+- `api/loja/_cupons.php` — regras e cálculo. O desconto é calculado em **centavos inteiros**
+  (`cupom_ratear`); o mesmo algoritmo está em `loja.js` (`ratearCupom`) para a tela mostrar o valor na hora.
+  Percentual: cada unidade é arredondada em centavos. Valor fixo: dividido entre as linhas
+  proporcionalmente ao total de cada uma.
+- Ao reservar o pedido, o servidor reconfere o cupom **dentro da transação** (trava a linha do cupom:
+  dois pedidos simultâneos não passam do limite) e recusa (HTTP 422, `cupom:true`) se o desconto que a tela
+  mostrou for diferente do calculado — o cliente nunca paga valor diferente do que viu; a tela remove o cupom e avisa.
+- O pedido grava: `subtotal` (preços de tabela), `desconto`, `cupom`, `total = subtotal − desconto + frete`.
+  Os itens do pedido guardam sempre o **preço de tabela** (o desconto não vai no preço do item).
+  O Dashboard já mostra "Desconto (CÓDIGO)" por pedido.
+- Os itens enviados ao Mercado Pago saem com o desconto aplicado (se o desconto de uma linha não dividir
+  certinho pelas unidades, a linha vira dois itens; o total cobrado é exatamente o mostrado).
+- Segurança: o preço de cada item agora precisa ser **igual** ao do catálogo (antes aceitava preço menor);
+  o código do cupom tem limite de 15 tentativas por minuto por sessão; cupom inexistente, desligado ou vencido
+  respondem com a mesma mensagem.
+
+## Limitação conhecida
+
+Igual ao frete: os itens com desconto seguem do navegador para o servidor de pagamento na AWS
+(`criar-pagamento`), que hoje não os confere. Para fechar isso de vez, esse servidor deveria buscar o
+`total` do pedido em nosso PHP antes de criar o pagamento.

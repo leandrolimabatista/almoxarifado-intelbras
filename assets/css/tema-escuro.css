@@ -3203,6 +3203,17 @@ html[data-tema="escuro"] button.equipes__cal-dia:hover:not(.equipes__cal-dia--se
 html[data-tema="escuro"] .equipes__cal-dia--fora {
   color: #a1aeba;
 }
+html[data-tema="escuro"] .equipes__hora-opcao {
+  color: #e1e5e9;
+}
+html[data-tema="escuro"] .equipes__hora-opcao:hover,
+html[data-tema="escuro"] .equipes__hora-opcao:focus-visible {
+  background: #215136;
+}
+html[data-tema="escuro"] .equipes__hora-opcao[aria-selected="true"] {
+  background: var(--eq-verde, #00A859);
+  color: #fff;
+}
 html[data-tema="escuro"] .equipes__cal-hoje {
   color: #87e8ba;
 }

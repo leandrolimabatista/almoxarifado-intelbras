@@ -302,3 +302,9 @@ Resposta: `itens[]` (direção, resultado, duração, a outra pessoa, equipe/tí
 **Ligar de volta:** botões Ligar/Vídeo em cada linha. Pela tela Chamadas usa `origem: "historico"` em `api/chamadas/chamada.php` (permite mesma equipe **ou** quem já tem conversa no Chat).
 
 **Arquivos:** `api/chamadas/historico.php`, `assets/js/historico-chamadas.js` e `assets/css/historico-chamadas.css` (componente compartilhado, com tema escuro e responsivo).
+
+## Responsivo — ajustes recentes
+
+- `assets/css/responsivo.css` (v=2): alvos de toque do cabeçalho encolhem em ≤480px (34px) e ≤380px (30px), para a logo não ser espremida; seção 8 (≤300px) e seção 9 (telas muito largas: `*__main` das páginas de conteúdo com `max-width: 1680px`, centralizado).
+- `assets/css/zoom.css` (v=5): degrau ≤300px (ícones do cabeçalho 28px) para dobráveis fechados e zoom alto.
+- Testado (Chromium, 280px a 3440px, celular/tablet/notebook, retrato e paisagem): sem rolagem horizontal em nenhuma página.

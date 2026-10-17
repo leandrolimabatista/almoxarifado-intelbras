@@ -2397,6 +2397,25 @@ button.equipes__cal-dia--sel:hover {
 .equipes__data-txt--vazio { color: var(--eq-cinza); }
 .equipes__data-icone { flex: 0 0 auto; width: 15px; height: 15px; color: var(--eq-cinza); }
 .equipes__aba-input--hora { flex: 0 0 110px; }
+.equipes__hora { flex: 0 0 110px; }
+
+/* Lista de horários 24h (seletor de hora das abas) */
+.equipes__cal--hora { width: 132px; padding: 6px; }
+.equipes__hora-lista { max-height: 220px; overflow-y: auto; display: flex; flex-direction: column; gap: 2px; }
+.equipes__hora-opcao {
+  border: 0;
+  background: none;
+  text-align: left;
+  padding: 7px 10px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--eq-preto);
+  cursor: pointer;
+}
+.equipes__hora-opcao:hover,
+.equipes__hora-opcao:focus-visible { background: #F5F5F5; outline: none; }
+.equipes__hora-opcao[aria-selected="true"] { background: var(--eq-verde); color: #fff; }
 
 .equipes__aba-btn {
   border: 1px solid transparent;
