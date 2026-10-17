@@ -21,8 +21,9 @@ try {
     $params = [];
 
     if ($busca !== '') {
-        $condicoes[] = '(u.nome LIKE :busca OR u.email LIKE :busca)';
-        $params['busca'] = '%' . $busca . '%';
+        $condicoes[] = '(u.nome LIKE :busca1 OR u.email LIKE :busca2)';
+        $params['busca1'] = '%' . $busca . '%';
+        $params['busca2'] = '%' . $busca . '%';
     }
     if (array_key_exists($equipe, USR_EQUIPES)) {
         $condicoes[] = 'u.equipe_slug = :equipe';
