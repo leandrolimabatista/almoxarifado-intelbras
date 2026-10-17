@@ -127,8 +127,9 @@ if ($logado) {
   <script src="assets/js/dialogo.js?v=1"></script>
   <!-- Responsivo: marca o <html> com o tipo de tela (toque, retrato, faixa) e a altura visível -->
   <script src="assets/js/responsivo.js?v=1"></script>
-  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=6">
-  <link rel="stylesheet" href="assets/css/barra-rolagem.css?v=2">
+  <link rel="stylesheet" href="assets/css/tema-escuro.css?v=7">
+  <link rel="stylesheet" href="assets/css/barra-rolagem.css?v=3">
+  <link rel="stylesheet" href="assets/css/barra-pagina.css?v=2">
   <!-- Troca de página sem "HTML cru": o navegador só mostra a página nova quando o
        marcador #mv-fim (último elemento do <body>, depois de TODOS os CSS) já foi lido.
        Sem isso, na transição entre páginas aparecia o HTML antes do CSS carregar.
@@ -199,7 +200,7 @@ if ($logado) {
   <script src="assets/js/chamadas-alerta.js?v=1"></script>
   <script src="assets/js/aviso-permissao.js?v=1"></script>
   <!-- Botão direito nas categorias do menu lateral (mover, desafixar, personalizar...) -->
-  <script src="assets/js/menu-contexto.js?v=14"></script>
+  <script src="assets/js/menu-contexto.js?v=13"></script>
 
   <!-- Camada global de animação + padronização visual (vale para todas as páginas).
        Fica por último para ter a palavra final na cascata. -->
@@ -208,12 +209,14 @@ if ($logado) {
 
   <!-- Responsivo global (celular · tablet · notebook): componentes de assets/ e base de toque.
        Antes do zoom.css, que continua com a palavra final. -->
-  <link rel="stylesheet" href="assets/css/responsivo.css?v=1">
+  <link rel="stylesheet" href="assets/css/responsivo.css?v=2">
 
   <!-- Zoom do navegador até 500%: cabeçalho compacto, menu lateral em gaveta e
        altura do cabeçalho em --hdr-h. Por último, para ter a palavra final. -->
-  <link rel="stylesheet" href="assets/css/zoom.css?v=4">
+  <link rel="stylesheet" href="assets/css/zoom.css?v=5">
   <script src="assets/js/zoom.js?v=1"></script>
+  <!-- Barra de rolagem da página: só a alça, transparente, por cima do conteúdo e do rodapé -->
+  <script src="assets/js/barra-pagina.js?v=1"></script>
 
   <!-- Marcador de fim de página (ver <link rel="expect"> no <head>). Deve ser o ÚLTIMO elemento. -->
   <div id="mv-fim" hidden></div>

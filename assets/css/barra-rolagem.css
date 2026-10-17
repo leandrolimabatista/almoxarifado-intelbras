@@ -12,7 +12,7 @@
   --rolagem-largura: 14px;
   --rolagem-thumb: rgba(110, 128, 118, .32);        /* repouso: bem discreta */
   --rolagem-thumb-area: rgba(110, 128, 118, .55);   /* mouse sobre a área rolável */
-  --rolagem-thumb-hover: rgba(86, 104, 94, .85);    /* mouse sobre a alça */
+  --rolagem-thumb-hover: var(--intelbras-verde, #00A859); /* mouse sobre a alça: verde */
   --rolagem-thumb-ativo: var(--intelbras-verde, #00A859);
   --rolagem-trilho-hover: rgba(110, 128, 118, .10);
 }
@@ -20,7 +20,7 @@
 html[data-tema="escuro"] {
   --rolagem-thumb: rgba(150, 175, 195, .26);
   --rolagem-thumb-area: rgba(150, 175, 195, .45);
-  --rolagem-thumb-hover: rgba(170, 195, 215, .75);
+  --rolagem-thumb-hover: var(--intelbras-verde, #00A859);
   --rolagem-thumb-ativo: var(--intelbras-verde, #00A859);
   --rolagem-trilho-hover: rgba(150, 175, 195, .10);
 }

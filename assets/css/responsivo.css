@@ -123,6 +123,27 @@ main table {
   }
 }
 
+/* Celular: os alvos de toque do cabeçalho encolhem junto com o zoom.css
+   (34px ≤480 · 30px ≤380 · 28px ≤300). Sem isto, o mínimo de 40px acima
+   anulava o zoom.css e espremia a logo (≈50px em 390, 22px em 360, some em 320). */
+@media (hover: none) and (pointer: coarse) and (max-width: 480px) {
+  .header__icon-btn,
+  .header__search-toggle,
+  .header__categories {
+    min-width: 34px;
+    min-height: 34px;
+  }
+}
+
+@media (hover: none) and (pointer: coarse) and (max-width: 380px) {
+  .header__icon-btn,
+  .header__search-toggle,
+  .header__categories {
+    min-width: 30px;
+    min-height: 30px;
+  }
+}
+
 /* iOS dá zoom na página ao focar campo com fonte < 16px: em telas de
    toque estreitas, todo campo de texto fica com 16px */
 @media (hover: none) and (pointer: coarse) and (max-width: 860px) {
@@ -289,4 +310,34 @@ main table {
   html[data-tema="escuro"] .documentos__tabela td.documentos__col-data {
     color: #a1aeba;
   }
+}
+
+/* ------------------------------------------------------------
+   8. TELAS MUITO ESTREITAS (≤ 300px: dobrável fechado, zoom alto)
+------------------------------------------------------------ */
+/* (os tamanhos dos ícones nesta faixa ficam em assets/css/zoom.css, que carrega depois) */
+@media (max-width: 300px) {
+  .header__container {
+    gap: 2px;
+  }
+}
+
+/* ------------------------------------------------------------
+   9. TELAS MUITO LARGAS (ultrawide, 2K/4K)
+      O conteúdo das páginas de leitura/cadastro para de esticar e fica
+      centralizado (o fundo continua ocupando a tela toda, pois ele está
+      na raiz de cada página). Chat, IA e Equipes seguem ocupando a tela
+      (são "apps" de altura cheia). Cursos e Reunião já têm o próprio limite.
+------------------------------------------------------------ */
+.inicio__main,
+.servicos__main,
+.documentos__main,
+.unidade__main,
+.chamadas__main,
+.loja__main,
+.usuarios__main,
+.configuracoes__main {
+  max-width: 1680px;
+  margin-left: auto;
+  margin-right: auto;
 }

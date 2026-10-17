@@ -803,6 +803,10 @@ body.lprod-aberto { overflow: hidden; }
 .lprod__sub { margin: 0 0 16px; font-size: 14px; line-height: 1.5; color: #5B6B7A; }
 /* folga de 6px em cima/embaixo e nas laterais: o contorno de foco (3px) dos campos nunca é cortado ao rolar */
 .lprod__corpo { overflow-y: auto; margin: -6px -8px 0; padding: 6px 8px 6px; scroll-padding: 10px 0; }
+/* o formulário do cupom fica dentro da caixa: precisa continuar a cadeia flex, senão o corpo nunca rola e os botões saem da tela */
+.lprod__caixa > form { display: flex; flex-direction: column; flex: 1 1 auto; min-height: 0; }
+.lprod__caixa > form > .lprod__corpo { flex: 1 1 auto; min-height: 0; }
+.lprod__caixa > form > .lprod__acoes { flex-shrink: 0; }
 
 .lprod__imagem { margin-bottom: 12px; }
 .lprod__drop {
@@ -856,3 +860,134 @@ body.lprod-aberto { overflow: hidden; }
   .lprod, .lprod__caixa, .loja__card-admin { transition: none; }
   .loja__card.is-novo { animation: none; }
 }
+
+/* ---------- Cupons (administrador) ---------- */
+.loja__cupons-btn {
+  display: inline-flex; align-items: center; gap: 7px; flex-shrink: 0; white-space: nowrap; cursor: pointer;
+  background: #fff; border: 1px solid var(--loja-linha); color: var(--loja-texto);
+  font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; font-size: 13px; font-weight: 700;
+  padding: 9px 15px; border-radius: 999px; transition: border-color 0.15s ease, color 0.15s ease, background 0.15s ease;
+}
+.loja__cupons-btn:hover { border-color: var(--loja-verde-escuro); color: var(--loja-verde-escuro); }
+.loja__cupons-btn:focus-visible { outline: 2px solid #00A859; outline-offset: 2px; }
+
+.lcp { width: min(620px, 100%); }
+.lcp__lista { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 10px; }
+.lcp__item { border: 1px solid var(--loja-linha); border-radius: var(--loja-raio-sm); padding: 12px 14px; }
+.lcp__item.is-off { opacity: 0.7; }
+.lcp__linha1 { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+.lcp__cod { font-size: 15px; letter-spacing: 0.04em; }
+.lcp__badge { font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 999px; }
+.lcp__badge--ok { background: #E3F6EC; color: #007A40; }
+.lcp__badge--off { background: #ECEFF3; color: #5E6B78; }
+.lcp__badge--exp { background: #FDEDEE; color: #C62828; }
+.lcp__badge--agd { background: #FFF3DC; color: #9A6200; }
+.lcp__desc { margin-top: 4px; font-size: 13px; color: var(--loja-texto); }
+.lcp__meta { margin-top: 2px; font-size: 12px; color: var(--loja-texto-dim); }
+.lcp__acoes { display: flex; gap: 14px; margin-top: 8px; }
+.lcp__vazio { padding: 28px 8px; text-align: center; font-size: 14px; line-height: 1.6; color: var(--loja-texto-dim); }
+.lcp__grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0 12px; }
+.lcp__f { margin-bottom: 12px; }
+.lcp__f label { display: block; margin-bottom: 5px; font-size: 12px; font-weight: 700; color: var(--loja-texto-dim); }
+.lcp__f input[type="text"], .lcp__f input[type="number"], .lcp__f input[type="date"], .lcp__f select {
+  width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; font: inherit; font-size: 14px;
+  color: var(--loja-texto); background: #fff; border: 1px solid var(--loja-linha); border-radius: var(--loja-raio-sm);
+}
+.lcp__f input:focus, .lcp__f select:focus { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.18); }
+.lcp__f input:disabled { background: var(--loja-bg); color: var(--loja-texto-dim); cursor: not-allowed; }
+.lcp__f.has-erro input, .lcp__f.has-erro select { border-color: var(--loja-vermelho); }
+.lcp__f.has-erro .lck__erro { display: block; }
+.lcp__dica { display: block; margin-top: 4px; font-size: 11.5px; line-height: 1.4; color: var(--loja-texto-faint); }
+.lcp__check { display: flex; align-items: center; gap: 8px; margin: 4px 0 8px; font-size: 14px; cursor: pointer; }
+.lcp__check input { width: 16px; height: 16px; accent-color: #00A859; }
+@media (max-width: 560px) { .lcp__grid { grid-template-columns: 1fr; } }
+
+html[data-tema="escuro"] .loja__cupons-btn { background: #17212B; border-color: #364453; color: #E6EDF3; }
+html[data-tema="escuro"] .loja__cupons-btn:hover { border-color: #3DDC97; color: #3DDC97; }
+html[data-tema="escuro"] .lcp__f input[type="text"],
+html[data-tema="escuro"] .lcp__f input[type="number"],
+html[data-tema="escuro"] .lcp__f input[type="date"],
+html[data-tema="escuro"] .lcp__f select { background: #17212B; border-color: #364453; color: #E6EDF3; color-scheme: dark; }
+html[data-tema="escuro"] .lcp__item { border-color: #364453; }
+html[data-tema="escuro"] .lcp__badge--ok { background: #12372A; color: #3DDC97; }
+html[data-tema="escuro"] .lcp__badge--off { background: #26323F; color: #A9B7C4; }
+html[data-tema="escuro"] .lcp__badge--exp { background: #3B1F22; color: #FF8A8F; }
+html[data-tema="escuro"] .lcp__badge--agd { background: #3B2F14; color: #F2C469; }
+
+/* ---------------- Cupons: lista suspensa e calendário no padrão do site ---------------- */
+.lcp__dd, .lcp__dt { position: relative; }
+.lcp__ctl { position: relative; }
+.lcp__dd-btn, .lcp__dt-btn {
+  width: 100%; box-sizing: border-box; height: 44px; padding: 0 12px; display: flex; align-items: center; justify-content: space-between; gap: 8px;
+  font: inherit; font-size: 14px; text-align: left; cursor: pointer; color: var(--loja-texto);
+  background: #fff; border: 1px solid var(--loja-linha); border-radius: var(--loja-raio-sm);
+}
+.lcp__dd-btn:hover, .lcp__dt-btn:hover, .lcp__dd.is-open .lcp__dd-btn, .lcp__dt.is-open .lcp__dt-btn { border-color: var(--loja-verde); }
+.lcp__dd-btn:focus-visible, .lcp__dt-btn:focus-visible { outline: none; border-color: var(--loja-verde-escuro); box-shadow: 0 0 0 3px rgba(0, 168, 89, 0.18); }
+.lcp__dd-btn svg { flex-shrink: 0; opacity: 0.6; transition: transform 0.18s ease; }
+.lcp__dd.is-open .lcp__dd-btn svg { transform: rotate(180deg); }
+.lcp__dt-btn svg { flex-shrink: 0; opacity: 0.65; }
+.lcp__dt-txt.is-vazio { color: var(--loja-texto-faint); }
+.lcp__f.has-erro .lcp__dd-btn, .lcp__f.has-erro .lcp__dt-btn { border-color: var(--loja-vermelho); }
+
+.lcp__dd-panel, .lcp__cal {
+  position: fixed; top: 0; left: 0; z-index: 60; background: #fff; border: 1px solid var(--content-border, #ECECEC);
+  border-radius: 12px; box-shadow: 0 12px 32px rgba(0, 0, 0, 0.14); padding: 6px;
+}
+.lcp__dd-panel {
+  box-sizing: border-box; opacity: 0; visibility: hidden; pointer-events: none; transition: opacity 0.16s ease-out, visibility 0.16s;
+}
+.lcp__dd.is-open .lcp__dd-panel { opacity: 1; visibility: visible; pointer-events: auto; }
+.lcp__dd-item {
+  width: 100%; display: flex; align-items: center; gap: 10px; background: transparent; border: 0; padding: 8px 10px; border-radius: 8px;
+  font: inherit; font-size: 13px; font-weight: 600; color: var(--intelbras-preto, #1A1A1A); text-align: left; cursor: pointer;
+}
+.lcp__dd-item > span { flex: 1; min-width: 0; }
+.lcp__dd-item:hover, .lcp__dd-item:focus-visible { background: #F5F5F5; outline: 0; }
+.lcp__dd-item.is-active { background: var(--intelbras-verde-100, #E7F7EE); color: var(--intelbras-verde-escuro, #007A40); }
+.lcp__dd-item.is-active::after {
+  content: ''; width: 15px; height: 15px; flex-shrink: 0;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2300A859' stroke-width='1.8' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 12.5l4.5 4.5L19 7.5'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
+/* Calendário no padrão do "Calendário da equipe" (Equipes); abre solto no <body>, por cima da janela */
+.lcp__cal { z-index: 4100; width: 252px; max-width: calc(100vw - 16px); padding: 10px; box-sizing: border-box; font-family: 'Nunito Sans', 'Segoe UI', Arial, sans-serif; color: #1B2733; box-shadow: 0 2px 6px rgba(16, 24, 20, 0.06), 0 14px 34px -6px rgba(16, 24, 20, 0.2); transform-origin: top left; animation: lcpCalFade 0.12s ease-out both; }
+.lcp__cal * { box-sizing: border-box; }
+.lcp__cal button { font-family: inherit; }
+.lcp__cal[hidden] { display: none; }
+/* mesmas animações do seletor de data de Equipes: o popup entra só com um fade curto (0,12s, sem zoom) e a grade troca de mês com o mesmo fade */
+@keyframes lcpCalFade { from { opacity: 0; } to { opacity: 1; } }
+.lcp__cal-topo { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.lcp__cal-titulo { font-size: 12px; font-weight: 700; }
+.lcp__cal-nav { width: 24px; height: 24px; padding: 0; border: 0; border-radius: 50%; background: transparent; color: #6B7785; font-size: 16px; line-height: 1; cursor: pointer; transition: background-color 0.15s ease, color 0.15s ease; }
+.lcp__cal-nav:hover { background: #F3F6F4; color: var(--loja-verde-escuro); }
+.lcp__cal-grade { display: grid; grid-template-columns: repeat(7, 1fr); gap: 2px; text-align: center; }
+.lcp__cal-grade--troca { animation: lcpCalFade 0.12s ease both; }
+.lcp__cal-sem { padding: 3px 0; font-size: 10.5px; font-weight: 700; color: #6B7785; }
+.lcp__cal-dia { display: flex; align-items: center; justify-content: center; height: 28px; padding: 0; border: 0; border-radius: 50%; background: transparent; font: inherit; font-size: 11.5px; color: inherit; transition: background-color 0.15s ease, color 0.15s ease, box-shadow 0.15s ease; }
+button.lcp__cal-dia { cursor: pointer; }
+button.lcp__cal-dia:hover:not(.is-selecionado) { background: #F1FAF5; }
+button.lcp__cal-dia.is-selecionado:hover { background: #007A40; box-shadow: 0 3px 8px rgba(0, 168, 89, 0.28); }
+.lcp__cal-dia--fora { color: #C4C8CE; }
+.lcp__cal-dia.is-hoje { font-weight: 800; box-shadow: inset 0 0 0 1px #00A859; }
+.lcp__cal-dia.is-selecionado { background: #00A859; color: #fff; font-weight: 700; }
+.lcp__cal-rodape { display: flex; align-items: center; justify-content: space-between; margin-top: 4px; }
+.lcp__cal-link { border: 0; background: none; font: inherit; font-size: 12px; font-weight: 700; color: var(--loja-verde-escuro); cursor: pointer; padding: 6px 8px; }
+.lcp__cal-link--limpar { color: #6B7785; }
+.lcp__cal-link:hover { text-decoration: underline; }
+.lcp__cal-nav:focus-visible, .lcp__cal-dia:focus-visible, .lcp__cal-link:focus-visible { outline: 2px solid #00A859; outline-offset: 1px; }
+@media (prefers-reduced-motion: reduce) { .lcp__dd-panel, .lcp__dd-btn svg { transition: none; } }
+
+html[data-tema="escuro"] .lcp__dd-btn, html[data-tema="escuro"] .lcp__dt-btn { background: #17212B; border-color: #364453; color: #E6EDF3; }
+html[data-tema="escuro"] .lcp__dd-btn:hover, html[data-tema="escuro"] .lcp__dt-btn:hover,
+html[data-tema="escuro"] .lcp__dd.is-open .lcp__dd-btn, html[data-tema="escuro"] .lcp__dt.is-open .lcp__dt-btn { border-color: #3DDC97; }
+html[data-tema="escuro"] .lcp__dd-panel, html[data-tema="escuro"] .lcp__cal { background: #17212B; border-color: #364453; color: #E6EDF3; }
+html[data-tema="escuro"] .lcp__dd-item { color: #E6EDF3; }
+html[data-tema="escuro"] .lcp__dd-item:hover, html[data-tema="escuro"] .lcp__dd-item:focus-visible, html[data-tema="escuro"] .lcp__cal-nav:hover, html[data-tema="escuro"] .lcp__cal-dia:hover:not(.is-selecionado) { background: #26323F; }
+html[data-tema="escuro"] .lcp__dd-item.is-active { background: #12372A; color: #3DDC97; }
+html[data-tema="escuro"] .lcp__cal-link { color: #3DDC97; }
+html[data-tema="escuro"] .lcp__cal { color: #E6EDF3; }
+html[data-tema="escuro"] .lcp__cal-nav, html[data-tema="escuro"] .lcp__cal-sem { color: #9AA9B8; }
+html[data-tema="escuro"] .lcp__cal-dia--fora { color: #4A5866; }
+html[data-tema="escuro"] .lcp__cal-link--limpar { color: #9AA9B8; }
+html[data-tema="escuro"] button.lcp__cal-dia:hover:not(.is-selecionado) { background: #26323F; }

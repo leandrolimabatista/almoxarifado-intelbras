@@ -177,6 +177,27 @@ html body .inteligencia-artificial .inicio__sidebar {
   }
 }
 
+@media (max-width: 300px) {
+  .header__icon-btn,
+  .header__search-toggle,
+  .header__categories {
+    width: 28px;
+    min-width: 28px;
+    height: 28px;
+    min-height: 28px;
+  }
+
+  .header__icon-btn svg {
+    width: 17px;
+    height: 17px;
+  }
+
+  .header__avatar {
+    width: 26px;
+    height: 26px;
+  }
+}
+
 /* ------------------------------------------------------------
    3. Menu lateral como "gaveta" em tela estreita (≤ 860px)
       Abre por cima do conteúdo, com fundo escurecido; não empurra mais

@@ -12,6 +12,7 @@ if (basename((string)($_SERVER['SCRIPT_FILENAME'] ?? '')) === basename(__FILE__)
 
 require_once __DIR__ . '/_mercadopago.php';
 require_once __DIR__ . '/_produtos.php';
+require_once __DIR__ . '/_cupons.php';
 
 const PEDIDO_STATUS = ['iniciado', 'pago', 'cancelado'];
 const PEDIDO_MAX_ITENS = 30;
@@ -77,7 +78,10 @@ function pedido_validar(array $c, array $catalogoFrete): array
         'frete_nome'     => $freteValor > 0 || !empty($c['frete']['nome']) ? pedido_texto($c['frete']['nome'] ?? '', 80) : null,
         'frete_valor'    => $freteValor,
         'total'          => round($subtotal + $freteValor, 2),
-        'cupom'          => ($c['cupom'] ?? '') !== '' && $c['cupom'] !== null ? pedido_texto($c['cupom'], 30) : null,
+        'cupom'          => ($c['cupom'] ?? '') !== '' && $c['cupom'] !== null ? cupom_normalizar(pedido_texto($c['cupom'], 30)) : null,
+        'desconto'       => 0.0,
+        // quanto o navegador mostrou de desconto: só serve para conferir com o cálculo do servidor
+        'desconto_visto' => round(max(0.0, min((float)($c['desconto'] ?? 0), 100000.0)), 2),
         'entrega_cep'    => strlen($cep) === 8 ? $cep : null,
         'entrega_cidade' => pedido_texto($c['cidade'] ?? '', 80) ?: null,
         'entrega_uf'     => preg_match('/^[A-Z]{2}$/', $uf) ? $uf : null,
@@ -88,14 +92,16 @@ function pedido_validar(array $c, array $catalogoFrete): array
 
 /**
  * Confere os itens com o catálogo do banco: o item precisa estar ativo, a quantidade respeita o
- * limite do produto e o preço nunca pode ser MAIOR que o do catálogo (cupom só reduz).
- * O nome gravado no pedido é o do catálogo. Não baixa estoque (isso é feito em pedido_criar).
+ * limite do produto e o preço enviado tem de ser o do catálogo (o desconto de cupom NÃO vai no preço
+ * do item: é calculado aqui no servidor em pedido_aplicar_cupom). O nome e o preço gravados no pedido
+ * são os do catálogo. Não baixa estoque (isso é feito em pedido_criar).
  * Códigos 409 = a vitrine do cliente está desatualizada (ele recarrega o catálogo).
  */
 function pedido_checar_catalogo(PDO $pdo, array $d): array
 {
     $mapa = prod_mapa_ativos($pdo);
     $vistos = [];
+    $subtotal = 0.0;
     foreach ($d['itens'] as $i => $it) {
         $id = (string)$it['id'];
         if (isset($vistos[$id])) {
@@ -110,11 +116,49 @@ function pedido_checar_catalogo(PDO $pdo, array $d): array
         if ($it['quantidade'] > $limite) {
             throw new PedidoErro('Limite de ' . $limite . ' unidades por pedido para "' . $p['nome'] . '".', 422);
         }
-        if ($it['preco'] > (float)$p['preco'] + 0.005) {
+        if (abs($it['preco'] - (float)$p['preco']) > 0.005) {
             throw new PedidoErro('O preço de "' . $p['nome'] . '" mudou. Atualize a Loja e tente de novo.', 409);
         }
-        $d['itens'][$i]['nome'] = (string)$p['nome'];
+        $d['itens'][$i]['nome']  = (string)$p['nome'];
+        $d['itens'][$i]['preco'] = round((float)$p['preco'], 2);
+        $subtotal += $d['itens'][$i]['preco'] * $it['quantidade'];
     }
+    $d['subtotal'] = round($subtotal, 2);
+    $d['total']    = round($d['subtotal'] + $d['frete_valor'], 2);
+    return $d;
+}
+
+/**
+ * Aplica o cupom do pedido (se houver): confere as regras e calcula o desconto no servidor.
+ * Chame DENTRO da transação de pedido_criar, com $travar = true (trava a linha do cupom até o commit,
+ * assim dois pedidos ao mesmo tempo não passam do limite de usos).
+ * Se o navegador mostrou um desconto diferente do calculado aqui, recusa: o cliente nunca paga um
+ * valor diferente do que viu.
+ */
+function pedido_aplicar_cupom(PDO $pdo, int $usuarioId, array $d, bool $travar): array
+{
+    $d['desconto'] = 0.0;
+    if ($d['cupom'] === null) {
+        $d['total'] = round($d['subtotal'] + $d['frete_valor'], 2);
+        return $d;
+    }
+    $linhas = [];
+    foreach ($d['itens'] as $it) {
+        $linhas[] = ['preco' => cupom_centavos($it['preco']), 'qtd' => (int)$it['quantidade']];
+    }
+    $sub = 0;
+    foreach ($linhas as $l) {
+        $sub += $l['preco'] * $l['qtd'];
+    }
+    $c = cupom_verificar($pdo, (string)$d['cupom'], $usuarioId, $sub, $travar);
+    $r = cupom_ratear($linhas, $c);
+    $desconto = $r['desconto'] / 100;
+    if (abs($desconto - (float)($d['desconto_visto'] ?? 0)) > 0.005) {
+        throw new CupomErro('O desconto do cupom mudou. Aplique o cupom novamente.', 422);
+    }
+    $d['cupom']    = (string)$c['codigo'];
+    $d['desconto'] = round($desconto, 2);
+    $d['total']    = round($d['subtotal'] - $d['desconto'] + $d['frete_valor'], 2);
     return $d;
 }
 
@@ -163,15 +207,25 @@ function pedido_estoque_devolver(PDO $pdo, $itens): void
  * Grava o pedido do usuário e devolve o código. Tenta de novo se o código colidir.
  * Com $reservarEstoque, baixa o estoque na MESMA transação: se faltar unidade, nada é gravado
  * (PedidoErro 409) — assim dois clientes nunca compram a última unidade ao mesmo tempo.
+ * Com cupom, a regra do cupom também é conferida nessa transação (CupomErro se não valer mais).
  */
 function pedido_criar(PDO $pdo, int $usuarioId, array $d, bool $reservarEstoque = false): string
 {
-    $comPref = mp_colunas_prontas($pdo);   // colunas de database/loja_pagamento_mp.sql já aplicadas?
+    $comPref    = mp_colunas_prontas($pdo);   // colunas de database/loja_pagamento_mp.sql já aplicadas?
+    $comCupom   = $d['cupom'] !== null;
+    $comDescCol = cupom_pedido_tem_desconto($pdo);
+    if ($comCupom && !cupom_prontos($pdo)) {
+        throw new CupomErro('Cupons indisponíveis no momento.', 503);
+    }
     $colunas = 'codigo, usuario_id, itens, subtotal, frete_nome, frete_valor, total, cupom, entrega_cep, entrega_cidade, entrega_uf';
     $marcas  = ':codigo, :u, :itens, :sub, :fn, :fv, :total, :cupom, :cep, :cid, :uf';
     if ($comPref) {
         $colunas .= ', preference_id';
         $marcas  .= ', :pref';
+    }
+    if ($comDescCol) {
+        $colunas .= ', desconto';
+        $marcas  .= ', :desc';
     }
     if ($reservarEstoque) {
         $colunas .= ', estoque_reservado';
@@ -179,10 +233,13 @@ function pedido_criar(PDO $pdo, int $usuarioId, array $d, bool $reservarEstoque 
     }
     $sql = "INSERT INTO tb_loja_pedidos ($colunas) VALUES ($marcas)";
 
-    if ($reservarEstoque) {
+    $transacao = $reservarEstoque || $comCupom;
+    if ($transacao) {
         $pdo->beginTransaction();
     }
     try {
+        // Cupom primeiro: trava a linha do cupom e calcula o desconto/total definitivos.
+        $d = pedido_aplicar_cupom($pdo, $usuarioId, $d, $comCupom);
         if ($reservarEstoque) {
             pedido_estoque_baixar($pdo, $d['itens']);
         }
@@ -205,8 +262,14 @@ function pedido_criar(PDO $pdo, int $usuarioId, array $d, bool $reservarEstoque 
                 if ($comPref) {
                     $valores['pref'] = $d['preference_id'] ?? null;
                 }
+                if ($comDescCol) {
+                    $valores['desc'] = $d['desconto'];
+                }
                 $pdo->prepare($sql)->execute($valores);
-                if ($reservarEstoque) {
+                if ($comCupom) {
+                    cupom_recontar($pdo, (string)$d['cupom']);
+                }
+                if ($transacao) {
                     $pdo->commit();
                 }
                 return $codigo;
@@ -218,7 +281,7 @@ function pedido_criar(PDO $pdo, int $usuarioId, array $d, bool $reservarEstoque 
         }
         throw new PedidoErro('Não foi possível gerar o código do pedido.');
     } catch (Throwable $e) {
-        if ($reservarEstoque && $pdo->inTransaction()) {
+        if ($transacao && $pdo->inTransaction()) {
             $pdo->rollBack();
         }
         throw $e;
@@ -247,7 +310,7 @@ function pedido_cancelar_pendente(PDO $pdo, int $pedidoId, bool $apagar = false)
         $pdo->beginTransaction();
     }
     try {
-        $st = $pdo->prepare("SELECT itens, estoque_reservado FROM tb_loja_pedidos WHERE id = :id AND status = 'iniciado' FOR UPDATE");
+        $st = $pdo->prepare("SELECT itens, estoque_reservado, cupom FROM tb_loja_pedidos WHERE id = :id AND status = 'iniciado' FOR UPDATE");
         $st->execute(['id' => $pedidoId]);
         $linha = $st->fetch();
         if (!$linha) {
@@ -264,6 +327,9 @@ function pedido_cancelar_pendente(PDO $pdo, int $pedidoId, bool $apagar = false)
         $mudou = $up->rowCount() === 1;
         if ($mudou && (int)$linha['estoque_reservado'] === 1) {
             pedido_estoque_devolver($pdo, json_decode((string)$linha['itens'], true));
+        }
+        if ($mudou && $linha['cupom'] !== null && cupom_prontos($pdo)) {
+            cupom_recontar($pdo, (string)$linha['cupom']);   // o cupom volta a ficar disponível
         }
         if ($propria) {
             $pdo->commit();
@@ -372,13 +438,14 @@ function pedido_expirar_pendentes(PDO $pdo): int
 /** Pedidos do usuário, do mais novo ao mais antigo. */
 function pedido_listar(PDO $pdo, int $usuarioId): array
 {
+    $colDesc = cupom_pedido_tem_desconto($pdo) ? 'desconto' : '0 AS desconto';
     $st = $pdo->prepare(
-        'SELECT codigo, status, itens, subtotal, frete_nome, frete_valor, total, cupom,
+        "SELECT codigo, status, itens, subtotal, $colDesc, frete_nome, frete_valor, total, cupom,
                 entrega_cidade, entrega_uf, criado_em
            FROM tb_loja_pedidos
           WHERE usuario_id = :u
           ORDER BY criado_em DESC, id DESC
-          LIMIT ' . PEDIDO_LISTA_MAX
+          LIMIT " . PEDIDO_LISTA_MAX
     );
     $st->execute(['u' => $usuarioId]);
     $saida = [];
@@ -389,6 +456,7 @@ function pedido_listar(PDO $pdo, int $usuarioId): array
             'status'     => $r['status'],
             'itens'      => is_array($itens) ? $itens : [],
             'subtotal'   => (float)$r['subtotal'],
+            'desconto'   => (float)$r['desconto'],
             'frete_nome' => $r['frete_nome'],
             'frete'      => (float)$r['frete_valor'],
             'total'      => (float)$r['total'],

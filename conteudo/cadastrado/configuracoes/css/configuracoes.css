@@ -1217,3 +1217,28 @@
   background: var(--cfg-verde-100);
   color: var(--cfg-verde-escuro);
 }
+
+/* Link "Esqueci minha senha" (aba Segurança, abaixo de "Senha atual") */
+.configuracoes__esqueci {
+  align-self: flex-start;
+  margin: -2px 0 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--intelbras-verde, #00A859);
+  cursor: pointer;
+}
+
+.configuracoes__esqueci:hover { text-decoration: underline; }
+.configuracoes__esqueci:disabled { opacity: .6; cursor: default; text-decoration: none; }
+
+/* Alterar senha (aba Segurança): avisos vazios não ocupam espaço, campos ficam mais próximos */
+#cfgFormSenha .configuracoes__erro:empty,
+#cfgFormSenha .configuracoes__forca:empty {
+  display: none;
+}
+
+#cfgFormSenha { gap: 14px; }

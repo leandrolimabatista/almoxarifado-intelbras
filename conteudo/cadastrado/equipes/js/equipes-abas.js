@@ -1,6 +1,6 @@
 // ============================================================
-// Equipes — abas Arquivos, Tarefas, Calendário e Notas
-// Tarefas/Calendário/Notas: api/equipes/abas.php (database/equipes_abas.sql).
+// Equipes — abas Arquivos, Calendário e Notas
+// Calendário/Notas: api/equipes/abas.php (database/equipes_abas.sql).
 // Arquivos: api/equipes/arquivos.php.
 // Carrega cada aba na primeira vez que ela é aberta.
 // ============================================================
@@ -181,112 +181,103 @@
     seletorLimpar.btn = btn;
   }
 
-  // ============================================================ TAREFAS
-  const tarefas = { itens: [], filtro: 'abertas', editando: 0, carregado: false };
+  // ============================================================ SELETOR DE HORA
+  // Lista 24h (de 30 em 30 min), no mesmo padrão do seletor de data, no lugar do
+  // <input type="time"> nativo (que mostrava AM/PM). O valor (HH:MM) fica num
+  // <input hidden> com o mesmo data-campo de antes.
+  const ICONE_HORA = '<svg class="equipes__data-icone" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="8.5"/><path d="M12 7.5V12l3 2"/></svg>';
+  const HORARIOS = [];
+  for (let h = 0; h < 24; h++) { HORARIOS.push(pad(h) + ':00'); HORARIOS.push(pad(h) + ':30'); }
 
-  function desenharTarefas() {
+  function campoHora(campo, valor, rotulo) {
+    return `<span class="equipes__data equipes__hora">
+      <button type="button" class="equipes__aba-input equipes__data-btn" data-timepicker aria-haspopup="listbox" aria-expanded="false" aria-label="${esc(rotulo)}">
+        <span class="equipes__data-txt${valor ? '' : ' equipes__data-txt--vazio'}">${valor ? esc(valor) : '--:--'}</span>${ICONE_HORA}
+      </button>
+      <input type="hidden" data-campo="${esc(campo)}" value="${esc(valor || '')}">
+    </span>`;
+  }
+
+  function abrirSeletorHora(btn) {
+    const reabrir = !(seletorLimpar && seletorLimpar.btn === btn);
     if (seletorLimpar) seletorLimpar();
-    const el = corpo('tarefas');
-    const abertas = tarefas.itens.filter((t) => !t.concluida);
-    const feitas = tarefas.itens.filter((t) => t.concluida);
-    const lista = tarefas.filtro === 'abertas' ? abertas : feitas;
-    const hoje = hojeIso();
+    if (!reabrir) return;
 
-    const linhas = lista.map((t) => {
-      if (tarefas.editando === t.id) {
-        return `<li class="equipes__tarefa equipes__tarefa--edicao" data-id="${t.id}">
-          <input class="equipes__aba-input" data-campo="titulo" maxlength="200" value="${esc(t.titulo)}" aria-label="Título da tarefa">
-          ${campoData('prazo', t.prazo || '', 'Prazo')}
-          <button type="button" class="equipes__aba-btn" data-acao="salvar-tarefa">Salvar</button>
-          <button type="button" class="equipes__aba-btn equipes__aba-btn--sec" data-acao="cancelar-tarefa">Cancelar</button>
-        </li>`;
-      }
-      const atrasada = !t.concluida && t.prazo && t.prazo < hoje;
-      const prazo = t.prazo ? `<span class="equipes__tarefa-prazo${atrasada ? ' equipes__tarefa-prazo--atrasada' : ''}">${atrasada ? 'Atrasada · ' : ''}${dataBr(t.prazo)}</span>` : '';
-      const acoes = t.pode_editar
-        ? `<span class="equipes__item-acoes">
-             <button type="button" class="equipes__icone-btn" data-acao="editar-tarefa" aria-label="Editar tarefa" title="Editar">✎</button>
-             <button type="button" class="equipes__icone-btn" data-acao="excluir-tarefa" aria-label="Excluir tarefa" title="Excluir">🗑</button>
-           </span>` : '';
-      return `<li class="equipes__tarefa${t.concluida ? ' equipes__tarefa--feita' : ''}" data-id="${t.id}">
-        <input type="checkbox" class="equipes__tarefa-check" data-acao="alternar-tarefa" ${t.concluida ? 'checked' : ''} aria-label="Concluir tarefa">
-        <span class="equipes__tarefa-info">
-          <span class="equipes__tarefa-titulo">${esc(t.titulo)}</span>
-          <span class="equipes__tarefa-meta">${prazo}<span>${esc(t.autor)}</span></span>
-        </span>${acoes}
-      </li>`;
-    }).join('');
+    const entrada = btn.parentElement.querySelector('input[type="hidden"]');
+    const txt = btn.querySelector('.equipes__data-txt');
+    const valor = entrada.value || '';
 
-    el.innerHTML = `
-      <div class="equipes__aba-topo">
-        <h2 class="equipes__aba-titulo">Tarefas</h2>
-        <div class="equipes__aba-filtros" role="tablist">
-          <button type="button" class="equipes__aba-filtro${tarefas.filtro === 'abertas' ? ' equipes__aba-filtro--ativo' : ''}" data-filtro="abertas">Abertas (${abertas.length})</button>
-          <button type="button" class="equipes__aba-filtro${tarefas.filtro === 'feitas' ? ' equipes__aba-filtro--ativo' : ''}" data-filtro="feitas">Concluídas (${feitas.length})</button>
-        </div>
-      </div>
-      <div class="equipes__aba-form" data-form="tarefa">
-        <input class="equipes__aba-input" data-campo="titulo" maxlength="200" placeholder="Nova tarefa…" aria-label="Nova tarefa">
-        ${campoData('prazo', '', 'Prazo (opcional)')}
-        <button type="button" class="equipes__aba-btn" data-acao="criar-tarefa">Adicionar</button>
-      </div>
-      <div class="equipes__aba-scroll">
-        ${linhas ? `<ul class="equipes__aba-lista">${linhas}</ul>` : `<p class="equipes__aba-vazio">${tarefas.filtro === 'abertas' ? 'Nenhuma tarefa aberta. Adicione a primeira acima.' : 'Nenhuma tarefa concluída ainda.'}</p>`}
+    const pop = document.createElement('div');
+    pop.className = 'equipes__cal equipes__cal--data equipes__cal--hora';
+    pop.setAttribute('role', 'listbox');
+    pop.setAttribute('aria-label', 'Escolher horário');
+    pop.setAttribute('data-mv', 'menu');
+    pop.setAttribute('data-mv-anim', '');
+    pop.innerHTML = `<div class="equipes__hora-lista">${HORARIOS.map((h) =>
+      `<button type="button" role="option" class="equipes__hora-opcao" data-hora="${h}" aria-selected="${h === valor}">${h}</button>`).join('')}</div>
+      <div class="equipes__cal-rodape equipes__cal-rodape--data">
+        ${valor ? '<button type="button" class="equipes__cal-hoje equipes__cal-hoje--limpar" data-limpar>Limpar</button>' : '<span></span>'}
+        <button type="button" class="equipes__cal-hoje" data-agora>Agora</button>
       </div>`;
-  }
 
-  async function carregarTarefas() {
-    try {
-      tarefas.itens = (await api('tarefas')).itens;
-      tarefas.carregado = true;
-      desenharTarefas();
-    } catch (e) {
-      corpo('tarefas').innerHTML = `<p class="equipes__aba-vazio">${esc(e.message)}</p>`;
+    function posicionar() {
+      if (!btn.isConnected) { fechar(); return; }
+      const rb = btn.getBoundingClientRect();
+      const larg = pop.offsetWidth;
+      const alt = pop.offsetHeight;
+      const margem = 8;
+      let topo = rb.bottom + 6;
+      let origem = 'top';
+      if (topo + alt > window.innerHeight - margem && rb.top - alt - 6 >= margem) { topo = rb.top - alt - 6; origem = 'bottom'; }
+      topo = Math.min(Math.max(margem, topo), Math.max(margem, window.innerHeight - alt - margem));
+      const esq = Math.min(Math.max(margem, rb.left), Math.max(margem, window.innerWidth - larg - margem));
+      pop.style.left = esq + 'px';
+      pop.style.top = topo + 'px';
+      pop.style.transformOrigin = origem + ' left';
     }
-  }
 
-  async function cliqueTarefas(e) {
-    const el = corpo('tarefas');
-    const seletor = e.target.closest('[data-datepicker]');
-    if (seletor) { abrirSeletorData(seletor); return; }
-    const filtro = e.target.closest('[data-filtro]');
-    if (filtro) { tarefas.filtro = filtro.dataset.filtro; desenharTarefas(); return; }
-    const botao = e.target.closest('[data-acao]');
-    if (!botao) return;
-    const acao = botao.dataset.acao;
-    const li = botao.closest('[data-id]');
-    const id = li ? Number(li.dataset.id) : 0;
-    try {
-      if (acao === 'criar-tarefa') {
-        const f = el.querySelector('[data-form="tarefa"]');
-        const titulo = f.querySelector('[data-campo="titulo"]').value.trim();
-        if (!titulo) { f.querySelector('[data-campo="titulo"]').focus(); return; }
-        await api('tarefas', { acao: 'criar', titulo, prazo: f.querySelector('[data-campo="prazo"]').value });
-        tarefas.filtro = 'abertas';
-        await carregarTarefas();
-      } else if (acao === 'alternar-tarefa') {
-        await api('tarefas', { acao: 'alternar', id, concluida: botao.checked });
-        await carregarTarefas();
-      } else if (acao === 'editar-tarefa') {
-        tarefas.editando = id; desenharTarefas();
-        const inp = el.querySelector('.equipes__tarefa--edicao [data-campo="titulo"]'); if (inp) inp.focus();
-      } else if (acao === 'cancelar-tarefa') {
-        tarefas.editando = 0; desenharTarefas();
-      } else if (acao === 'salvar-tarefa') {
-        const titulo = li.querySelector('[data-campo="titulo"]').value.trim();
-        if (!titulo) return;
-        await api('tarefas', { acao: 'editar', id, titulo, prazo: li.querySelector('[data-campo="prazo"]').value });
-        tarefas.editando = 0;
-        await carregarTarefas();
-      } else if (acao === 'excluir-tarefa') {
-        if (!(await window.IBDialogo.confirmar({ titulo: 'Excluir tarefa?', texto: 'Esta tarefa será excluída.', confirmar: 'Excluir', perigo: true }))) return;
-        await api('tarefas', { acao: 'excluir', id });
-        await carregarTarefas();
-      }
-    } catch (err) {
-      toast(err.message, true);
-      if (acao === 'alternar-tarefa') carregarTarefas();
+    function escolher(novo) {
+      entrada.value = novo;
+      txt.textContent = novo || '--:--';
+      txt.classList.toggle('equipes__data-txt--vazio', !novo);
+      fechar();
+      btn.focus();
     }
+
+    pop.addEventListener('click', (e) => {
+      const op = e.target.closest('[data-hora]');
+      if (op) { escolher(op.dataset.hora); return; }
+      if (e.target.closest('[data-agora]')) { const d = new Date(); escolher(pad(d.getHours()) + ':' + pad(d.getMinutes())); return; }
+      if (e.target.closest('[data-limpar]')) escolher('');
+    });
+
+    const aoClicarFora = (e) => { if (!pop.contains(e.target) && !btn.contains(e.target)) fechar(); };
+    const aoTeclar = (e) => { if (e.key === 'Escape') { fechar(); btn.focus(); } };
+    const aoMover = () => posicionar();
+
+    function fechar() {
+      document.removeEventListener('click', aoClicarFora);
+      document.removeEventListener('keydown', aoTeclar);
+      window.removeEventListener('resize', aoMover);
+      window.removeEventListener('scroll', aoMover, true);
+      btn.setAttribute('aria-expanded', 'false');
+      pop.remove();
+      seletorLimpar = null;
+    }
+
+    document.body.appendChild(pop);
+    btn.setAttribute('aria-expanded', 'true');
+    posicionar();
+    const lista = pop.querySelector('.equipes__hora-lista');
+    const sel = pop.querySelector('[aria-selected="true"]');
+    const alvo = sel || pop.querySelector('[data-hora="09:00"]');
+    if (alvo) lista.scrollTop = Math.max(0, alvo.offsetTop - 80);
+    document.addEventListener('click', aoClicarFora);
+    document.addEventListener('keydown', aoTeclar);
+    window.addEventListener('resize', aoMover);
+    window.addEventListener('scroll', aoMover, { passive: true, capture: true });
+    seletorLimpar = fechar;
+    seletorLimpar.btn = btn;
   }
 
   // ============================================================ CALENDÁRIO
@@ -294,6 +285,7 @@
   const cal = { itens: [], ano: hojeData.getFullYear(), mes: hojeData.getMonth(), sel: hojeIso(), editando: 0, carregado: false };
 
   function desenharCalendario() {
+    if (seletorLimpar) seletorLimpar();
     const el = corpo('calendario');
     const hoje = hojeIso();
     const porDia = {};
@@ -320,7 +312,7 @@
       if (cal.editando === ev.id) {
         return `<li class="equipes__evento equipes__evento--edicao" data-id="${ev.id}">
           <input class="equipes__aba-input" data-campo="titulo" maxlength="200" value="${esc(ev.titulo)}" aria-label="Título">
-          <input class="equipes__aba-input equipes__aba-input--hora" type="time" data-campo="hora" value="${esc(ev.hora || '')}" aria-label="Hora">
+          ${campoHora('hora', ev.hora || '', 'Hora')}
           <button type="button" class="equipes__aba-btn" data-acao="salvar-evento">Salvar</button>
           <button type="button" class="equipes__aba-btn equipes__aba-btn--sec" data-acao="cancelar-evento">Cancelar</button>
         </li>`;
@@ -356,7 +348,7 @@
           <div class="equipes__aba-form equipes__aba-form--col" data-form="evento">
             <input class="equipes__aba-input" data-campo="titulo" maxlength="200" placeholder="Novo evento…" aria-label="Novo evento">
             <div class="equipes__aba-form-linha">
-              <input class="equipes__aba-input equipes__aba-input--hora" type="time" data-campo="hora" aria-label="Hora (opcional)">
+              ${campoHora('hora', '', 'Hora (opcional)')}
               <button type="button" class="equipes__aba-btn" data-acao="criar-evento">Adicionar</button>
             </div>
           </div>
@@ -377,6 +369,8 @@
 
   async function cliqueCalendario(e) {
     const el = corpo('calendario');
+    const hora = e.target.closest('[data-timepicker]');
+    if (hora) { abrirSeletorHora(hora); return; }
     const nav = e.target.closest('[data-nav]');
     if (nav) {
       const n = new Date(cal.ano, cal.mes + Number(nav.dataset.nav), 1);
@@ -498,12 +492,6 @@
   }
 
   // ============================================================ LIGAÇÃO
-  corpo('tarefas').addEventListener('click', cliqueTarefas);
-  corpo('tarefas').addEventListener('keydown', (e) => {
-    if (e.key !== 'Enter' || !e.target.matches('input[data-campo="titulo"]')) return;
-    const b = e.target.closest('[data-form], [data-id]').querySelector('[data-acao="criar-tarefa"], [data-acao="salvar-tarefa"]');
-    if (b) b.click();
-  });
   corpo('calendario').addEventListener('click', cliqueCalendario);
   corpo('calendario').addEventListener('keydown', (e) => {
     if (e.key !== 'Enter' || !e.target.matches('input[data-campo="titulo"]')) return;
@@ -632,8 +620,7 @@
       const aba = tab.getAttribute('data-aba');
       if (aba === 'chamadas') abrirChamadas();
       if (aba === 'arquivos') carregarArquivos(); // recarrega a cada abertura: pega o que acabou de ser enviado
-      if (aba === 'tarefas') carregarTarefas();
-      else if (aba === 'calendario') carregarCalendario();
+      if (aba === 'calendario') carregarCalendario();
       else if (aba === 'notas' && notas.aberta === null) carregarNotas();
     });
   });

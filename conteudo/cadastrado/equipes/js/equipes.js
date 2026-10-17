@@ -678,6 +678,8 @@
         <button type="button" class="equipes__reacao ${r.reagiu ? 'equipes__reacao--minha' : ''}" data-reagir="${r.emoji}">${r.emoji} ${r.total}</button>
       `).join('')}</div>` : '<div class="equipes__reacoes" data-reacoes></div>';
 
+    // Anexo enviado sem texto: o servidor guarda "📎 Arquivo enviado" como texto padrão; no balão aparece só o cartão do arquivo.
+    const soAnexo = (m.anexos || []).length > 0 && String(m.conteudo || '').trim() === '📎 Arquivo enviado';
     const statusHtml = m.status ? `<span class="equipes__status ${m.status === 'lida' ? 'equipes__status--lida' : ''}">${m.status === 'lida' ? 'Lida' : 'Enviada'}</span>` : '';
     const editadaHtml = m.editada ? '<span class="equipes__editada-rotulo">(editada)</span>' : '';
     const podeApagarOuEditar = m.minha;
@@ -695,7 +697,7 @@
         </div>
         <div class="equipes__bolha" data-conteudo>
           ${citacao}
-          <span data-texto>${formatarConteudo(m.conteudo)}</span>${editadaHtml}
+          <span data-texto${soAnexo ? ' hidden' : ''}>${formatarConteudo(m.conteudo)}</span>${soAnexo ? '' : editadaHtml}
           ${anexosHtml}
         </div>
         ${reacoesHtml}

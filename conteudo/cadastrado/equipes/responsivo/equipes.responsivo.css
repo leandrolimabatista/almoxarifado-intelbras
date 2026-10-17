@@ -73,7 +73,7 @@
   }
 
   .equipes__aba-input--data,
-  .equipes__data {
+  .equipes__data:not(.equipes__hora) {
     flex: 1 1 140px;
   }
 }

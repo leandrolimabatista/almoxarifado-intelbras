@@ -422,6 +422,34 @@
   // Alterar senha
   // ------------------------------------------------------------
   const formSenha = $('cfgFormSenha');
+
+  // "Esqueci minha senha": mesmo fluxo do login (api/esqueci_senha.php -> e-mail pela Brevo),
+  // enviado para o e-mail da conta logada.
+  const btnEsqueci = $('cfgEsqueciSenha');
+  btnEsqueci.addEventListener('click', async () => {
+    const email = estado.perfil && estado.perfil.email;
+    if (!email) { toast('Não foi possível identificar o e-mail da sua conta.'); return; }
+    const texto = btnEsqueci.textContent;
+    btnEsqueci.disabled = true;
+    btnEsqueci.textContent = 'Enviando...';
+    try {
+      const resp = await fetch('api/esqueci_senha.php', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      let dados = null;
+      try { dados = await resp.json(); } catch (_) { dados = null; }
+      if (resp.ok && dados && dados.sucesso) toast(dados.mensagem || 'Link enviado! Confira seu e-mail.');
+      else toast((dados && dados.erro) || 'Não foi possível enviar agora. Tente novamente.');
+    } catch (_) {
+      toast('Erro de conexão. Verifique sua internet e tente novamente.');
+    } finally {
+      btnEsqueci.disabled = false;
+      btnEsqueci.textContent = texto;
+    }
+  });
+
   $('cfgSenhaNova').addEventListener('input', (ev) => {
     const v = ev.target.value;
     const forca = $('cfgForcaSenha');
